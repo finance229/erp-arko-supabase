@@ -5,17 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ERP ARKO GROUP</title>
     
-    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <!-- Select2 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
-    
-    <!-- Charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    
-    <!-- jQuery & Select2 -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -24,31 +17,26 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; background: #f3f4f6; color: #1f2937; line-height: 1.5; }
         :root {
-            --primary: #0f172a; --primary-light: #1e293b; --accent: #3b82f6; --accent-soft: #60a5fa;
+            --primary: #0f172a; --primary-light: #1e293b; --accent: #3b82f6;
             --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --info: #6366f1;
             --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-300: #d1d5db;
             --gray-400: #9ca3af; --gray-500: #6b7280; --gray-600: #4b5563; --gray-700: #374151; --gray-800: #1f2937;
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
         }
         .app { display: flex; min-height: 100vh; }
         .sidebar { width: 280px; background: white; border-right: 1px solid var(--gray-200); position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
         .sidebar-header { padding: 2rem 1.5rem; border-bottom: 1px solid var(--gray-200); }
-        .logo { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--primary), var(--primary-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: 0.75rem; }
-        .logo i { background: linear-gradient(135deg, var(--primary), var(--primary-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2rem; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.75rem; }
+        .logo i { color: var(--accent); font-size: 2rem; }
         .sidebar-menu { flex: 1; padding: 1.5rem; overflow-y: auto; }
         .menu-item { display: flex; align-items: center; gap: 1rem; padding: 0.875rem 1rem; color: var(--gray-600); border-radius: 12px; margin-bottom: 0.25rem; transition: all 0.2s; cursor: pointer; font-weight: 500; }
-        .menu-item i { width: 24px; font-size: 1.25rem; color: var(--gray-400); transition: all 0.2s; }
+        .menu-item i { width: 24px; font-size: 1.25rem; color: var(--gray-400); }
         .menu-item:hover { background: var(--gray-100); color: var(--primary); }
-        .menu-item:hover i { color: var(--accent); }
-        .menu-item.active { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; box-shadow: var(--shadow-lg); }
+        .menu-item.active { background: var(--primary); color: white; }
         .menu-item.active i { color: white; }
         .menu-item.has-dropdown { display: flex; align-items: center; justify-content: space-between; }
         .dropdown-menu { margin-left: 0.5rem; border-left: 2px dashed var(--gray-300); margin-bottom: 0.5rem; }
-        .menu-item.submenu { padding: 0.6rem 1rem; font-size: 0.9rem; margin-bottom: 0.1rem; }
-        .menu-item.submenu i { font-size: 0.9rem; width: 20px; }
+        .menu-item.submenu { padding: 0.6rem 1rem; font-size: 0.9rem; margin-bottom: 0.1rem; padding-left: 2rem; }
         .main { flex: 1; margin-left: 280px; padding: 2rem; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; background: white; padding: 1rem 1.5rem; border-radius: 12px; box-shadow: var(--shadow); }
         .page-title { font-size: 1.5rem; font-weight: 600; color: var(--gray-800); }
@@ -62,46 +50,40 @@
         .form-card { background: white; border-radius: 20px; padding: 2rem; border: 1px solid var(--gray-200); box-shadow: var(--shadow); }
         .form-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--gray-200); }
         .form-header h2 { font-size: 1.3rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
-        .form-header h2 i { color: var(--accent); }
         .form-group { margin-bottom: 1.2rem; }
         .form-group label { display: block; margin-bottom: 0.4rem; font-weight: 500; font-size: 0.85rem; color: var(--gray-700); }
-        .form-group label i { margin-right: 0.3rem; color: var(--accent); }
-        .form-control { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--gray-300); border-radius: 10px; font-size: 0.9rem; transition: all 0.2s; }
+        .form-control { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--gray-300); border-radius: 10px; font-size: 0.9rem; }
         .form-control:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
         .filter-card { background: white; border-radius: 16px; padding: 1.2rem; margin-bottom: 1.5rem; border: 1px solid var(--gray-200); }
         .filter-grid { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; }
         .filter-item { flex: 1; min-width: 150px; }
-        .filter-label { font-size: 0.7rem; font-weight: 600; color: var(--gray-500); margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .filter-label { font-size: 0.7rem; font-weight: 600; color: var(--gray-500); margin-bottom: 0.2rem; text-transform: uppercase; }
         .filter-select { width: 100%; padding: 0.5rem 0.8rem; border: 1px solid var(--gray-300); border-radius: 10px; background: white; }
         .btn { padding: 0.5rem 1rem; border-radius: 10px; border: none; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; }
         .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: var(--primary-light); transform: translateY(-1px); }
         .btn-success { background: var(--success); color: white; }
         .btn-danger { background: var(--danger); color: white; }
         .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
-        .action-btn { background: none; border: none; color: var(--gray-500); cursor: pointer; padding: 0.3rem; border-radius: 6px; transition: all 0.2s; }
+        .action-btn { background: none; border: none; color: var(--gray-500); cursor: pointer; padding: 0.3rem; border-radius: 6px; }
         .action-btn:hover { color: var(--accent); background: var(--gray-100); }
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; margin-bottom: 1.5rem; }
-        .stat-card { background: white; border-radius: 16px; padding: 1.2rem; text-align: center; box-shadow: var(--shadow); transition: all 0.2s; }
-        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .stat-card { background: white; border-radius: 16px; padding: 1.2rem; text-align: center; box-shadow: var(--shadow); }
         .stat-value { font-size: 1.6rem; font-weight: 700; color: var(--primary); }
-        .stat-label { font-size: 0.7rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.3rem; }
+        .stat-label { font-size: 0.7rem; color: var(--gray-500); text-transform: uppercase; margin-top: 0.3rem; }
         .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.5rem; }
         .chart-card { background: white; border-radius: 16px; padding: 1.2rem; box-shadow: var(--shadow); }
         .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
         .chart-title { font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 0.3rem; }
-        .chart-title i { color: var(--accent); }
         .chart-container { height: 220px; position: relative; }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--gray-200); font-size: 0.85rem; }
-        th { background: var(--gray-100); font-weight: 600; color: var(--gray-600); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; }
+        th { background: var(--gray-100); font-weight: 600; color: var(--gray-600); text-transform: uppercase; font-size: 0.7rem; }
         tr:hover td { background: var(--gray-50); }
         .status-badge { padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.2rem; }
         .status-draft { background: var(--gray-200); color: var(--gray-600); }
         .status-submitted { background: #dbeafe; color: #1e40af; }
         .status-verified { background: #fef3c7; color: #92400e; }
         .status-paid { background: #d1fae5; color: #065f46; }
-        .status-rejected { background: #fee2e2; color: #991b1b; }
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
         .modal-content { background: white; border-radius: 20px; padding: 1.5rem; max-width: 550px; width: 90%; max-height: 80vh; overflow-y: auto; }
         .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; z-index: 9999; display: none; }
@@ -110,22 +92,18 @@
         .alert { padding: 0.8rem 1rem; border-radius: 10px; margin-bottom: 1rem; font-size: 0.85rem; }
         .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        .alert-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
         .login-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--primary), var(--primary-light)); }
         .login-card { background: white; border-radius: 24px; padding: 2.5rem; width: 100%; max-width: 420px; text-align: center; box-shadow: var(--shadow-lg); }
         .login-logo i { font-size: 3rem; color: var(--accent); margin-bottom: 0.5rem; }
         .login-logo h1 { font-size: 1.8rem; margin-bottom: 0.2rem; color: var(--primary); }
         .login-logo p { color: var(--gray-500); margin-bottom: 1.5rem; }
         .welcome-section { background: linear-gradient(135deg, var(--primary), var(--primary-light)); border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem; color: white; display: flex; justify-content: space-between; align-items: center; }
-        .welcome-section h1 { font-size: 1.4rem; display: flex; align-items: center; gap: 0.5rem; }
         .welcome-date { background: rgba(255,255,255,0.15); padding: 0.4rem 1rem; border-radius: 30px; font-size: 0.8rem; }
         @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; } .stats-grid { grid-template-columns: 1fr 1fr; } .charts-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div></div>
-
-    <!-- LOGIN PAGE -->
     <div id="loginPage" class="login-container">
         <div class="login-card">
             <div class="login-logo"><i class="fas fa-building"></i><h1>ARKO GROUP</h1><p>ERP System</p></div>
@@ -135,8 +113,6 @@
             <div id="loginError" class="alert alert-error" style="display:none; margin-top:1rem;"></div>
         </div>
     </div>
-
-    <!-- MAIN APP -->
     <div id="appPage" class="app" style="display:none">
         <div class="sidebar">
             <div class="sidebar-header"><div class="logo"><i class="fas fa-building"></i> ARKO GROUP</div></div>
@@ -144,7 +120,7 @@
         </div>
         <div class="main">
             <div class="top-bar">
-                <h1 class="page-title" id="pageTitle">Dashboard Keuangan</h1>
+                <h1 class="page-title" id="pageTitle">Dashboard</h1>
                 <div class="user-menu">
                     <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">Loading...</div></div>
                     <div class="user-avatar" id="userAvatar">U</div>
@@ -154,46 +130,50 @@
             <div id="content"></div>
         </div>
     </div>
-
     <script>
-    // ==================== KONFIGURASI SUPABASE ====================
     const SUPABASE_URL = 'https://vtkineqwvnuzxxcegofx.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0a2luZXF3dm51enh4Y2Vnb2Z4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMDU4OTMsImV4cCI6MjA5MDg4MTg5M30.7ygetyHX-_-5JDU-pXS2eP3iLgpI_zP6Gqms1gSY0ys';
     const GAS_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzQDc9CUWZELs7iw9a4lDJJPC74jMMZr5savRc-2GTWnuWpFyUytI_zrYYgaCWZfXrMMQ/exec';
     const DRIVE_FOLDER_ID = '15OqEW00HkWJrBEJtPnNPV5jwaMZ24wik';
     
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let currentUser = null, currentUserRole = null, currentCompanyId = 1;
-    let companies = [], accounts = [], projects = [], customers = [];
+    let companies = [], accounts = [], projects = [], customers = [], vendors = [];
     let statusChart = null, companyChart = null;
+    let revenueAccounts = [];
     
-    // ==================== FUNGSI HELPER ====================
     function showLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; }
     function hideLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
     function formatNumber(num) { if (!num) return '0'; return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
     function parseRupiah(str) { if (!str) return 0; let cleaned = str.toString().replace(/[^0-9,-]/g, '').replace(',', '.'); return parseFloat(cleaned) || 0; }
+    function formatMoney(input) { let v = input.value.replace(/\./g, '').replace(/[^0-9]/g, ''); input.value = v ? new Intl.NumberFormat('id-ID').format(parseInt(v)) : ''; }
+    function formatDate(dateStr) { if (!dateStr) return '-'; let d = new Date(dateStr); return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' }); }
     
-    async function getCustomerList(companyId) { let { data } = await supabaseClient.from('customers').select('*').eq('company_id', companyId); return data || []; }
-    async function getProjectList(companyId) { let { data } = await supabaseClient.from('projects').select('*').eq('company_id', companyId); return data || []; }
-    async function getAccountList(companyId) { let { data } = await supabaseClient.from('chart_of_accounts').select('*').eq('company_id', companyId); return data || []; }
-    // ==================== AUTHENTICATION ====================
+    async function getCustomerList(companyId) { let { data } = await supabase.from('customers').select('*').eq('company_id', companyId); return data || []; }
+    async function getProjectList(companyId) { let { data } = await supabase.from('projects').select('*').eq('company_id', companyId); return data || []; }
+    async function getAccountList(companyId) { let { data } = await supabase.from('chart_of_accounts').select('*').eq('company_id', companyId); return data || []; }
+    async function getRevenueAccounts(companyId) { let { data } = await supabase.from('chart_of_accounts').select('*').eq('company_id', companyId).eq('account_type', 'Pendapatan'); return data || []; }
+    async function getBankList(companyId) { let { data } = await supabase.from('chart_of_accounts').select('*').eq('company_id', companyId).ilike('account_name', '%Bank%'); return data.map(b => ({ code: b.account_code, name: b.account_name, display: b.account_name })); }
+    async function getVendorList(companyId) { let { data } = await supabase.from('vendors').select('*').eq('company_id', companyId); return data || []; }
+    async function getTaxConfig(companyId) { let configs = { 1: { ppn_rate: 11, is_pkp: true }, 2: { ppn_rate: 1.1, is_pkp: false }, 3: { ppn_rate: 1.1, is_pkp: false }, 4: { ppn_rate: 11, is_pkp: true } }; return configs[companyId] || { ppn_rate: 11, is_pkp: true }; }
+    
     async function login() {
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
         if (!email || !password) { let err = document.getElementById('loginError'); err.innerText = 'Isi email dan password'; err.style.display = 'block'; return; }
         showLoading();
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) { hideLoading(); let err = document.getElementById('loginError'); err.innerText = error.message; err.style.display = 'block'; return; }
-        const { data: profile } = await supabaseClient.from('user_profiles').select('*').eq('email', email).single();
+        const { data: profile } = await supabase.from('user_profiles').select('*').eq('email', email).single();
         currentUser = data.user; currentUserRole = profile?.role || 'staff'; currentCompanyId = profile?.company_id || 1;
-        const { data: comps } = await supabaseClient.from('companies').select('*'); companies = comps || [];
+        const { data: comps } = await supabase.from('companies').select('*'); companies = comps || [];
         document.getElementById('loginPage').style.display = 'none'; document.getElementById('appPage').style.display = 'flex';
         document.getElementById('userName').innerText = profile?.name || email; document.getElementById('userRole').innerText = currentUserRole;
         document.getElementById('userAvatar').innerText = (profile?.name || email).charAt(0).toUpperCase();
         renderSidebar(); loadDashboard(); hideLoading();
     }
     
-    async function logout() { await supabaseClient.auth.signOut(); document.getElementById('loginPage').style.display = 'flex'; document.getElementById('appPage').style.display = 'none'; }
+    async function logout() { await supabase.auth.signOut(); document.getElementById('loginPage').style.display = 'flex'; document.getElementById('appPage').style.display = 'none'; }
     
     function renderSidebar() {
         let menus = [
@@ -255,42 +235,28 @@
         else if (menu === 'aset') loadAsetList();
         else if (menu === 'customers') loadCustomerList();
         else if (menu === 'projects') loadProjectList();
-        else if (menu === 'opening_balance') alert('Fitur Saldo Awal menyusul');
+        else if (menu === 'opening_balance') loadOpeningBalanceForm();
     }
-    
     // ==================== DASHBOARD ====================
     async function loadDashboard() {
         if (statusChart) statusChart.destroy(); if (companyChart) companyChart.destroy();
         const today = new Date(); const currentMonth = today.getMonth() + 1; const currentYear = today.getFullYear();
         const greeting = today.getHours() < 12 ? 'Selamat Pagi' : today.getHours() < 18 ? 'Selamat Siang' : 'Selamat Malam';
         const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-        
         let companyOptions = '<option value="all">Semua Perusahaan</option>';
         companies.forEach(c => { companyOptions += `<option value="${c.id}">${c.nama}</option>`; });
-        
-        let html = `
-            <div class="welcome-section">
-                <div><h1><i class="fas fa-hand-wave"></i> ${greeting}, ${currentUser?.name || 'User'}!</h1><p><i class="fas fa-chart-pie"></i> Ringkasan keuangan konsolidasi</p></div>
-                <div class="welcome-date"><i class="far fa-calendar-alt"></i> ${today.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' })}</div>
-            </div>
-            <div class="filter-card"><div class="filter-grid">
-                <div class="filter-item"><label class="filter-label">Perusahaan</label><select id="dashboardCompany" class="filter-select">${companyOptions}</select></div>
-                <div class="filter-item"><label class="filter-label">Bulan</label><select id="dashboardMonth" class="filter-select"><option value="all">Semua Bulan</option>${monthNames.map((m,i)=>`<option value="${i+1}" ${i+1==currentMonth?'selected':''}>${m}</option>`).join('')}</select></div>
-                <div class="filter-item"><label class="filter-label">Tahun</label><select id="dashboardYear" class="filter-select"><option value="all">Semua Tahun</option><option value="${currentYear-1}">${currentYear-1}</option><option value="${currentYear}" selected>${currentYear}</option><option value="${currentYear+1}">${currentYear+1}</option></select></div>
-                <div class="filter-item"><button class="btn btn-primary" onclick="refreshDashboard()"><i class="fas fa-sync-alt"></i> Perbarui</button></div>
-            </div></div>
-            <div class="stats-grid">
-                <div class="stat-card"><div class="stat-value" id="totalKas">Rp 0</div><div class="stat-label">Total Kas</div></div>
-                <div class="stat-card"><div class="stat-value" id="totalPending">Rp 0</div><div class="stat-label">Pending Approval</div></div>
-                <div class="stat-card"><div class="stat-value" id="totalApproved">Rp 0</div><div class="stat-label">Sudah Dibayar</div></div>
-                <div class="stat-card"><div class="stat-value" id="totalRequest">0</div><div class="stat-label">Total Request</div></div>
-            </div>
-            <div class="charts-grid">
-                <div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-chart-pie"></i> Status Payment Request</h3><span class="badge" id="periodLabel">${monthNames[currentMonth-1]} ${currentYear}</span></div><div class="chart-container"><canvas id="statusChart"></canvas></div></div>
-                <div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-chart-bar"></i> Per Perusahaan</h3></div><div class="chart-container"><canvas id="companyChart"></canvas></div></div>
-            </div>
-            <div class="card"><h2><i class="fas fa-clock"></i> Payment Request Terbaru</h2>
-            <div style="overflow-x:auto;"><table><thead><tr><th>ID</th><th>Tgl</th><th>Perusahaan</th><th>Deskripsi</th><th>Jumlah</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="recentTableBody"></tbody></table></div></div>`;
+        let html = `<div class="welcome-section"><div><h1><i class="fas fa-hand-wave"></i> ${greeting}, ${currentUser?.name || 'User'}!</h1><p><i class="fas fa-chart-pie"></i> Ringkasan keuangan konsolidasi</p></div><div class="welcome-date"><i class="far fa-calendar-alt"></i> ${today.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' })}</div></div>
+            <div class="filter-card"><div class="filter-grid"><div class="filter-item"><label class="filter-label">Perusahaan</label><select id="dashboardCompany" class="filter-select">${companyOptions}</select></div>
+            <div class="filter-item"><label class="filter-label">Bulan</label><select id="dashboardMonth" class="filter-select"><option value="all">Semua Bulan</option>${monthNames.map((m,i)=>`<option value="${i+1}" ${i+1==currentMonth?'selected':''}>${m}</option>`).join('')}</select></div>
+            <div class="filter-item"><label class="filter-label">Tahun</label><select id="dashboardYear" class="filter-select"><option value="all">Semua Tahun</option><option value="${currentYear-1}">${currentYear-1}</option><option value="${currentYear}" selected>${currentYear}</option><option value="${currentYear+1}">${currentYear+1}</option></select></div>
+            <div class="filter-item"><button class="btn btn-primary" onclick="refreshDashboard()"><i class="fas fa-sync-alt"></i> Perbarui</button></div></div></div>
+            <div class="stats-grid"><div class="stat-card"><div class="stat-value" id="totalKas">Rp 0</div><div class="stat-label">Total Kas</div></div>
+            <div class="stat-card"><div class="stat-value" id="totalPending">Rp 0</div><div class="stat-label">Pending Approval</div></div>
+            <div class="stat-card"><div class="stat-value" id="totalApproved">Rp 0</div><div class="stat-label">Sudah Dibayar</div></div>
+            <div class="stat-card"><div class="stat-value" id="totalRequest">0</div><div class="stat-label">Total Request</div></div></div>
+            <div class="charts-grid"><div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-chart-pie"></i> Status Payment Request</h3><span class="badge" id="periodLabel">${monthNames[currentMonth-1]} ${currentYear}</span></div><div class="chart-container"><canvas id="statusChart"></canvas></div></div>
+            <div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-chart-bar"></i> Per Perusahaan</h3></div><div class="chart-container"><canvas id="companyChart"></canvas></div></div></div>
+            <div class="card"><h2><i class="fas fa-clock"></i> Payment Request Terbaru</h2><div style="overflow-x:auto;"><table><thead><tr><th>ID</th><th>Tgl</th><th>Perusahaan</th><th>Deskripsi</th><th>Jumlah</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="recentTableBody"></tbody></table></div></div>`;
         document.getElementById('content').innerHTML = html;
         await refreshDashboard();
     }
@@ -299,7 +265,7 @@
         let companyId = document.getElementById('dashboardCompany')?.value || 'all';
         let month = document.getElementById('dashboardMonth')?.value || 'all';
         let year = document.getElementById('dashboardYear')?.value || 'all';
-        let query = supabaseClient.from('payment_requests').select('*');
+        let query = supabase.from('payment_requests').select('*');
         if (companyId !== 'all') query = query.eq('company_id', parseInt(companyId));
         if (month !== 'all' && year !== 'all') { let start = `${year}-${month.padStart(2,'0')}-01`; let end = `${year}-${month.padStart(2,'0')}-31`; query = query.gte('request_date', start).lte('request_date', end); }
         let { data: payments } = await query.order('created_at', { ascending: false });
@@ -309,24 +275,20 @@
         document.getElementById('totalPending').innerHTML = `Rp ${formatNumber(totalPending)}`;
         document.getElementById('totalApproved').innerHTML = `Rp ${formatNumber(totalApproved)}`;
         document.getElementById('totalRequest').innerHTML = payments?.length || 0;
-        
         let statusData = { draft: 0, submitted: 0, verified: 0, paid: 0, rejected: 0 };
         let companyData = { 1:0, 2:0, 3:0, 4:0 };
         payments?.forEach(p => { statusData[p.status] = (statusData[p.status] || 0) + 1; companyData[p.company_id] = (companyData[p.company_id] || 0) + p.amount; });
-        
         if (statusChart) statusChart.destroy();
         statusChart = new Chart(document.getElementById('statusChart'), { type: 'pie', data: { labels: ['Draft','Submitted','Verified','Paid','Rejected'], datasets: [{ data: [statusData.draft,statusData.submitted,statusData.verified,statusData.paid,statusData.rejected], backgroundColor: ['#9ca3af','#3b82f6','#f59e0b','#10b981','#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
-        
         if (companyChart) companyChart.destroy();
         companyChart = new Chart(document.getElementById('companyChart'), { type: 'bar', data: { labels: ['Arko','MMC','USA','MST'], datasets: [{ data: [companyData[1]/1e6, companyData[2]/1e6, companyData[3]/1e6, companyData[4]/1e6], backgroundColor: '#3b82f6' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => 'Rp ' + v + ' Jt' } } } } });
-        
         let tbody = ''; (payments || []).slice(0,5).forEach(p => { let company = companies.find(c => c.id == p.company_id)?.nama || '-'; tbody += `<tr><td>#${p.id}</td><td>${p.request_date || '-'}</td><td>${company}</td><td>${p.description || '-'}</td><td>Rp ${formatNumber(p.amount)}</td><td><span class="status-badge status-${p.status}">${p.status}</span></td><td><button class="action-btn" onclick="viewPaymentRequest(${p.id})"><i class="fas fa-eye"></i></button></td></tr>`; });
-        document.getElementById('recentTableBody').innerHTML = tbody || '<tr><td colspan="7">Belum ada数据</td></tr>';
+        document.getElementById('recentTableBody').innerHTML = tbody || '<tr><td colspan="7">Belum ada data</td></tr>';
     }
     
     // ==================== PAYMENT REQUESTS ====================
     async function loadPaymentRequests() {
-        let { data: payments } = await supabaseClient.from('payment_requests').select('*').order('id', { ascending: false });
+        let { data: payments } = await supabase.from('payment_requests').select('*').order('id', { ascending: false });
         let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-money-bill-wave"></i> Payment Request</h2><button class="btn btn-primary" onclick="showNewPaymentForm()"><i class="fas fa-plus"></i> Buat Request</button></div>
             <div class="filter-card"><div class="filter-grid"><div class="filter-item"><label class="filter-label">Status</label><select id="paymentStatusFilter" class="filter-select" onchange="filterPaymentRequests()"><option value="all">Semua</option><option value="draft">Draft</option><option value="submitted">Submitted</option><option value="verified">Verified</option><option value="paid">Paid</option></select></div></div></div>
             <div class="table-container"><table class="table"><thead><tr><th>ID</th><th>Tgl</th><th>Deskripsi</th><th>Jumlah</th><th>Total Transfer</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="paymentTableBody"></tbody></table></div></div>`;
@@ -345,7 +307,7 @@
             if (p.status === 'verified' && currentUserRole === 'direktur') actions += ` <button class="action-btn" onclick="approvePaymentRequest(${p.id})" style="color:var(--success);"><i class="fas fa-thumbs-up"></i></button>`;
             tbody += `<tr><td>#${p.id}</td><td>${p.request_date || '-'}</td><td>${p.description || '-'}</td><td>Rp ${formatNumber(p.amount)}</td><td>Rp ${formatNumber(p.total_with_tax || p.amount)}</td><td><span class="status-badge status-${p.status}">${p.status}</span></td><td>${actions}</td></tr>`;
         });
-        document.getElementById('paymentTableBody').innerHTML = tbody || '<td><td colspan="7">Belum ada data</td></tr>';
+        document.getElementById('paymentTableBody').innerHTML = tbody || '<tr><td colspan="7">Belum ada数据</td></tr>';
     }
     
     function filterPaymentRequests() { loadPaymentRequests(); }
@@ -380,120 +342,644 @@
     }
     
     async function saveToSupabase(desc, amount, bank, buktiUrl) {
-        let { error } = await supabaseClient.from('payment_requests').insert({ company_id: currentCompanyId, request_date: new Date().toISOString().split('T')[0], description: desc, amount: parseInt(amount), bank_account: bank, bukti_url: buktiUrl, requester_email: currentUser?.email, status: 'draft' });
+        let { error } = await supabase.from('payment_requests').insert({ company_id: currentCompanyId, request_date: new Date().toISOString().split('T')[0], description: desc, amount: parseInt(amount), bank_account: bank, bukti_url: buktiUrl, requester_email: currentUser?.email, status: 'draft' });
         if (error) { document.getElementById('newPaymentMsg').innerHTML = `<div class="alert alert-error">${error.message}</div>`; }
         else { document.getElementById('newPaymentMsg').innerHTML = '<div class="alert alert-success">✅ Berhasil!</div>'; setTimeout(() => { document.querySelector('.modal-overlay')?.remove(); loadPaymentRequests(); }, 1500); }
     }
     
-    async function submitPaymentRequest(id) { await supabaseClient.from('payment_requests').update({ status: 'submitted', submitted_at: new Date() }).eq('id', id); loadPaymentRequests(); }
-    async function verifyPaymentRequest(id) { await supabaseClient.from('payment_requests').update({ status: 'verified', verified_at: new Date(), verified_by: currentUser?.email }).eq('id', id); loadPaymentRequests(); }
-    async function approvePaymentRequest(id) { await supabaseClient.from('payment_requests').update({ status: 'paid', paid_at: new Date(), approved_by: currentUser?.email }).eq('id', id); loadPaymentRequests(); }
-    async function viewPaymentRequest(id) { let { data } = await supabaseClient.from('payment_requests').select('*').eq('id', id).single(); alert(`Payment #${id}\nDeskripsi: ${data.description}\nJumlah: Rp ${formatNumber(data.amount)}\nStatus: ${data.status}\nBukti: ${data.bukti_url || '-'}`); }
+    async function submitPaymentRequest(id) { await supabase.from('payment_requests').update({ status: 'submitted', submitted_at: new Date() }).eq('id', id); loadPaymentRequests(); }
+    async function verifyPaymentRequest(id) { await supabase.from('payment_requests').update({ status: 'verified', verified_at: new Date(), verified_by: currentUser?.email }).eq('id', id); loadPaymentRequests(); }
+    async function approvePaymentRequest(id) { await supabase.from('payment_requests').update({ status: 'paid', paid_at: new Date(), approved_by: currentUser?.email }).eq('id', id); loadPaymentRequests(); }
+    async function viewPaymentRequest(id) { let { data } = await supabase.from('payment_requests').select('*').eq('id', id).single(); alert(`Payment #${id}\nDeskripsi: ${data.description}\nJumlah: Rp ${formatNumber(data.amount)}\nStatus: ${data.status}\nBukti: ${data.bukti_url || '-'}`); }
     
-    // ==================== INVOICE ====================
+    // ==================== INVOICE PENJUALAN (AR) ====================
     async function loadInvoiceList() {
-        let { data: invoices } = await supabaseClient.from('invoices').select('*').order('id', { ascending: false });
+        let { data: invoices } = await supabase.from('invoices').select('*').order('id', { ascending: false });
         let customersList = await getCustomerList(currentCompanyId);
-        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-file-invoice"></i> Invoice Penjualan</h2><button class="btn btn-primary" onclick="alert('Fitur Create Invoice menyusul')"><i class="fas fa-plus"></i> Buat Invoice</button></div>
-            <div class="table-container"><table class="table"><thead><tr><th>No Invoice</th><th>Customer</th><th>Tanggal</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="invoiceTableBody"></tbody></table></div></div>`;
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-file-invoice"></i> Invoice Penjualan</h2><button class="btn btn-primary" onclick="showCreateInvoiceForm()"><i class="fas fa-plus"></i> Buat Invoice</button></div>
+            <div class="table-container"><table class="table"><thead><tr><th>No Invoice</th><th>Customer</th><th>Tanggal</th><th>Jatuh Tempo</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="invoiceTableBody"></tbody></table></div></div>`;
         document.getElementById('content').innerHTML = html;
-        let tbody = ''; (invoices || []).forEach(inv => { let customer = customersList.find(c => c.id == inv.customer_id); tbody += `<tr><td><strong>${inv.invoice_no || '#'+inv.id}</strong></td><td>${customer?.name || '-'}</td><td>${inv.invoice_date || '-'}</td><td>Rp ${formatNumber(inv.total)}</td><td><span class="status-badge status-${inv.status}">${inv.status}</span></td><td><button class="action-btn" onclick="alert('Detail Invoice menyusul')"><i class="fas fa-eye"></i></button></td></tr>`; });
-        document.getElementById('invoiceTableBody').innerHTML = tbody || '<tr><td colspan="6">Belum ada invoice</td></tr>';
+        let tbody = '';
+        (invoices || []).forEach(inv => {
+            let customer = customersList.find(c => c.id == inv.customer_id);
+            let statusClass = inv.status === 'paid' ? 'status-paid' : inv.status === 'posted' ? 'status-submitted' : 'status-draft';
+            tbody += `<tr>
+                <td><strong>${inv.invoice_no || '#'+inv.id}</strong></td>
+                <td>${customer?.name || '-'}</td>
+                <td>${inv.invoice_date || '-'}</td>
+                <td>${inv.due_date || '-'}</td>
+                <td class="text-right">Rp ${formatNumber(inv.total)}</td>
+                <td><span class="status-badge ${statusClass}">${inv.status || 'draft'}</span></td>
+                <td>
+                    <button class="action-btn" onclick="previewInvoicePDF(${inv.id})" title="Preview/Print"><i class="fas fa-print"></i></button>
+                    <button class="action-btn" onclick="editInvoice(${inv.id})" title="Edit"><i class="fas fa-edit"></i></button>
+                    <button class="action-btn" onclick="postInvoice(${inv.id})" title="Post ke Jurnal"><i class="fas fa-check-circle"></i></button>
+                    <button class="action-btn" onclick="recordPayment(${inv.id})" title="Record Payment"><i class="fas fa-money-bill-wave"></i></button>
+                    <button class="action-btn" onclick="deleteInvoice(${inv.id})" title="Hapus"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>`;
+        });
+        document.getElementById('invoiceTableBody').innerHTML = tbody || '<tr><td colspan="8">Belum ada invoice</td></tr>';
     }
     
-    // ==================== VENDOR INVOICE ====================
+    function showCreateInvoiceForm() {
+        showLoading();
+        Promise.all([getCustomerList(currentCompanyId), getProjectList(currentCompanyId), getTaxConfig(currentCompanyId), getRevenueAccounts(currentCompanyId), getBankList(currentCompanyId)]).then(([cust, proj, tax, rev, banks]) => {
+            customers = cust; projects = proj; revenueAccounts = rev;
+            let customerOptions = '<option value="">Pilih Customer</option>'; customers.forEach(c => { customerOptions += `<option value="${c.id}">${c.name}</option>`; });
+            let projectOptions = '<option value="">Tanpa Project</option>'; projects.forEach(p => { projectOptions += `<option value="${p.id}">${p.code} - ${p.name}</option>`; });
+            let revenueOptions = '<option value="">Pilih Akun Pendapatan</option>'; revenueAccounts.forEach(acc => { revenueOptions += `<option value="${acc.account_code}">${acc.account_code} - ${acc.account_name}</option>`; });
+            let bankOptions = '<option value="">Pilih Bank Tujuan</option>'; banks.forEach(b => { bankOptions += `<option value="${b.code}">${b.display}</option>`; });
+            let today = new Date().toISOString().split('T')[0];
+            let dueDate = new Date(); dueDate.setMonth(dueDate.getMonth() + 1);
+            let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-plus"></i> Buat Invoice Baru</h2><button class="btn btn-secondary" onclick="loadInvoiceList()">Kembali</button></div>
+                <div class="form-group"><label>Perusahaan</label><select id="createInvoiceCompany" class="form-control">${companies.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('')}</select></div>
+                <div class="form-group"><label>Customer</label><select id="createInvoiceCustomer" class="form-control searchable-dropdown" required>${customerOptions}</select></div>
+                <div class="form-group"><label>Project</label><select id="createInvoiceProject" class="form-control searchable-dropdown">${projectOptions}</select></div>
+                <div class="form-group"><label>Akun Pendapatan</label><select id="createInvoiceRevenueAccount" class="form-control searchable-dropdown" required>${revenueOptions}</select></div>
+                <div class="form-group"><label>Bank Tujuan</label><select id="createInvoiceBank" class="form-control searchable-dropdown" required>${bankOptions}</select></div>
+                <div class="row" style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;"><div class="form-group"><label>Tanggal Invoice</label><input type="date" id="createInvoiceDate" class="form-control" value="${today}"></div>
+                <div class="form-group"><label>Jatuh Tempo</label><input type="date" id="createInvoiceDueDate" class="form-control" value="${dueDate.toISOString().split('T')[0]}"></div></div>
+                <div style="background:#f8f9fa; padding:1rem; border-radius:12px;"><h4>Item Barang/Jasa</h4><div id="invoiceItemsContainer"></div><button class="btn btn-secondary btn-sm" onclick="addInvoiceItem()">+ Tambah Item</button></div>
+                <div style="margin:1rem 0;"><label><input type="checkbox" id="createInvoicePPN" checked onchange="calculateInvoiceTotal()"> Kena PPN <span id="ppnRateLabel">11%</span></label></div>
+                <div style="background:var(--primary); color:white; padding:1rem; border-radius:12px;"><div style="display:flex; justify-content:space-between;"><span>Subtotal</span><span id="invoiceSubtotal">Rp 0</span></div><div style="display:flex; justify-content:space-between;"><span>PPN</span><span id="invoicePPN">Rp 0</span></div><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>TOTAL</span><span id="invoiceTotal">Rp 0</span></div></div>
+                <div class="form-group"><label>Catatan</label><textarea id="createInvoiceNotes" class="form-control" rows="2"></textarea></div>
+                <div style="display:flex; gap:1rem; justify-content:flex-end;"><button class="btn btn-secondary" onclick="loadInvoiceList()">Batal</button><button class="btn btn-primary" onclick="saveInvoice()">Simpan Invoice</button></div>
+                <div id="createInvoiceResult"></div></div>`;
+            document.getElementById('content').innerHTML = html;
+            $('.searchable-dropdown').select2({ width: '100%' });
+            window.invoiceItemCounter = 1;
+            document.getElementById('invoiceItemsContainer').innerHTML = renderInvoiceItem(0);
+            calculateInvoiceTotal();
+            hideLoading();
+        });
+    }
+    
+    function renderInvoiceItem(id) {
+        return `<div class="invoice-item" id="invoice-item-${id}" style="display:grid; grid-template-columns:3fr 1fr 1fr 1fr 1fr auto; gap:0.5rem; margin-bottom:0.5rem;">
+            <input type="text" class="item-name form-control" placeholder="Nama Item" value="Item ${id+1}">
+            <input type="number" class="item-qty form-control" placeholder="Qty" value="1" min="1" onchange="calculateInvoiceTotal()">
+            <input type="text" class="item-price form-control" placeholder="Harga" value="0" onkeyup="formatMoney(this)" onblur="calculateInvoiceTotal()">
+            <input type="text" class="item-discount form-control" placeholder="Diskon %" value="0" onchange="calculateInvoiceTotal()">
+            <input type="text" class="item-total form-control" placeholder="Total" readonly style="background:#f0f0f0;">
+            ${id > 0 ? `<button class="btn btn-danger btn-sm" onclick="removeInvoiceItem(${id})"><i class="fas fa-trash"></i></button>` : '<div style="width:32px;"></div>'}
+        </div>`;
+    }
+    
+    function addInvoiceItem() { let container = document.getElementById('invoiceItemsContainer'); window.invoiceItemCounter++; let newItem = document.createElement('div'); newItem.innerHTML = renderInvoiceItem(window.invoiceItemCounter); container.appendChild(newItem.firstChild); calculateInvoiceTotal(); }
+    function removeInvoiceItem(id) { let item = document.getElementById(`invoice-item-${id}`); if (document.querySelectorAll('.invoice-item').length > 1) { item.remove(); calculateInvoiceTotal(); } else { alert('Minimal satu item harus ada'); } }
+    
+    function calculateInvoiceTotal() {
+        let subtotal = 0;
+        document.querySelectorAll('.invoice-item').forEach(item => {
+            let qty = parseFloat(item.querySelector('.item-qty')?.value) || 0;
+            let price = parseRupiah(item.querySelector('.item-price')?.value);
+            let discount = parseFloat(item.querySelector('.item-discount')?.value) || 0;
+            let itemTotal = qty * price * (1 - discount / 100);
+            subtotal += itemTotal;
+            let totalInput = item.querySelector('.item-total');
+            if (totalInput) totalInput.value = formatNumber(itemTotal);
+        });
+        let companyId = parseInt(document.getElementById('createInvoiceCompany')?.value || currentCompanyId);
+        let ppnRate = (companyId === 2 || companyId === 3) ? 1.1 : 11;
+        let kenaPPN = document.getElementById('createInvoicePPN')?.checked || false;
+        let ppn = kenaPPN ? subtotal * ppnRate / 100 : 0;
+        document.getElementById('invoiceSubtotal').innerHTML = `Rp ${formatNumber(subtotal)}`;
+        document.getElementById('invoicePPN').innerHTML = `Rp ${formatNumber(ppn)}`;
+        document.getElementById('invoiceTotal').innerHTML = `Rp ${formatNumber(subtotal + ppn)}`;
+        document.getElementById('ppnRateLabel').innerHTML = ppnRate + '%';
+    }
+    
+    async function saveInvoice() {
+        let companyId = parseInt(document.getElementById('createInvoiceCompany').value);
+        let customerId = parseInt(document.getElementById('createInvoiceCustomer').value);
+        let projectId = document.getElementById('createInvoiceProject').value || null;
+        let revenueAccount = document.getElementById('createInvoiceRevenueAccount').value;
+        let bankCode = document.getElementById('createInvoiceBank').value;
+        let invoiceDate = document.getElementById('createInvoiceDate').value;
+        let dueDate = document.getElementById('createInvoiceDueDate').value;
+        let notes = document.getElementById('createInvoiceNotes').value;
+        let items = [];
+        let hasError = false;
+        document.querySelectorAll('.invoice-item').forEach((item, idx) => {
+            let name = item.querySelector('.item-name')?.value;
+            let qty = parseFloat(item.querySelector('.item-qty')?.value) || 0;
+            let price = parseRupiah(item.querySelector('.item-price')?.value);
+            let discount = parseFloat(item.querySelector('.item-discount')?.value) || 0;
+            if (!name) { alert(`Item ${idx+1}: Nama harus diisi`); hasError = true; return; }
+            let amount = qty * price * (1 - discount / 100);
+            items.push({ description: name, quantity: qty, unitPrice: price, discount: discount * price * qty / 100, amount: amount });
+        });
+        if (hasError) return;
+        if (items.length === 0) { alert('Minimal satu item'); return; }
+        let subtotal = parseRupiah(document.getElementById('invoiceSubtotal').innerHTML.replace('Rp ', '').replace(/\./g, ''));
+        let ppn = parseRupiah(document.getElementById('invoicePPN').innerHTML.replace('Rp ', '').replace(/\./g, ''));
+        let total = parseRupiah(document.getElementById('invoiceTotal').innerHTML.replace('Rp ', '').replace(/\./g, ''));
+        showLoading();
+        let { data, error } = await supabase.from('invoices').insert({
+            company_id: companyId, customer_id: customerId, project_id: projectId, revenue_account: revenueAccount, bank_code: bankCode,
+            invoice_date: invoiceDate, due_date: dueDate, notes: notes, dpp: subtotal, ppn: ppn, total: total, status: 'draft', created_by: currentUser?.email
+        }).select().single();
+        if (error) { hideLoading(); document.getElementById('createInvoiceResult').innerHTML = `<div class="alert alert-error">${error.message}</div>`; return; }
+        for (let item of items) { await supabase.from('invoice_items').insert({ invoice_id: data.id, description: item.description, quantity: item.quantity, price: item.unitPrice, discount: item.discount, amount: item.amount }); }
+        hideLoading(); document.getElementById('createInvoiceResult').innerHTML = `<div class="alert alert-success">✅ Invoice berhasil dibuat! ID: ${data.id}</div>`; setTimeout(() => loadInvoiceList(), 2000);
+    }
+    
+    async function editInvoice(id) {
+        let { data: invoice } = await supabase.from('invoices').select('*').eq('id', id).single();
+        let { data: items } = await supabase.from('invoice_items').select('*').eq('invoice_id', id);
+        let customersList = await getCustomerList(currentCompanyId);
+        let projectsList = await getProjectList(currentCompanyId);
+        let banksList = await getBankList(currentCompanyId);
+        let revenueList = await getRevenueAccounts(currentCompanyId);
+        let customerOptions = '<option value="">Pilih Customer</option>'; customersList.forEach(c => { customerOptions += `<option value="${c.id}" ${c.id==invoice.customer_id?'selected':''}>${c.name}</option>`; });
+        let projectOptions = '<option value="">Tanpa Project</option>'; projectsList.forEach(p => { projectOptions += `<option value="${p.id}" ${p.id==invoice.project_id?'selected':''}>${p.code} - ${p.name}</option>`; });
+        let bankOptions = '<option value="">Pilih Bank</option>'; banksList.forEach(b => { bankOptions += `<option value="${b.code}" ${b.code==invoice.bank_code?'selected':''}>${b.display}</option>`; });
+        let revenueOptions = '<option value="">Pilih Akun Pendapatan</option>'; revenueList.forEach(acc => { revenueOptions += `<option value="${acc.account_code}" ${acc.account_code==invoice.revenue_account?'selected':''}>${acc.account_code} - ${acc.account_name}</option>`; });
+        let itemsHtml = ''; let idx = 0;
+        items.forEach(item => { itemsHtml += renderInvoiceItemForEdit(idx++, item); });
+        window.invoiceItemCounter = items.length;
+        let ppnRate = (invoice.company_id === 2 || invoice.company_id === 3) ? 1.1 : 11;
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-edit"></i> Edit Invoice #${invoice.invoice_no || invoice.id}</h2><button class="btn btn-secondary" onclick="loadInvoiceList()">Kembali</button></div>
+            <div class="form-group"><label>Perusahaan</label><select id="editInvoiceCompany" class="form-control" disabled><option value="${invoice.company_id}">${companies.find(c=>c.id==invoice.company_id)?.nama}</option></select></div>
+            <div class="form-group"><label>Customer</label><select id="editInvoiceCustomer" class="form-control searchable-dropdown" required>${customerOptions}</select></div>
+            <div class="form-group"><label>Project</label><select id="editInvoiceProject" class="form-control searchable-dropdown">${projectOptions}</select></div>
+            <div class="form-group"><label>Akun Pendapatan</label><select id="editInvoiceRevenueAccount" class="form-control searchable-dropdown" required>${revenueOptions}</select></div>
+            <div class="form-group"><label>Bank Tujuan</label><select id="editInvoiceBank" class="form-control searchable-dropdown" required>${bankOptions}</select></div>
+            <div class="row" style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;"><div class="form-group"><label>Tanggal Invoice</label><input type="date" id="editInvoiceDate" class="form-control" value="${invoice.invoice_date}"></div>
+            <div class="form-group"><label>Jatuh Tempo</label><input type="date" id="editInvoiceDueDate" class="form-control" value="${invoice.due_date}"></div></div>
+            <div style="background:#f8f9fa; padding:1rem; border-radius:12px;"><h4>Item Barang/Jasa</h4><div id="invoiceItemsContainer">${itemsHtml}</div><button class="btn btn-secondary btn-sm" onclick="addInvoiceItem()">+ Tambah Item</button></div>
+            <div style="margin:1rem 0;"><label><input type="checkbox" id="editInvoicePPN" ${invoice.ppn>0?'checked':''} onchange="calculateEditInvoiceTotal()"> Kena PPN <span id="editPpnRateLabel">${ppnRate}%</span></label></div>
+            <div style="background:var(--primary); color:white; padding:1rem; border-radius:12px;"><div style="display:flex; justify-content:space-between;"><span>Subtotal</span><span id="editInvoiceSubtotal">Rp ${formatNumber(invoice.dpp)}</span></div><div style="display:flex; justify-content:space-between;"><span>PPN</span><span id="editInvoicePPN">Rp ${formatNumber(invoice.ppn)}</span></div><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>TOTAL</span><span id="editInvoiceTotal">Rp ${formatNumber(invoice.total)}</span></div></div>
+            <div class="form-group"><label>Catatan</label><textarea id="editInvoiceNotes" class="form-control" rows="2">${invoice.notes||''}</textarea></div>
+            <div style="display:flex; gap:1rem; justify-content:flex-end;"><button class="btn btn-secondary" onclick="loadInvoiceList()">Batal</button><button class="btn btn-primary" onclick="updateInvoice(${id})">Update Invoice</button></div>
+            <div id="editInvoiceResult"></div></div>`;
+        document.getElementById('content').innerHTML = html;
+        $('.searchable-dropdown').select2({ width: '100%' });
+        window.calculateEditInvoiceTotal = function() {
+            let subtotal = 0;
+            document.querySelectorAll('.invoice-item').forEach(item => {
+                let qty = parseFloat(item.querySelector('.item-qty')?.value) || 0;
+                let price = parseRupiah(item.querySelector('.item-price')?.value);
+                let discount = parseFloat(item.querySelector('.item-discount')?.value) || 0;
+                let itemTotal = qty * price * (1 - discount / 100);
+                subtotal += itemTotal;
+                let totalInput = item.querySelector('.item-total');
+                if (totalInput) totalInput.value = formatNumber(itemTotal);
+            });
+            let companyId = invoice.company_id;
+            let ppnRate = (companyId === 2 || companyId === 3) ? 1.1 : 11;
+            let kenaPPN = document.getElementById('editInvoicePPN')?.checked || false;
+            let ppn = kenaPPN ? subtotal * ppnRate / 100 : 0;
+            document.getElementById('editInvoiceSubtotal').innerHTML = `Rp ${formatNumber(subtotal)}`;
+            document.getElementById('editInvoicePPN').innerHTML = `Rp ${formatNumber(ppn)}`;
+            document.getElementById('editInvoiceTotal').innerHTML = `Rp ${formatNumber(subtotal + ppn)}`;
+        };
+        window.calculateEditInvoiceTotal();
+    }
+    
+    function renderInvoiceItemForEdit(index, item) {
+        return `<div class="invoice-item" id="invoice-item-${index}" style="display:grid; grid-template-columns:3fr 1fr 1fr 1fr 1fr auto; gap:0.5rem; margin-bottom:0.5rem;">
+            <input type="text" class="item-name form-control" placeholder="Nama Item" value="${item.description}">
+            <input type="number" class="item-qty form-control" placeholder="Qty" value="${item.quantity}" min="1" onchange="calculateEditInvoiceTotal()">
+            <input type="text" class="item-price form-control" placeholder="Harga" value="${formatNumber(item.price)}" onkeyup="formatMoney(this)" onblur="calculateEditInvoiceTotal()">
+            <input type="text" class="item-discount form-control" placeholder="Diskon %" value="${Math.round((item.discount / (item.price * item.quantity)) * 100)}" onchange="calculateEditInvoiceTotal()">
+            <input type="text" class="item-total form-control" placeholder="Total" readonly value="${formatNumber(item.amount)}">
+            ${index > 0 ? `<button class="btn btn-danger btn-sm" onclick="removeInvoiceItem(${index})"><i class="fas fa-trash"></i></button>` : '<div style="width:32px;"></div>'}
+        </div>`;
+    }
+    
+    async function updateInvoice(id) {
+        let customerId = parseInt(document.getElementById('editInvoiceCustomer').value);
+        let projectId = document.getElementById('editInvoiceProject').value || null;
+        let revenueAccount = document.getElementById('editInvoiceRevenueAccount').value;
+        let bankCode = document.getElementById('editInvoiceBank').value;
+        let invoiceDate = document.getElementById('editInvoiceDate').value;
+        let dueDate = document.getElementById('editInvoiceDueDate').value;
+        let notes = document.getElementById('editInvoiceNotes').value;
+        let items = [];
+        let hasError = false;
+        document.querySelectorAll('.invoice-item').forEach((item, idx) => {
+            let name = item.querySelector('.item-name')?.value;
+            let qty = parseFloat(item.querySelector('.item-qty')?.value) || 0;
+            let price = parseRupiah(item.querySelector('.item-price')?.value);
+            let discount = parseFloat(item.querySelector('.item-discount')?.value) || 0;
+            if (!name) { alert(`Item ${idx+1}: Nama harus diisi`); hasError = true; return; }
+            let amount = qty * price * (1 - discount / 100);
+            items.push({ description: name, quantity: qty, unitPrice: price, discount: discount * price * qty / 100, amount: amount });
+        });
+        if (hasError) return;
+        let subtotal = parseRupiah(document.getElementById('editInvoiceSubtotal').innerHTML.replace('Rp ', '').replace(/\./g, ''));
+        let ppn = parseRupiah(document.getElementById('editInvoicePPN').innerHTML.replace('Rp ', '').replace(/\./g, ''));
+        let total = parseRupiah(document.getElementById('editInvoiceTotal').innerHTML.replace('Rp ', '').replace(/\./g, ''));
+        showLoading();
+        let { error } = await supabase.from('invoices').update({
+            customer_id: customerId, project_id: projectId, revenue_account: revenueAccount, bank_code: bankCode,
+            invoice_date: invoiceDate, due_date: dueDate, notes: notes, dpp: subtotal, ppn: ppn, total: total
+        }).eq('id', id);
+        if (error) { hideLoading(); document.getElementById('editInvoiceResult').innerHTML = `<div class="alert alert-error">${error.message}</div>`; return; }
+        await supabase.from('invoice_items').delete().eq('invoice_id', id);
+        for (let item of items) { await supabase.from('invoice_items').insert({ invoice_id: id, description: item.description, quantity: item.quantity, price: item.unitPrice, discount: item.discount, amount: item.amount }); }
+        hideLoading(); document.getElementById('editInvoiceResult').innerHTML = `<div class="alert alert-success">✅ Invoice berhasil diupdate!</div>`; setTimeout(() => loadInvoiceList(), 2000);
+    }
+    
+    async function postInvoice(id) {
+        if (!confirm('Posting invoice akan membuat jurnal otomatis. Lanjutkan?')) return;
+        showLoading();
+        let { data: invoice } = await supabase.from('invoices').select('*').eq('id', id).single();
+        let { data: company } = await supabase.from('companies').select('*').eq('id', invoice.company_id).single();
+        let suffix = company.singkatan || 'A';
+        let piutangAkun = `1111-${suffix}`;
+        let ppnAkun = `2103-01-${suffix}`;
+        let lastJournal = await supabase.from('journals').select('id').order('id', { ascending: false }).limit(1);
+        let journalId = (lastJournal.data?.[0]?.id || 0) + 1;
+        let { error: jError } = await supabase.from('journals').insert({
+            id: journalId, company_id: invoice.company_id, journal_date: invoice.invoice_date,
+            period: invoice.invoice_date.substring(0,7), description: `Penjualan Invoice ${invoice.invoice_no || id}`,
+            reference: invoice.invoice_no || `INV-${id}`, created_by: currentUser?.email, status: 'posted'
+        });
+        if (jError) { hideLoading(); alert(jError.message); return; }
+        await supabase.from('journal_lines').insert([
+            { journal_id: journalId, account_code: piutangAkun, debit: invoice.total, credit: 0, description: `Piutang dari invoice ${invoice.invoice_no || id}` },
+            { journal_id: journalId, account_code: invoice.revenue_account, debit: 0, credit: invoice.dpp, description: `Pendapatan invoice ${invoice.invoice_no || id}` }
+        ]);
+        if (invoice.ppn > 0) {
+            await supabase.from('journal_lines').insert({ journal_id: journalId, account_code: ppnAkun, debit: 0, credit: invoice.ppn, description: `PPN Keluaran invoice ${invoice.invoice_no || id}` });
+        }
+        await supabase.from('invoices').update({ status: 'posted' }).eq('id', id);
+        hideLoading(); alert(`✅ Invoice berhasil diposting! Jurnal ID: ${journalId}`); loadInvoiceList();
+    }
+    
+    async function recordPayment(id) {
+        let amount = prompt('Jumlah pembayaran:', '0');
+        if (!amount) return;
+        let { data: invoice } = await supabase.from('invoices').select('*').eq('id', id).single();
+        let sisa = invoice.total - (invoice.paid_amount || 0);
+        if (parseFloat(amount) > sisa) { alert(`Maksimal pembayaran Rp ${formatNumber(sisa)}`); return; }
+        let newPaid = (invoice.paid_amount || 0) + parseFloat(amount);
+        let newStatus = newPaid >= invoice.total ? 'paid' : 'partial';
+        let suffix = (await supabase.from('companies').select('singkatan').eq('id', invoice.company_id).single()).data?.singkatan || 'A';
+        let bankAkun = invoice.bank_code;
+        let piutangAkun = `1111-${suffix}`;
+        let lastJournal = await supabase.from('journals').select('id').order('id', { ascending: false }).limit(1);
+        let journalId = (lastJournal.data?.[0]?.id || 0) + 1;
+        await supabase.from('journals').insert({
+            id: journalId, company_id: invoice.company_id, journal_date: new Date().toISOString().split('T')[0],
+            period: new Date().toISOString().substring(0,7), description: `Penerimaan pembayaran invoice ${invoice.invoice_no || id}`,
+            reference: invoice.invoice_no || `INV-${id}`, created_by: currentUser?.email, status: 'posted'
+        });
+        await supabase.from('journal_lines').insert([
+            { journal_id: journalId, account_code: bankAkun, debit: parseFloat(amount), credit: 0, description: `Penerimaan dari invoice ${invoice.invoice_no || id}` },
+            { journal_id: journalId, account_code: piutangAkun, debit: 0, credit: parseFloat(amount), description: `Lunasi piutang invoice ${invoice.invoice_no || id}` }
+        ]);
+        await supabase.from('invoices').update({ paid_amount: newPaid, status: newStatus, last_payment_date: new Date().toISOString().split('T')[0] }).eq('id', id);
+        alert(`✅ Pembayaran Rp ${formatNumber(amount)} dicatat. Sisa: Rp ${formatNumber(newPaid >= invoice.total ? 0 : invoice.total - newPaid)}`);
+        loadInvoiceList();
+    }
+    
+    async function deleteInvoice(id) {
+        if (!confirm('Hapus invoice ini? Tindakan tidak bisa dibatalkan!')) return;
+        showLoading();
+        await supabase.from('invoice_items').delete().eq('invoice_id', id);
+        await supabase.from('invoices').delete().eq('id', id);
+        hideLoading(); alert('Invoice berhasil dihapus'); loadInvoiceList();
+    }
+    
+    async function previewInvoicePDF(invoiceId) {
+        showLoading();
+        let { data: invoice } = await supabase.from('invoices').select('*').eq('id', invoiceId).single();
+        let { data: items } = await supabase.from('invoice_items').select('*').eq('invoice_id', invoiceId);
+        let { data: company } = await supabase.from('companies').select('*').eq('id', invoice.company_id).single();
+        let { data: customer } = await supabase.from('customers').select('*').eq('id', invoice.customer_id).single();
+        let { data: bank } = await supabase.from('chart_of_accounts').select('*').eq('company_id', invoice.company_id).eq('account_code', invoice.bank_code).single();
+        let html = generateInvoiceHTML(invoice, items, company, customer, bank);
+        let printWindow = window.open('', '_blank');
+        printWindow.document.write(html);
+        printWindow.document.close();
+        setTimeout(() => printWindow.print(), 500);
+        hideLoading();
+    }
+    
+    function generateInvoiceHTML(invoice, items, company, customer, bank) {
+        let ppnRate = (invoice.company_id === 2 || invoice.company_id === 3) ? '1.1%' : '11%';
+        let itemsHtml = ''; let no = 1;
+        items.forEach(item => { itemsHtml += `<tr><td>${no++}</td><td>${item.description}</td><td class="text-center">${item.quantity}</td><td class="text-right">Rp ${formatNumber(item.price)}</td><td class="text-right">Rp ${formatNumber(item.discount)}</td><td class="text-right">Rp ${formatNumber(item.amount)}</td></tr>`; });
+        function terbilang(angka) { let bilangan = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas']; if (angka < 12) return bilangan[angka]; if (angka < 20) return bilangan[angka-10] + ' Belas'; if (angka < 100) return bilangan[Math.floor(angka/10)] + ' Puluh ' + bilangan[angka%10]; if (angka < 200) return 'Seratus ' + terbilang(angka-100); if (angka < 1000) return bilangan[Math.floor(angka/100)] + ' Ratus ' + terbilang(angka%100); if (angka < 1000000) return terbilang(Math.floor(angka/1000)) + ' Ribu ' + terbilang(angka%1000); return terbilang(Math.floor(angka/1000000)) + ' Juta ' + terbilang(angka%1000000); }
+        return `<!DOCTYPE html><html><head><title>Invoice ${invoice.invoice_no || '#'+invoice.id}</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>body{font-family:'Inter',sans-serif;background:#f3f4f6;padding:30px}.invoice{max-width:1000px;margin:0 auto;background:white;border-radius:20px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25)}.header{background:linear-gradient(135deg,#0f172a,#1e293b);padding:30px;color:white}.header-top{display:flex;justify-content:space-between}.logo{width:60px;height:60px;background:#3b82f6;border-radius:16px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:24px}.company-info{display:flex;justify-content:space-between;padding:20px 30px;background:#f8fafc}.customer-section{padding:20px 30px}.meta{padding:15px 30px;background:#f3f4f6;display:flex;gap:30px}.items-table{padding:20px 30px}table{width:100%;border-collapse:collapse}th{background:#0f172a;color:white;padding:12px}td{padding:10px;border-bottom:1px solid #e5e7eb}.summary{padding:20px 30px;background:#f8fafc;text-align:right}.terbilang{padding:20px 30px;background:#e0f2fe;border-left:4px solid #3b82f6}.footer{display:flex;justify-content:space-between;padding:20px 30px;background:#f3f4f6}.print-btn{text-align:center;padding:20px;background:white}button{background:#0f172a;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer}@media print{.print-btn{display:none}body{background:white;padding:0}}</style></head><body><div class="invoice"><div class="header"><div class="header-top"><div class="logo">${company.singkatan||'AG'}</div><div><h2>INVOICE</h2><p>${invoice.invoice_no||'#'+invoice.id}</p></div></div><h1>${company.nama}</h1><p>${company.alamat||''}</p></div><div class="company-info"><div><strong>NPWP:</strong> ${company.npwp||'-'}</div><div>Telp: ${company.telp||'-'}<br>Email: ${company.email||'-'}</div></div><div class="customer-section"><h4>Kepada Yth.</h4><h3>${customer?.name||'Customer'}</h3><p>${customer?.alamat||'-'}<br>NPWP: ${customer?.npwp||'-'}<br>Telp: ${customer?.telp||'-'}</p></div><div class="meta"><div><strong>Tanggal Invoice:</strong> ${invoice.invoice_date}</div><div><strong>Jatuh Tempo:</strong> ${invoice.due_date}</div></div><div class="items-table"><table><thead><tr><th>No</th><th>Deskripsi</th><th class="text-center">Qty</th><th class="text-right">Harga</th><th class="text-right">Diskon</th><th class="text-right">Jumlah</th></tr></thead><tbody>${itemsHtml}</tbody></table></div><div class="summary"><p>Subtotal: Rp ${formatNumber(invoice.dpp)}</p><p>PPN ${ppnRate}: Rp ${formatNumber(invoice.ppn)}</p><h3>Total: Rp ${formatNumber(invoice.total)}</h3></div><div class="terbilang"><strong>Terbilang:</strong> ${terbilang(Math.floor(invoice.total))} Rupiah</div><div class="footer"><div><strong>INFORMASI PEMBAYARAN</strong><br>✓ ${bank?.account_name || bank?.display || 'Bank Tujuan'}<br>Harap sertakan nomor invoice pada referensi transfer</div><div><div style="margin-top:30px; text-align:center;"><div style="border-top:1px solid #000; width:200px;"></div>${company.direktur||'Direktur Utama'}</div></div></div><div class="print-btn"><button onclick="window.print()">🖨️ PRINT / DOWNLOAD PDF</button></div></div></body></html>`;
+    }
+    
+    // ==================== VENDOR INVOICE (AP) ====================
     async function loadVendorInvoiceList() {
-        let { data: invoices } = await supabaseClient.from('vendor_invoices').select('*').order('id', { ascending: false });
-        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-users"></i> Invoice Pembelian (AP)</h2><button class="btn btn-primary" onclick="alert('Fitur tambah invoice vendor menyusul')"><i class="fas fa-plus"></i> Tambah Invoice</button></div>
-            <div class="table-container"><table class="table"><thead><tr><th>Vendor</th><th>No Invoice</th><th>Tanggal</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="vendorTableBody"></tbody></table></div></div>`;
+        let { data: invoices } = await supabase.from('vendor_invoices').select('*').order('id', { ascending: false });
+        let vendorsList = await getVendorList(currentCompanyId);
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-users"></i> Invoice Pembelian (AP)</h2><button class="btn btn-primary" onclick="showCreateVendorInvoiceForm()"><i class="fas fa-plus"></i> Tambah Invoice</button></div>
+            <div class="table-container"><table class="table"><thead><tr><th>Vendor</th><th>No Invoice</th><th>Tanggal</th><th>Jatuh Tempo</th><th>Total</th><th>Dibayar</th><th>Sisa</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="vendorTableBody"></tbody></table></div></div>`;
         document.getElementById('content').innerHTML = html;
-        let tbody = ''; (invoices || []).forEach(inv => { tbody += `<tr><td>${inv.vendor_name || '-'}</td><td>${inv.invoice_no || '-'}</td><td>${inv.invoice_date || '-'}</td><td>Rp ${formatNumber(inv.total)}</td><td><span class="status-badge status-${inv.payment_status}">${inv.payment_status}</span></td><td><button class="action-btn"><i class="fas fa-eye"></i></button></td></tr>`; });
-        document.getElementById('vendorTableBody').innerHTML = tbody || '<tr><td colspan="6">Belum ada data</td></tr>';
+        let tbody = '';
+        (invoices || []).forEach(inv => {
+            let sisa = (inv.total || 0) - (inv.paid_amount || 0);
+            let statusClass = inv.payment_status === 'paid' ? 'status-paid' : inv.payment_status === 'partial' ? 'status-verified' : 'status-draft';
+            tbody += `<tr>
+                <td>${inv.vendor_name || '-'}</td>
+                <td>${inv.invoice_no || '-'}</td>
+                <td>${inv.invoice_date || '-'}</td>
+                <td>${inv.due_date || '-'}</td>
+                <td class="text-right">Rp ${formatNumber(inv.total)}</td>
+                <td class="text-right">Rp ${formatNumber(inv.paid_amount)}</td>
+                <td class="text-right">Rp ${formatNumber(sisa)}</td>
+                <td><span class="status-badge ${statusClass}">${inv.payment_status}</span></td>
+                <td>
+                    <button class="action-btn" onclick="viewVendorInvoiceDetail(${inv.id})"><i class="fas fa-eye"></i></button>
+                    ${sisa > 0 ? `<button class="action-btn" onclick="submitVendorPayment(${inv.id})" style="color:var(--success);"><i class="fas fa-money-bill-wave"></i></button>` : ''}
+                </td>
+            </tr>`;
+        });
+        document.getElementById('vendorTableBody').innerHTML = tbody || '<tr><td colspan="9">Belum ada data</td></tr>';
     }
     
-    // ==================== JURNAL (LENGKAP) ====================
+    function showCreateVendorInvoiceForm() {
+        showLoading();
+        Promise.all([getVendorList(currentCompanyId), getAccountList(currentCompanyId), getProjectList(currentCompanyId), getBankList(currentCompanyId)]).then(([vendorsList, accountsList, projectsList, banksList]) => {
+            vendors = vendorsList; accounts = accountsList;
+            let vendorOptions = '<option value="">Pilih Vendor</option>'; vendors.forEach(v => { vendorOptions += `<option value="${v.id}" data-name="${v.name}" data-term="${v.payment_term}">${v.name}</option>`; });
+            let accountOptions = '<option value="">Pilih Akun Debet</option>'; accounts.filter(a => a.account_type === 'Beban' || a.account_type === 'Aset').forEach(a => { accountOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`; });
+            let projectOptions = '<option value="">Tanpa Project</option>'; projects.forEach(p => { projectOptions += `<option value="${p.id}">${p.code} - ${p.name}</option>`; });
+            let bankOptions = '<option value="">Pilih Bank Tujuan</option>'; banksList.forEach(b => { bankOptions += `<option value="${b.code}">${b.display}</option>`; });
+            let today = new Date().toISOString().split('T')[0];
+            let dueDate = new Date(); dueDate.setMonth(dueDate.getMonth() + 1);
+            let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-plus"></i> Tambah Invoice Vendor</h2><button class="btn btn-secondary" onclick="loadVendorInvoiceList()">Kembali</button></div>
+                <div class="form-group"><label>Perusahaan</label><select id="vendorCompany" class="form-control">${companies.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('')}</select></div>
+                <div class="form-group"><label>Vendor</label><select id="vendorSelect" class="form-control searchable-dropdown" onchange="onVendorSelect()">${vendorOptions}</select>
+                    <div><input type="checkbox" id="showNewVendor" onchange="toggleNewVendor()"> Vendor belum terdaftar</div></div>
+                <div id="newVendorSection" style="display:none; padding:1rem; background:var(--gray-50); border-radius:8px; margin-bottom:1rem;"><h4>Tambah Vendor Baru</h4><div class="form-group"><label>Nama Vendor</label><input type="text" id="newVendorName" class="form-control"></div><div class="form-group"><label>NPWP</label><input type="text" id="newVendorNpwp" class="form-control"></div><div class="form-group"><label>Bank</label><input type="text" id="newVendorBank" class="form-control"></div><div class="form-group"><label>No Rekening</label><input type="text" id="newVendorRekening" class="form-control"></div><div class="form-group"><label>Termin (hari)</label><input type="number" id="newVendorTerm" class="form-control" value="30"></div></div>
+                <div class="form-group"><label>No Invoice Vendor</label><input type="text" id="vendorInvoiceNo" class="form-control" placeholder="INV-001"></div>
+                <div class="row" style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;"><div class="form-group"><label>Tanggal Invoice</label><input type="date" id="vendorInvoiceDate" class="form-control" value="${today}"></div>
+                <div class="form-group"><label>Jatuh Tempo</label><input type="date" id="vendorDueDate" class="form-control" value="${dueDate.toISOString().split('T')[0]}"></div></div>
+                <div class="form-group"><label>Akun Debet</label><select id="vendorAccountCode" class="form-control searchable-dropdown" required>${accountOptions}</select></div>
+                <div class="form-group"><label>Bank Tujuan</label><select id="vendorBankCode" class="form-control searchable-dropdown" required>${bankOptions}</select></div>
+                <div style="background:#f8f9fa; padding:1rem; border-radius:12px;"><h4>Detail Barang/Jasa</h4><div id="vendorInvoiceItemsContainer"></div><button class="btn btn-secondary btn-sm" onclick="addVendorInvoiceItem()">+ Tambah Item</button></div>
+                <div style="margin:1rem 0;"><label><input type="checkbox" id="vendorPPN" onchange="calculateVendorTotal()"> Kena PPN 11%</label>&nbsp;&nbsp;<label><input type="checkbox" id="vendorPPh" onchange="calculateVendorTotal()"> Kena PPh 23 2%</label></div>
+                <div style="background:var(--primary); color:white; padding:1rem; border-radius:12px;"><div style="display:flex; justify-content:space-between;"><span>DPP</span><span id="vendorDPP">Rp 0</span></div><div style="display:flex; justify-content:space-between;"><span>PPN</span><span id="vendorPPNAmount">Rp 0</span></div><div style="display:flex; justify-content:space-between;"><span>PPh 23</span><span id="vendorPPhAmount">Rp 0</span></div><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>TOTAL</span><span id="vendorTotal">Rp 0</span></div></div>
+                <div class="form-group"><label>Upload Bukti Invoice</label><input type="file" id="vendorInvoiceFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png"></div>
+                <div class="form-group"><label>Catatan</label><textarea id="vendorNotes" class="form-control" rows="2"></textarea></div>
+                <div style="display:flex; gap:1rem; justify-content:flex-end;"><button class="btn btn-secondary" onclick="loadVendorInvoiceList()">Batal</button><button class="btn btn-primary" onclick="saveVendorInvoice()">Simpan Invoice</button></div>
+                <div id="vendorInvoiceResult"></div></div>`;
+            document.getElementById('content').innerHTML = html;
+            $('.searchable-dropdown').select2({ width: '100%' });
+            window.vendorItemCounter = 1;
+            document.getElementById('vendorInvoiceItemsContainer').innerHTML = renderVendorInvoiceItem(0);
+            hideLoading();
+        });
+    }
+    
+    function renderVendorInvoiceItem(id) {
+        return `<div class="vendor-item" id="vendor-item-${id}" style="display:grid; grid-template-columns:3fr 1fr 1fr 1fr 1fr auto; gap:0.5rem; margin-bottom:0.5rem;">
+            <input type="text" class="item-name form-control" placeholder="Nama Item" value="Item ${id+1}">
+            <input type="number" class="item-qty form-control" placeholder="Qty" value="1" min="1" onchange="calculateVendorTotal()">
+            <input type="text" class="item-price form-control" placeholder="Harga" value="0" onkeyup="formatMoney(this)" onblur="calculateVendorTotal()">
+            <input type="text" class="item-discount form-control" placeholder="Diskon %" value="0" onchange="calculateVendorTotal()">
+            <input type="text" class="item-total form-control" placeholder="Total" readonly style="background:#f0f0f0;">
+            ${id > 0 ? `<button class="btn btn-danger btn-sm" onclick="removeVendorInvoiceItem(${id})"><i class="fas fa-trash"></i></button>` : '<div style="width:32px;"></div>'}
+        </div>`;
+    }
+    
+    function addVendorInvoiceItem() { let container = document.getElementById('vendorInvoiceItemsContainer'); window.vendorItemCounter++; let newItem = document.createElement('div'); newItem.innerHTML = renderVendorInvoiceItem(window.vendorItemCounter); container.appendChild(newItem.firstChild); calculateVendorTotal(); }
+    function removeVendorInvoiceItem(id) { let item = document.getElementById(`vendor-item-${id}`); if (document.querySelectorAll('.vendor-item').length > 1) { item.remove(); calculateVendorTotal(); } else { alert('Minimal satu item harus ada'); } }
+    
+    function calculateVendorTotal() {
+        let subtotal = 0;
+        document.querySelectorAll('.vendor-item').forEach(item => {
+            let qty = parseFloat(item.querySelector('.item-qty')?.value) || 0;
+            let price = parseRupiah(item.querySelector('.item-price')?.value);
+            let discount = parseFloat(item.querySelector('.item-discount')?.value) || 0;
+            let itemTotal = qty * price * (1 - discount / 100);
+            subtotal += itemTotal;
+            let totalInput = item.querySelector('.item-total');
+            if (totalInput) totalInput.value = formatNumber(itemTotal);
+        });
+        let kenaPPN = document.getElementById('vendorPPN')?.checked || false;
+        let kenaPPh = document.getElementById('vendorPPh')?.checked || false;
+        let ppn = kenaPPN ? subtotal * 0.11 : 0;
+        let pph = kenaPPh ? subtotal * 0.02 : 0;
+        let total = subtotal + ppn - pph;
+        document.getElementById('vendorDPP').innerHTML = `Rp ${formatNumber(subtotal)}`;
+        document.getElementById('vendorPPNAmount').innerHTML = `Rp ${formatNumber(ppn)}`;
+        document.getElementById('vendorPPhAmount').innerHTML = `Rp ${formatNumber(pph)}`;
+        document.getElementById('vendorTotal').innerHTML = `Rp ${formatNumber(total)}`;
+    }
+    
+    function onVendorSelect() {
+        let select = document.getElementById('vendorSelect');
+        let selected = select.options[select.selectedIndex];
+        if (selected && selected.value) {
+            let term = selected.getAttribute('data-term');
+            if (term) {
+                let invoiceDate = document.getElementById('vendorInvoiceDate').value;
+                if (invoiceDate) {
+                    let date = new Date(invoiceDate);
+                    date.setDate(date.getDate() + parseInt(term));
+                    document.getElementById('vendorDueDate').value = date.toISOString().split('T')[0];
+                }
+            }
+        }
+    }
+    
+    function toggleNewVendor() { let show = document.getElementById('showNewVendor').checked; document.getElementById('newVendorSection').style.display = show ? 'block' : 'none'; document.getElementById('vendorSelect').disabled = show; }
+    
+    async function saveVendorInvoice() {
+        let companyId = parseInt(document.getElementById('vendorCompany').value);
+        let showNew = document.getElementById('showNewVendor')?.checked || false;
+        let vendorId = null, vendorName = '', vendorNpwp = '', vendorBank = '', vendorRekening = '', vendorTerm = 30;
+        if (showNew) {
+            vendorName = document.getElementById('newVendorName').value;
+            vendorNpwp = document.getElementById('newVendorNpwp').value;
+            vendorBank = document.getElementById('newVendorBank').value;
+            vendorRekening = document.getElementById('newVendorRekening').value;
+            vendorTerm = parseInt(document.getElementById('newVendorTerm').value) || 30;
+            if (!vendorName) { alert('Nama vendor harus diisi'); return; }
+        } else {
+            vendorId = document.getElementById('vendorSelect').value;
+            if (!vendorId) { alert('Pilih vendor'); return; }
+            vendorName = document.getElementById('vendorSelect').options[document.getElementById('vendorSelect').selectedIndex]?.getAttribute('data-name') || '';
+        }
+        let invoiceNo = document.getElementById('vendorInvoiceNo').value;
+        if (!invoiceNo) { alert('Nomor invoice harus diisi'); return; }
+        let invoiceDate = document.getElementById('vendorInvoiceDate').value;
+        let dueDate = document.getElementById('vendorDueDate').value;
+        let accountCode = document.getElementById('vendorAccountCode').value;
+        let bankCode = document.getElementById('vendorBankCode').value;
+        if (!accountCode) { alert('Pilih akun debet'); return; }
+        if (!bankCode) { alert('Pilih bank tujuan'); return; }
+        let items = [];
+        let hasError = false;
+        document.querySelectorAll('.vendor-item').forEach((item, idx) => {
+            let name = item.querySelector('.item-name')?.value;
+            let qty = parseFloat(item.querySelector('.item-qty')?.value) || 0;
+            let price = parseRupiah(item.querySelector('.item-price')?.value);
+            let discount = parseFloat(item.querySelector('.item-discount')?.value) || 0;
+            if (!name) { alert(`Item ${idx+1}: Nama harus diisi`); hasError = true; return; }
+            let amount = qty * price * (1 - discount / 100);
+            items.push({ description: name, qty: qty, price: price, discount: discount * price * qty / 100, amount: amount });
+        });
+        if (hasError) return;
+        let file = document.getElementById('vendorInvoiceFile').files[0];
+        if (!file) { alert('Upload bukti invoice'); return; }
+        let dpp = parseRupiah(document.getElementById('vendorDPP').innerHTML.replace('Rp ', '').replace(/\./g, ''));
+        let ppn = parseRupiah(document.getElementById('vendorPPNAmount').innerHTML.replace('Rp ', '').replace(/\./g, ''));
+        let pph = parseRupiah(document.getElementById('vendorPPhAmount').innerHTML.replace('Rp ', '').replace(/\./g, ''));
+        let total = parseRupiah(document.getElementById('vendorTotal').innerHTML.replace('Rp ', '').replace(/\./g, ''));
+        showLoading();
+        let reader = new FileReader();
+        reader.onload = async (e) => {
+            let base64 = e.target.result;
+            let res = await fetch(GAS_UPLOAD_URL, { method: 'POST', body: JSON.stringify({ action: 'upload', file: base64, name: file.name, mimeType: file.type, folderId: DRIVE_FOLDER_ID }) });
+            let uploadResult = await res.json();
+            if (!uploadResult.success) { hideLoading(); document.getElementById('vendorInvoiceResult').innerHTML = `<div class="alert alert-error">Upload gagal: ${uploadResult.message}</div>`; return; }
+            let vendorData = { company_id: companyId, vendor_id: vendorId, vendor_name: vendorName, vendor_npwp: vendorNpwp, vendor_bank: vendorBank, vendor_rekening: vendorRekening, vendor_term: vendorTerm, invoice_no: invoiceNo, invoice_date: invoiceDate, due_date: dueDate, bank_code: bankCode, account_code: accountCode, dpp: dpp, ppn: ppn, pph23: pph, total: total, notes: document.getElementById('vendorNotes').value, file_url: uploadResult.url, items: items };
+            let { data, error } = await supabase.from('vendor_invoices').insert({
+                company_id: companyId, vendor_id: vendorId, vendor_name: vendorName, invoice_no: invoiceNo, invoice_date: invoiceDate, due_date: dueDate,
+                bank_code: bankCode, account_code: accountCode, dpp: dpp, ppn: ppn, pph23: pph, total: total, notes: document.getElementById('vendorNotes').value,
+                file_url: uploadResult.url, status: 'posted', payment_status: 'unpaid', created_by: currentUser?.email
+            }).select().single();
+            if (error) { hideLoading(); document.getElementById('vendorInvoiceResult').innerHTML = `<div class="alert alert-error">${error.message}</div>`; return; }
+            for (let item of items) { await supabase.from('vendor_invoice_items').insert({ vendor_invoice_id: data.id, description: item.description, qty: item.qty, price: item.price, discount: item.discount, amount: item.amount }); }
+            hideLoading(); document.getElementById('vendorInvoiceResult').innerHTML = `<div class="alert alert-success">✅ Invoice vendor berhasil disimpan! ID: ${data.id}</div>`; setTimeout(() => loadVendorInvoiceList(), 2000);
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    async function viewVendorInvoiceDetail(id) {
+        let { data: invoice } = await supabase.from('vendor_invoices').select('*').eq('id', id).single();
+        let { data: items } = await supabase.from('vendor_invoice_items').select('*').eq('vendor_invoice_id', id);
+        let sisa = (invoice.total || 0) - (invoice.paid_amount || 0);
+        let itemsHtml = ''; items.forEach(item => { itemsHtml += `<tr><td>${item.description}</td><td class="text-center">${item.qty}</td><td class="text-right">Rp ${formatNumber(item.price)}</td><td class="text-right">Rp ${formatNumber(item.discount)}</td><td class="text-right">Rp ${formatNumber(item.amount)}</td></tr>`; });
+        alert(`Detail Invoice Vendor\nVendor: ${invoice.vendor_name}\nNo Invoice: ${invoice.invoice_no}\nTanggal: ${invoice.invoice_date}\nTotal: Rp ${formatNumber(invoice.total)}\nDibayar: Rp ${formatNumber(invoice.paid_amount)}\nSisa: Rp ${formatNumber(sisa)}\nStatus: ${invoice.payment_status}\nFile: ${invoice.file_url || '-'}`);
+    }
+    
+    async function submitVendorPayment(id) {
+        let amount = prompt('Jumlah pembayaran:', '0');
+        if (!amount) return;
+        let { data: invoice } = await supabase.from('vendor_invoices').select('*').eq('id', id).single();
+        let sisa = invoice.total - (invoice.paid_amount || 0);
+        if (parseFloat(amount) > sisa) { alert(`Maksimal pembayaran Rp ${formatNumber(sisa)}`); return; }
+        let newPaid = (invoice.paid_amount || 0) + parseFloat(amount);
+        let newStatus = newPaid >= invoice.total ? 'paid' : 'partial';
+        let bankCode = prompt('Kode Bank (contoh: 1102-01-A):', invoice.bank_code);
+        if (!bankCode) return;
+        let suffix = (await supabase.from('companies').select('singkatan').eq('id', invoice.company_id).single()).data?.singkatan || 'A';
+        let utangAkun = `2111-${suffix}`;
+        let lastJournal = await supabase.from('journals').select('id').order('id', { ascending: false }).limit(1);
+        let journalId = (lastJournal.data?.[0]?.id || 0) + 1;
+        await supabase.from('journals').insert({
+            id: journalId, company_id: invoice.company_id, journal_date: new Date().toISOString().split('T')[0],
+            period: new Date().toISOString().substring(0,7), description: `Pembayaran invoice ${invoice.invoice_no}`,
+            reference: invoice.invoice_no, created_by: currentUser?.email, status: 'posted'
+        });
+        await supabase.from('journal_lines').insert([
+            { journal_id: journalId, account_code: utangAkun, debit: parseFloat(amount), credit: 0, description: `Pembayaran invoice ${invoice.invoice_no}` },
+            { journal_id: journalId, account_code: bankCode, debit: 0, credit: parseFloat(amount), description: `Transfer ke ${invoice.vendor_name}` }
+        ]);
+        await supabase.from('vendor_invoices').update({ paid_amount: newPaid, payment_status: newStatus, last_payment_date: new Date().toISOString().split('T')[0] }).eq('id', id);
+        alert(`✅ Pembayaran Rp ${formatNumber(amount)} dicatat. Sisa: Rp ${formatNumber(newPaid >= invoice.total ? 0 : invoice.total - newPaid)}`);
+        loadVendorInvoiceList();
+    }
+    
+    // ==================== JURNAL ====================
     async function loadJurnalForm() {
         accounts = await getAccountList(currentCompanyId);
         projects = await getProjectList(currentCompanyId);
-        let accountOptions = '<option value="">Pilih Akun</option>';
-        accounts.forEach(a => accountOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`);
-        let projectOptions = '<option value="">Tanpa Project</option>';
-        projects.forEach(p => projectOptions += `<option value="${p.id}">${p.code} - ${p.name}</option>`);
-        
-        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-pen"></i> Input Jurnal</h2></div>
-            <div class="form-group"><label><i class="fas fa-building"></i> Perusahaan</label><select id="companySelector" class="form-control">${companies.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('')}</select></div>
-            <div class="form-group"><label><i class="fas fa-calendar"></i> Tanggal</label><input type="date" id="jurnalTanggal" class="form-control" value="${new Date().toISOString().split('T')[0]}"></div>
-            <div class="form-group"><label><i class="fas fa-align-left"></i> Deskripsi</label><input type="text" id="jurnalDeskripsi" class="form-control" placeholder="Contoh: Setoran modal"></div>
-            <div class="form-group"><label><i class="fas fa-project-diagram"></i> Project</label><select id="jurnalProject" class="form-control searchable-dropdown">${projectOptions}</select></div>
-            <div style="background:var(--gray-50); padding:1.5rem; border-radius:12px;"><h4 style="margin-bottom:1rem;"><i class="fas fa-list"></i> Detail Jurnal</h4>
-            <div id="jurnalLines"><div class="line-item" style="display:grid; grid-template-columns:2fr 1fr 1fr 1.5fr auto; gap:0.5rem; margin-bottom:0.5rem;">
+        let accountOptions = '<option value="">Pilih Akun</option>'; accounts.forEach(a => { accountOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`; });
+        let projectOptions = '<option value="">Tanpa Project</option>'; projects.forEach(p => { projectOptions += `<option value="${p.id}">${p.code} - ${p.name}</option>`; });
+        let today = new Date().toISOString().split('T')[0];
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-pen"></i> Input Jurnal</h2><button class="btn btn-secondary btn-sm" onclick="loadJurnalForm()">Refresh</button></div>
+            <div class="form-group"><label>Perusahaan</label><select id="journalCompany" class="form-control">${companies.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('')}</select></div>
+            <div class="form-group"><label>Tanggal</label><input type="date" id="journalDate" class="form-control" value="${today}"></div>
+            <div class="form-group"><label>Deskripsi</label><input type="text" id="journalDesc" class="form-control" placeholder="Contoh: Setoran modal"></div>
+            <div class="form-group"><label>Project</label><select id="journalProject" class="form-control searchable-dropdown">${projectOptions}</select></div>
+            <div style="background:#f8f9fa; padding:1rem; border-radius:12px;"><h4>Detail Jurnal</h4><div id="journalLines"><div class="journal-line" style="display:grid; grid-template-columns:2fr 1fr 1fr 1.5fr auto; gap:0.5rem; margin-bottom:0.5rem;">
                 <select class="account-select form-control">${accountOptions}</select>
                 <input type="text" class="debit-input form-control" placeholder="Debit" onkeyup="formatMoney(this)">
                 <input type="text" class="credit-input form-control" placeholder="Kredit" onkeyup="formatMoney(this)">
                 <input type="text" class="desc-input form-control" placeholder="Keterangan">
-                <div style="width:36px;"></div>
+                <div style="width:32px;"></div>
             </div></div>
-            <button class="btn btn-secondary btn-sm" onclick="addJurnalLine()"><i class="fas fa-plus"></i> Tambah Baris</button>
-            <div style="background:var(--primary); color:white; padding:1rem; border-radius:10px; margin-top:1rem; display:flex; justify-content:space-between;"><span>Total Debit - Kredit</span><span id="totalSelisih">Rp 0</span></div></div>
-            <div style="display:flex; gap:1rem; justify-content:flex-end; margin-top:1.5rem;"><button class="btn btn-primary" onclick="saveJurnal()"><i class="fas fa-save"></i> Simpan Jurnal</button></div>
-            <div id="jurnalResult" style="margin-top:1rem;"></div></div>`;
+            <button class="btn btn-secondary btn-sm" onclick="addJournalLine()">+ Tambah Baris</button>
+            <div style="background:var(--primary); color:white; padding:0.8rem; border-radius:10px; margin-top:1rem; display:flex; justify-content:space-between;"><span>Total Debit - Kredit</span><span id="totalSelisih">Rp 0</span></div></div>
+            <div style="display:flex; gap:1rem; justify-content:flex-end;"><button class="btn btn-primary" onclick="saveJournal()">Simpan Jurnal</button></div>
+            <div id="journalResult"></div></div>`;
         document.getElementById('content').innerHTML = html;
         $('.searchable-dropdown').select2({ width: '100%' });
+        window.lineCounter = 1;
     }
     
-    function addJurnalLine() {
-        let accountOptions = '<option value="">Pilih Akun</option>';
-        accounts.forEach(a => accountOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`);
-        let lines = document.getElementById('jurnalLines');
-        let newLine = document.createElement('div'); newLine.className = 'line-item'; newLine.style.display = 'grid'; newLine.style.gridTemplateColumns = '2fr 1fr 1fr 1.5fr auto'; newLine.style.gap = '0.5rem'; newLine.style.marginBottom = '0.5rem';
-        newLine.innerHTML = `<select class="account-select form-control">${accountOptions}</select><input type="text" class="debit-input form-control" placeholder="Debit" onkeyup="formatMoney(this)"><input type="text" class="credit-input form-control" placeholder="Kredit" onkeyup="formatMoney(this)"><input type="text" class="desc-input form-control" placeholder="Keterangan"><button class="btn btn-danger btn-sm" onclick="this.closest('.line-item').remove(); updateJurnalTotal()"><i class="fas fa-trash"></i></button>`;
+    function addJournalLine() {
+        let accountOptions = '<option value="">Pilih Akun</option>'; accounts.forEach(a => { accountOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`; });
+        let lines = document.getElementById('journalLines');
+        let lineId = window.lineCounter++;
+        let newLine = document.createElement('div'); newLine.className = 'journal-line'; newLine.id = `journal-line-${lineId}`;
+        newLine.style.display = 'grid'; newLine.style.gridTemplateColumns = '2fr 1fr 1fr 1.5fr auto'; newLine.style.gap = '0.5rem'; newLine.style.marginBottom = '0.5rem';
+        newLine.innerHTML = `<select class="account-select form-control">${accountOptions}</select><input type="text" class="debit-input form-control" placeholder="Debit" onkeyup="formatMoney(this)"><input type="text" class="credit-input form-control" placeholder="Kredit" onkeyup="formatMoney(this)"><input type="text" class="desc-input form-control" placeholder="Keterangan"><button class="btn btn-danger btn-sm" onclick="removeJournalLine(${lineId})"><i class="fas fa-trash"></i></button>`;
         lines.appendChild(newLine);
+        $(`#journal-line-${lineId} .account-select`).select2({ width: '100%' });
     }
     
-    function updateJurnalTotal() { let totalDebit=0,totalCredit=0; document.querySelectorAll('.line-item').forEach(item=>{ totalDebit+=parseRupiah(item.querySelector('.debit-input')?.value); totalCredit+=parseRupiah(item.querySelector('.credit-input')?.value); }); document.getElementById('totalSelisih').innerHTML = `Rp ${formatNumber(totalDebit-totalCredit)}`; }
+    function removeJournalLine(id) { let line = document.getElementById(`journal-line-${id}`); if (document.querySelectorAll('.journal-line').length > 1) { line.remove(); updateJournalTotal(); } else { alert('Minimal satu baris harus ada'); } }
     
-    async function saveJurnal() {
-        let lines = []; let totalDebit=0,totalCredit=0;
-        document.querySelectorAll('.line-item').forEach(item=>{
+    function updateJournalTotal() {
+        let totalDebit = 0, totalCredit = 0;
+        document.querySelectorAll('.journal-line').forEach(item => {
+            totalDebit += parseRupiah(item.querySelector('.debit-input')?.value);
+            totalCredit += parseRupiah(item.querySelector('.credit-input')?.value);
+        });
+        document.getElementById('totalSelisih').innerHTML = `Rp ${formatNumber(totalDebit - totalCredit)}`;
+    }
+    
+    async function saveJournal() {
+        let lines = [];
+        let totalDebit = 0, totalCredit = 0;
+        document.querySelectorAll('.journal-line').forEach(item => {
             let account = item.querySelector('.account-select').value;
             let debit = parseRupiah(item.querySelector('.debit-input').value);
             let credit = parseRupiah(item.querySelector('.credit-input').value);
             let desc = item.querySelector('.desc-input').value;
-            if(!account) { alert('Pilih akun'); throw new Error(); }
-            totalDebit+=debit; totalCredit+=credit;
+            if (!account) { alert('Pilih akun'); return; }
+            totalDebit += debit; totalCredit += credit;
             lines.push({ account_code: account, debit, credit, description: desc });
         });
-        if(Math.abs(totalDebit-totalCredit)>0.01) { alert('Total debit harus sama dengan total kredit'); return; }
+        if (Math.abs(totalDebit - totalCredit) > 0.01) { alert('Total debit harus sama dengan total kredit'); return; }
+        let companyId = parseInt(document.getElementById('journalCompany').value);
+        let journalDate = document.getElementById('journalDate').value;
+        let description = document.getElementById('journalDesc').value;
+        let projectId = document.getElementById('journalProject').value || null;
+        let lastJournal = await supabase.from('journals').select('id').order('id', { ascending: false }).limit(1);
+        let journalId = (lastJournal.data?.[0]?.id || 0) + 1;
         showLoading();
-        let { error } = await supabaseClient.from('journals').insert({
-            company_id: parseInt(document.getElementById('companySelector').value),
-            journal_date: document.getElementById('jurnalTanggal').value,
-            period: document.getElementById('jurnalTanggal').value.substring(0,7),
-            description: document.getElementById('jurnalDeskripsi').value,
-            project_id: document.getElementById('jurnalProject').value || null,
-            created_by: currentUser?.email,
-            status: 'posted'
-        }).select().single();
-        if(error) { hideLoading(); document.getElementById('jurnalResult').innerHTML = `<div class="alert alert-error">${error.message}</div>`; return; }
-        for(let line of lines) {
-            await supabaseClient.from('journal_lines').insert({ journal_id: journalData.id, account_code: line.account_code, debit: line.debit, credit: line.credit, description: line.description });
+        let { error } = await supabase.from('journals').insert({
+            id: journalId, company_id: companyId, journal_date: journalDate, period: journalDate.substring(0,7),
+            description: description, project_id: projectId, created_by: currentUser?.email, status: 'posted'
+        });
+        if (error) { hideLoading(); document.getElementById('journalResult').innerHTML = `<div class="alert alert-error">${error.message}</div>`; return; }
+        for (let line of lines) {
+            await supabase.from('journal_lines').insert({ journal_id: journalId, account_code: line.account_code, debit: line.debit, credit: line.credit, description: line.description });
         }
-        hideLoading(); document.getElementById('jurnalResult').innerHTML = '<div class="alert alert-success">✅ Jurnal berhasil disimpan!</div>';
-        setTimeout(()=>loadJurnalForm(),2000);
+        hideLoading(); document.getElementById('journalResult').innerHTML = `<div class="alert alert-success">✅ Jurnal berhasil disimpan! ID: ${journalId}</div>`;
+        setTimeout(() => loadJurnalForm(), 2000);
     }
     
     // ==================== BUKU BESAR ====================
     async function loadLedgerForm() {
         accounts = await getAccountList(currentCompanyId);
-        let accountOptions = '<option value="">Pilih Akun</option>';
-        accounts.forEach(a => accountOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`);
+        let accountOptions = '<option value="">Pilih Akun</option>'; accounts.forEach(a => { accountOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`; });
+        let today = new Date();
+        let firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+        let lastDay = today.toISOString().split('T')[0];
         let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-book"></i> Buku Besar</h2></div>
             <div class="form-group"><label>Perusahaan</label><select id="ledgerCompany" class="form-control">${companies.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('')}</select></div>
             <div class="form-group"><label>Akun</label><select id="ledgerAccount" class="form-control searchable-dropdown">${accountOptions}</select></div>
-            <div class="form-group"><label>Periode Mulai</label><input type="date" id="ledgerStart" class="form-control" value="${new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]}"></div>
-            <div class="form-group"><label>Periode Akhir</label><input type="date" id="ledgerEnd" class="form-control" value="${new Date().toISOString().split('T')[0]}"></div>
+            <div class="form-group"><label>Periode Mulai</label><input type="date" id="ledgerStart" class="form-control" value="${firstDay}"></div>
+            <div class="form-group"><label>Periode Akhir</label><input type="date" id="ledgerEnd" class="form-control" value="${lastDay}"></div>
             <button class="btn btn-primary" onclick="showLedger()"><i class="fas fa-search"></i> Tampilkan</button>
-            <div id="ledgerResult" style="margin-top:1.5rem;"></div></div>`;
+            <div id="ledgerResult" style="margin-top:1rem;"></div></div>`;
         document.getElementById('content').innerHTML = html;
         $('.searchable-dropdown').select2({ width: '100%' });
     }
@@ -503,31 +989,35 @@
         let accountCode = document.getElementById('ledgerAccount').value;
         let startDate = document.getElementById('ledgerStart').value;
         let endDate = document.getElementById('ledgerEnd').value;
-        if(!accountCode) { alert('Pilih akun'); return; }
+        if (!accountCode) { alert('Pilih akun'); return; }
         showLoading();
-        let { data: journals } = await supabaseClient.from('journals').select('*').eq('company_id', companyId).gte('journal_date', startDate).lte('journal_date', endDate);
-        let { data: lines } = await supabaseClient.from('journal_lines').select('*').in('journal_id', journals.map(j=>j.id));
-        let filtered = lines.filter(l=>l.account_code===accountCode);
-        let balance = 0; let html = '<table class="table"><thead><tr><th>Tanggal</th><th>Deskripsi</th><th>Debit</th><th>Kredit</th><th>Saldo</th></tr></thead><tbody>';
-        for(let line of filtered) {
-            let journal = journals.find(j=>j.id===line.journal_id);
+        let { data: journals } = await supabase.from('journals').select('*').eq('company_id', companyId).gte('journal_date', startDate).lte('journal_date', endDate);
+        let { data: lines } = await supabase.from('journal_lines').select('*').in('journal_id', journals.map(j=>j.id));
+        let filtered = lines.filter(l => l.account_code === accountCode);
+        let balance = 0;
+        let html = '<div class="table-container"><table class="table"><thead><tr><th>Tanggal</th><th>Deskripsi</th><th>Debit</th><th>Kredit</th><th>Saldo</th></tr></thead><tbody>';
+        for (let line of filtered) {
+            let journal = journals.find(j => j.id === line.journal_id);
             let change = line.debit - line.credit;
             balance += change;
-            html += `<tr><td>${journal.journal_date}</td><td>${journal.description}</td><td class="text-right">${line.debit>0?formatNumber(line.debit):''}</td><td class="text-right">${line.credit>0?formatNumber(line.credit):''}</td><td class="text-right">${formatNumber(balance)}</td></tr>`;
+            html += `<tr><td>${journal.journal_date}</td><td>${journal.description}${line.description ? ' - ' + line.description : ''}</td><td class="text-right">${line.debit > 0 ? formatNumber(line.debit) : '-'}</td><td class="text-right">${line.credit > 0 ? formatNumber(line.credit) : '-'}</td><td class="text-right">${formatNumber(balance)}</td></tr>`;
         }
-        html += '</tbody></table>';
+        html += '</tbody></table></div>';
         document.getElementById('ledgerResult').innerHTML = html;
         hideLoading();
     }
     
     // ==================== LABA RUGI ====================
     async function loadLabaRugiForm() {
+        let today = new Date();
+        let firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+        let lastDay = today.toISOString().split('T')[0];
         let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-chart-line"></i> Laba Rugi</h2></div>
             <div class="form-group"><label>Perusahaan</label><select id="lrCompany" class="form-control">${companies.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('')}</select></div>
-            <div class="form-group"><label>Periode Mulai</label><input type="date" id="lrStart" class="form-control" value="${new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]}"></div>
-            <div class="form-group"><label>Periode Akhir</label><input type="date" id="lrEnd" class="form-control" value="${new Date().toISOString().split('T')[0]}"></div>
+            <div class="form-group"><label>Periode Mulai</label><input type="date" id="lrStart" class="form-control" value="${firstDay}"></div>
+            <div class="form-group"><label>Periode Akhir</label><input type="date" id="lrEnd" class="form-control" value="${lastDay}"></div>
             <button class="btn btn-primary" onclick="showLabaRugi()"><i class="fas fa-search"></i> Tampilkan</button>
-            <div id="lrResult" style="margin-top:1.5rem;"></div></div>`;
+            <div id="lrResult" style="margin-top:1rem;"></div></div>`;
         document.getElementById('content').innerHTML = html;
     }
     
@@ -536,33 +1026,42 @@
         let startDate = document.getElementById('lrStart').value;
         let endDate = document.getElementById('lrEnd').value;
         showLoading();
-        let { data: journals } = await supabaseClient.from('journals').select('*').eq('company_id', companyId).gte('journal_date', startDate).lte('journal_date', endDate);
-        let { data: lines } = await supabaseClient.from('journal_lines').select('*').in('journal_id', journals.map(j=>j.id));
-        let { data: coa } = await supabaseClient.from('chart_of_accounts').select('*').eq('company_id', companyId);
+        let { data: journals } = await supabase.from('journals').select('*').eq('company_id', companyId).gte('journal_date', startDate).lte('journal_date', endDate);
+        let { data: lines } = await supabase.from('journal_lines').select('*').in('journal_id', journals.map(j=>j.id));
+        let { data: coa } = await supabase.from('chart_of_accounts').select('*').eq('company_id', companyId);
         let pendapatan = [], beban = [];
         let totalPendapatan = 0, totalBeban = 0;
-        for(let acc of coa.filter(a=>a.account_type==='Pendapatan')) {
-            let amount = lines.filter(l=>l.account_code===acc.account_code).reduce((sum,l)=>sum + (l.credit - l.debit),0);
-            if(amount!==0) { pendapatan.push({name:acc.account_name, amount}); totalPendapatan+=amount; }
+        for (let acc of coa.filter(a => a.account_type === 'Pendapatan')) {
+            let amount = lines.filter(l => l.account_code === acc.account_code).reduce((sum, l) => sum + (l.credit - l.debit), 0);
+            if (amount !== 0) { pendapatan.push({ name: acc.account_name, amount: amount }); totalPendapatan += amount; }
         }
-        for(let acc of coa.filter(a=>a.account_type==='Beban')) {
-            let amount = lines.filter(l=>l.account_code===acc.account_code).reduce((sum,l)=>sum + (l.debit - l.credit),0);
-            if(amount!==0) { beban.push({name:acc.account_name, amount}); totalBeban+=amount; }
+        for (let acc of coa.filter(a => a.account_type === 'Beban')) {
+            let amount = lines.filter(l => l.account_code === acc.account_code).reduce((sum, l) => sum + (l.debit - l.credit), 0);
+            if (amount !== 0) { beban.push({ name: acc.account_name, amount: amount }); totalBeban += amount; }
         }
-        let html = `<div class="card"><h3>PENDAPATAN</h3><table class="table">${pendapatan.map(p=>`<tr><td>${p.name}</td><td class="text-right">Rp ${formatNumber(p.amount)}</td></tr>`).join('')}<tr class="fw-bold"><td><strong>Total Pendapatan</strong></td><td class="text-right"><strong>Rp ${formatNumber(totalPendapatan)}</strong></td></tr></table>
-        <h3 class="mt-3">BEBAN</h3><table class="table">${beban.map(b=>`<tr><td>${b.name}</td><td class="text-right">Rp ${formatNumber(b.amount)}</td></tr>`).join('')}<tr class="fw-bold"><td><strong>Total Beban</strong></td><td class="text-right"><strong>Rp ${formatNumber(totalBeban)}</strong></td></tr></table>
-        <div class="alert alert-success mt-3"><strong>LABA BERSIH: Rp ${formatNumber(totalPendapatan - totalBeban)}</strong></div>`;
+        let html = `<div style="display:flex; justify-content:flex-end; margin-bottom:1rem;"><button class="btn btn-primary" onclick="printLabaRugi()"><i class="fas fa-print"></i> Print / PDF</button></div>
+            <div id="printArea"><div class="card"><h3>PENDAPATAN</h3><table class="table">${pendapatan.map(p => `<tr><td>${p.name}</td><td class="text-right">Rp ${formatNumber(p.amount)}</td></tr>`).join('')}<tr class="fw-bold"><td><strong>Total Pendapatan</strong></td><td class="text-right"><strong>Rp ${formatNumber(totalPendapatan)}</strong></td></tr></table>
+            <h3 class="mt-3">BEBAN</h3><table class="table">${beban.map(b => `<tr><td>${b.name}</td><td class="text-right">Rp ${formatNumber(b.amount)}</td></tr>`).join('')}<tr class="fw-bold"><td><strong>Total Beban</strong></td><td class="text-right"><strong>Rp ${formatNumber(totalBeban)}</strong></td></tr></table>
+            <div class="alert alert-success mt-3"><strong>LABA BERSIH: Rp ${formatNumber(totalPendapatan - totalBeban)}</strong></div></div></div>`;
         document.getElementById('lrResult').innerHTML = html;
         hideLoading();
     }
     
+    window.printLabaRugi = function() {
+        let content = document.getElementById('printArea').innerHTML;
+        let printWindow = window.open('', '_blank');
+        printWindow.document.write(`<html><head><title>Laporan Laba Rugi</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>body{font-family:'Inter',sans-serif;padding:30px}.card{background:white;border-radius:16px;padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 1px 3px 0 rgb(0 0 0 / 0.1)}table{width:100%;border-collapse:collapse}th,td{padding:0.8rem;text-align:left;border-bottom:1px solid #e5e7eb}.text-right{text-align:right}.alert-success{background:#d1fae5;color:#065f46;padding:1rem;border-radius:10px}.mt-3{margin-top:1rem}.fw-bold{font-weight:bold}</style></head><body>${content}<div class="print-btn" style="text-align:center;margin-top:30px"><button onclick="window.print()">Print</button></div></body></html>`);
+        printWindow.document.close();
+    };
+    
     // ==================== NERACA ====================
     async function loadNeracaForm() {
+        let today = new Date().toISOString().split('T')[0];
         let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-scale-balanced"></i> Neraca</h2></div>
             <div class="form-group"><label>Perusahaan</label><select id="neracaCompany" class="form-control">${companies.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('')}</select></div>
-            <div class="form-group"><label>Per Tanggal</label><input type="date" id="neracaDate" class="form-control" value="${new Date().toISOString().split('T')[0]}"></div>
+            <div class="form-group"><label>Per Tanggal</label><input type="date" id="neracaDate" class="form-control" value="${today}"></div>
             <button class="btn btn-primary" onclick="showNeraca()"><i class="fas fa-search"></i> Tampilkan</button>
-            <div id="neracaResult" style="margin-top:1.5rem;"></div></div>`;
+            <div id="neracaResult" style="margin-top:1rem;"></div></div>`;
         document.getElementById('content').innerHTML = html;
     }
     
@@ -570,33 +1069,44 @@
         let companyId = parseInt(document.getElementById('neracaCompany').value);
         let asOfDate = document.getElementById('neracaDate').value;
         showLoading();
-        let { data: journals } = await supabaseClient.from('journals').select('*').eq('company_id', companyId).lte('journal_date', asOfDate);
-        let { data: lines } = await supabaseClient.from('journal_lines').select('*').in('journal_id', journals.map(j=>j.id));
-        let { data: coa } = await supabaseClient.from('chart_of_accounts').select('*').eq('company_id', companyId);
+        let { data: journals } = await supabase.from('journals').select('*').eq('company_id', companyId).lte('journal_date', asOfDate);
+        let { data: lines } = await supabase.from('journal_lines').select('*').in('journal_id', journals.map(j=>j.id));
+        let { data: coa } = await supabase.from('chart_of_accounts').select('*').eq('company_id', companyId);
         let aset = [], liabilitas = [], ekuitas = [];
         let totalAset = 0, totalLiabilitas = 0, totalEkuitas = 0;
-        for(let acc of coa) {
-            let amount = lines.filter(l=>l.account_code===acc.account_code).reduce((sum,l)=>sum + ((acc.normal_balance==='D'?l.debit-l.credit:l.credit-l.debit)),0);
-            if(amount===0) continue;
-            if(acc.account_type==='Aset') { aset.push({name:acc.account_name, amount}); totalAset+=amount; }
-            else if(acc.account_type==='Liabilitas') { liabilitas.push({name:acc.account_name, amount}); totalLiabilitas+=amount; }
-            else if(acc.account_type==='Ekuitas') { ekuitas.push({name:acc.account_name, amount}); totalEkuitas+=amount; }
+        for (let acc of coa) {
+            let amount = lines.filter(l => l.account_code === acc.account_code).reduce((sum, l) => sum + ((acc.normal_balance === 'D' ? l.debit - l.credit : l.credit - l.debit)), 0);
+            if (amount === 0) continue;
+            if (acc.account_type === 'Aset') { aset.push({ name: acc.account_name, amount }); totalAset += amount; }
+            else if (acc.account_type === 'Liabilitas') { liabilitas.push({ name: acc.account_name, amount }); totalLiabilitas += amount; }
+            else if (acc.account_type === 'Ekuitas') { ekuitas.push({ name: acc.account_name, amount }); totalEkuitas += amount; }
         }
-        let html = `<div class="row"><div class="col-md-6"><div class="card"><h3>ASET</h3><table class="table">${aset.map(a=>`<tr><td>${a.name}</td><td class="text-right">Rp ${formatNumber(a.amount)}</td></tr>`).join('')}<tr class="fw-bold"><td>Total Aset</td><td class="text-right">Rp ${formatNumber(totalAset)}</td></tr></table></div></div>
-        <div class="col-md-6"><div class="card"><h3>LIABILITAS</h3><table class="table">${liabilitas.map(l=>`<tr><td>${l.name}</td><td class="text-right">Rp ${formatNumber(l.amount)}</td></tr>`).join('')}<tr class="fw-bold"><td>Total Liabilitas</td><td class="text-right">Rp ${formatNumber(totalLiabilitas)}</td></tr></table>
-        <h3 class="mt-3">EKUITAS</h3><table class="table">${ekuitas.map(e=>`<tr><td>${e.name}</td><td class="text-right">Rp ${formatNumber(e.amount)}</td></tr>`).join('')}<tr class="fw-bold"><td>Total Ekuitas</td><td class="text-right">Rp ${formatNumber(totalEkuitas)}</td></tr></table></div></div>`;
+        let html = `<div style="display:flex; justify-content:flex-end; margin-bottom:1rem;"><button class="btn btn-primary" onclick="printNeraca()"><i class="fas fa-print"></i> Print / PDF</button></div>
+            <div id="printArea"><div class="row" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;"><div class="card"><h3>ASET</h3><table class="table">${aset.map(a => `<tr><td>${a.name}</td><td class="text-right">Rp ${formatNumber(a.amount)}</td></tr>`).join('')}<tr class="fw-bold"><td><strong>Total Aset</strong></td><td class="text-right"><strong>Rp ${formatNumber(totalAset)}</strong></td></tr></table></div>
+            <div><div class="card"><h3>LIABILITAS</h3><table class="table">${liabilitas.map(l => `<tr><td>${l.name}</td><td class="text-right">Rp ${formatNumber(l.amount)}</td></tr>`).join('')}<tr class="fw-bold"><td><strong>Total Liabilitas</strong></td><td class="text-right"><strong>Rp ${formatNumber(totalLiabilitas)}</strong></td></tr></table></div>
+            <div class="card mt-3"><h3>EKUITAS</h3><table class="table">${ekuitas.map(e => `<td>${e.name}</td><td class="text-right">Rp ${formatNumber(e.amount)}</td></tr>`).join('')}<tr class="fw-bold"><td><strong>Total Ekuitas</strong></td><td class="text-right"><strong>Rp ${formatNumber(totalEkuitas)}</strong></td></tr></table></div></div></div></div>`;
         document.getElementById('neracaResult').innerHTML = html;
         hideLoading();
     }
     
+    window.printNeraca = function() {
+        let content = document.getElementById('printArea').innerHTML;
+        let printWindow = window.open('', '_blank');
+        printWindow.document.write(`<html><head><title>Neraca</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>body{font-family:'Inter',sans-serif;padding:30px}.card{background:white;border-radius:16px;padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 1px 3px 0 rgb(0 0 0 / 0.1)}.row{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}table{width:100%;border-collapse:collapse}th,td{padding:0.8rem;text-align:left;border-bottom:1px solid #e5e7eb}.text-right{text-align:right}.mt-3{margin-top:1rem}.fw-bold{font-weight:bold}@media print{.print-btn{display:none}}</style></head><body>${content}<div class="print-btn" style="text-align:center;margin-top:30px"><button onclick="window.print()">Print</button></div></body></html>`);
+        printWindow.document.close();
+    };
+    
     // ==================== JURNAL UMUM ====================
     async function loadJurnalUmum() {
+        let today = new Date();
+        let firstDay = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+        let lastDay = today.toISOString().split('T')[0];
         let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-book-open"></i> Jurnal Umum</h2></div>
             <div class="filter-grid"><div class="filter-item"><label>Perusahaan</label><select id="juCompany" class="filter-select"><option value="all">Semua</option>${companies.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('')}</select></div>
-            <div class="filter-item"><label>Tanggal Mulai</label><input type="date" id="juStart" class="filter-select" value="${new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]}"></div>
-            <div class="filter-item"><label>Tanggal Akhir</label><input type="date" id="juEnd" class="filter-select" value="${new Date().toISOString().split('T')[0]}"></div>
+            <div class="filter-item"><label>Tanggal Mulai</label><input type="date" id="juStart" class="filter-select" value="${firstDay}"></div>
+            <div class="filter-item"><label>Tanggal Akhir</label><input type="date" id="juEnd" class="filter-select" value="${lastDay}"></div>
             <div class="filter-item"><button class="btn btn-primary" onclick="refreshJurnalUmum()">Tampilkan</button></div></div>
-            <div id="jurnalUmumContainer" style="margin-top:1.5rem;"></div></div>`;
+            <div id="jurnalUmumContainer" style="margin-top:1rem;"></div></div>`;
         document.getElementById('content').innerHTML = html;
         refreshJurnalUmum();
     }
@@ -606,13 +1116,21 @@
         let startDate = document.getElementById('juStart').value;
         let endDate = document.getElementById('juEnd').value;
         showLoading();
-        let query = supabaseClient.from('journals').select('*, journal_lines(*)').gte('journal_date', startDate).lte('journal_date', endDate).order('journal_date', {ascending:false});
-        if(companyId!=='all') query = query.eq('company_id', parseInt(companyId));
+        let query = supabase.from('journals').select('*, journal_lines(*)').gte('journal_date', startDate).lte('journal_date', endDate).order('journal_date', { ascending: false });
+        if (companyId !== 'all') query = query.eq('company_id', parseInt(companyId));
         let { data } = await query;
-        let html = '<div class="table-container"><table class="table"><thead><tr><th>Tanggal</th><th>Deskripsi</th><th>Akun</th><th>Debit</th><th>Kredit</th></tr></thead><tbody>';
-        for(let j of data) {
-            for(let line of j.journal_lines) {
-                html += `<tr><td>${j.journal_date}</td><td>${j.description}</td><td>${line.account_code}</td><td class="text-right">${line.debit>0?formatNumber(line.debit):''}</td><td class="text-right">${line.credit>0?formatNumber(line.credit):''}</td></tr>`;
+        let html = '<div class="table-container"><table class="table"><thead><tr><th>Tanggal</th><th>Deskripsi</th><th>Akun</th><th>Debit</th><th>Kredit</th><th>Aksi</th></tr></thead><tbody>';
+        for (let j of data) {
+            let firstLine = true;
+            for (let line of j.journal_lines) {
+                html += `<tr class="${firstLine ? 'journal-header' : ''}">
+                    ${firstLine ? `<td rowspan="${j.journal_lines.length}">${j.journal_date}</td><td rowspan="${j.journal_lines.length}">${j.description}</td>` : ''}
+                    <td>${line.account_code}</td>
+                    <td class="text-right">${line.debit > 0 ? formatNumber(line.debit) : '-'}</td>
+                    <td class="text-right">${line.credit > 0 ? formatNumber(line.credit) : '-'}</td>
+                    ${firstLine ? `<td rowspan="${j.journal_lines.length}"><button class="action-btn" onclick="editJournal(${j.id})"><i class="fas fa-edit"></i></button><button class="action-btn" onclick="deleteJournal(${j.id})"><i class="fas fa-trash"></i></button></td>` : ''}
+                </tr>`;
+                firstLine = false;
             }
         }
         html += '</tbody></table></div>';
@@ -620,18 +1138,384 @@
         hideLoading();
     }
     
-    // ==================== LAINNYA (placeholder) ====================
-    async function loadRecurringList() { document.getElementById('content').innerHTML = '<div class="card"><h2>Transaksi Berulang</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadAsetList() { document.getElementById('content').innerHTML = '<div class="card"><h2>Manajemen Aset</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadCustomerList() { let cust = await getCustomerList(currentCompanyId); let html = `<div class="card"><h2>Data Customer</h2><div class="table-container"><table class="table"><thead><tr><th>Kode</th><th>Nama</th><th>NPWP</th><th>Telepon</th></tr></thead><tbody>${cust.map(c=>`<tr><td>${c.code||'-'}</td><td>${c.name}</td><td>${c.npwp||'-'}</td><td>${c.telp||'-'}</td></tr>`).join('')}</tbody></table></div></div>`; document.getElementById('content').innerHTML = html; }
-    async function loadProjectList() { let proj = await getProjectList(currentCompanyId); let html = `<div class="card"><h2>Data Project</h2><div class="table-container"><table class="table"><thead><tr><th>Kode</th><th>Nama</th></tr></thead><tbody>${proj.map(p=>`<td>${p.code||'-'}</td><td>${p.name}</td></tr>`).join('')}</tbody></table></div></div>`; document.getElementById('content').innerHTML = html; }
+    async function editJournal(id) {
+        let { data: journal } = await supabase.from('journals').select('*, journal_lines(*)').eq('id', id).single();
+        let accountsList = await getAccountList(journal.company_id);
+        let accountOptions = '<option value="">Pilih Akun</option>'; accountsList.forEach(a => { accountOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`; });
+        let linesHtml = '';
+        journal.journal_lines.forEach((line, idx) => {
+            linesHtml += `<div class="journal-line" id="edit-line-${idx}" style="display:grid; grid-template-columns:2fr 1fr 1fr 1.5fr auto; gap:0.5rem; margin-bottom:0.5rem;">
+                <select class="account-select form-control">${accountOptions}</select>
+                <input type="text" class="debit-input form-control" placeholder="Debit" value="${formatNumber(line.debit)}" onkeyup="formatMoney(this)">
+                <input type="text" class="credit-input form-control" placeholder="Kredit" value="${formatNumber(line.credit)}" onkeyup="formatMoney(this)">
+                <input type="text" class="desc-input form-control" placeholder="Keterangan" value="${line.description || ''}">
+                ${idx > 0 ? `<button class="btn btn-danger btn-sm" onclick="removeEditJournalLine(${idx})"><i class="fas fa-trash"></i></button>` : '<div style="width:32px;"></div>'}
+            </div>`;
+        });
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-edit"></i> Edit Jurnal #${journal.id}</h2><button class="btn btn-secondary" onclick="loadJurnalUmum()">Kembali</button></div>
+            <div class="form-group"><label>Perusahaan</label><select id="editJournalCompany" class="form-control" disabled>${companies.map(c=>`<option value="${c.id}" ${c.id==journal.company_id?'selected':''}>${c.nama}</option>`).join('')}</select></div>
+            <div class="form-group"><label>Tanggal</label><input type="date" id="editJournalDate" class="form-control" value="${journal.journal_date}"></div>
+            <div class="form-group"><label>Deskripsi</label><input type="text" id="editJournalDesc" class="form-control" value="${journal.description}"></div>
+            <div style="background:#f8f9fa; padding:1rem; border-radius:12px;"><h4>Detail Jurnal</h4><div id="editJournalLines">${linesHtml}</div>
+            <button class="btn btn-secondary btn-sm" onclick="addEditJournalLine()">+ Tambah Baris</button>
+            <div style="background:var(--primary); color:white; padding:0.8rem; border-radius:10px; margin-top:1rem; display:flex; justify-content:space-between;"><span>Total Debit - Kredit</span><span id="editTotalSelisih">Rp 0</span></div></div>
+            <div style="display:flex; gap:1rem; justify-content:flex-end;"><button class="btn btn-danger" onclick="deleteJournal(${journal.id})">Hapus</button><button class="btn btn-primary" onclick="saveEditJournal(${journal.id})">Simpan</button></div>
+            <div id="editJournalResult"></div></div>`;
+        document.getElementById('content').innerHTML = html;
+        $('.account-select').each(function() { $(this).html(accountOptions); });
+        journal.journal_lines.forEach((line, idx) => { $(`#edit-line-${idx} .account-select`).val(line.account_code); });
+        window.editLineCounter = journal.journal_lines.length;
+        updateEditJournalTotal();
+    }
+    
+    function addEditJournalLine() {
+        let accountOptions = '<option value="">Pilih Akun</option>'; accounts.forEach(a => { accountOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`; });
+        let lines = document.getElementById('editJournalLines');
+        let lineId = window.editLineCounter++;
+        let newLine = document.createElement('div'); newLine.className = 'journal-line'; newLine.id = `edit-line-${lineId}`;
+        newLine.style.display = 'grid'; newLine.style.gridTemplateColumns = '2fr 1fr 1fr 1.5fr auto'; newLine.style.gap = '0.5rem'; newLine.style.marginBottom = '0.5rem';
+        newLine.innerHTML = `<select class="account-select form-control">${accountOptions}</select><input type="text" class="debit-input form-control" placeholder="Debit" onkeyup="formatMoney(this)"><input type="text" class="credit-input form-control" placeholder="Kredit" onkeyup="formatMoney(this)"><input type="text" class="desc-input form-control" placeholder="Keterangan"><button class="btn btn-danger btn-sm" onclick="removeEditJournalLine(${lineId})"><i class="fas fa-trash"></i></button>`;
+        lines.appendChild(newLine);
+        $(`#edit-line-${lineId} .account-select`).select2({ width: '100%' });
+    }
+    
+    function removeEditJournalLine(id) { let line = document.getElementById(`edit-line-${id}`); if (document.querySelectorAll('#editJournalLines .journal-line').length > 1) { line.remove(); updateEditJournalTotal(); } else { alert('Minimal satu baris harus ada'); } }
+    
+    function updateEditJournalTotal() {
+        let totalDebit = 0, totalCredit = 0;
+        document.querySelectorAll('#editJournalLines .journal-line').forEach(item => {
+            totalDebit += parseRupiah(item.querySelector('.debit-input')?.value);
+            totalCredit += parseRupiah(item.querySelector('.credit-input')?.value);
+        });
+        document.getElementById('editTotalSelisih').innerHTML = `Rp ${formatNumber(totalDebit - totalCredit)}`;
+    }
+    
+    async function saveEditJournal(id) {
+        let lines = [];
+        let totalDebit = 0, totalCredit = 0;
+        document.querySelectorAll('#editJournalLines .journal-line').forEach(item => {
+            let account = item.querySelector('.account-select').value;
+            let debit = parseRupiah(item.querySelector('.debit-input').value);
+            let credit = parseRupiah(item.querySelector('.credit-input').value);
+            let desc = item.querySelector('.desc-input').value;
+            if (!account) { alert('Pilih akun untuk semua baris'); return; }
+            totalDebit += debit; totalCredit += credit;
+            lines.push({ account_code: account, debit, credit, description: desc });
+        });
+        if (Math.abs(totalDebit - totalCredit) > 0.01) { alert('Total debit harus sama dengan total kredit'); return; }
+        let journalDate = document.getElementById('editJournalDate').value;
+        let description = document.getElementById('editJournalDesc').value;
+        showLoading();
+        let { error } = await supabase.from('journals').update({
+            journal_date: journalDate, period: journalDate.substring(0,7), description: description
+        }).eq('id', id);
+        if (error) { hideLoading(); document.getElementById('editJournalResult').innerHTML = `<div class="alert alert-error">${error.message}</div>`; return; }
+        await supabase.from('journal_lines').delete().eq('journal_id', id);
+        for (let line of lines) {
+            await supabase.from('journal_lines').insert({ journal_id: id, account_code: line.account_code, debit: line.debit, credit: line.credit, description: line.description });
+        }
+        hideLoading(); document.getElementById('editJournalResult').innerHTML = `<div class="alert alert-success">✅ Jurnal berhasil diupdate!</div>`; setTimeout(() => loadJurnalUmum(), 2000);
+    }
+    
+    async function deleteJournal(id) {
+        if (!confirm('Hapus jurnal ini? Tindakan tidak bisa dibatalkan!')) return;
+        showLoading();
+        await supabase.from('journal_lines').delete().eq('journal_id', id);
+        await supabase.from('journals').delete().eq('id', id);
+        hideLoading(); alert('Jurnal berhasil dihapus'); loadJurnalUmum();
+    }
+    
+    // ==================== MANAJEMEN ASET ====================
+    async function loadAsetList() {
+        let { data: assets } = await supabase.from('fixed_assets').select('*').order('id', { ascending: false });
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-chart-pie"></i> Manajemen Aset</h2><button class="btn btn-primary" onclick="showAddAsetForm()"><i class="fas fa-plus"></i> Tambah Aset</button></div>
+            <div class="table-container"><table class="table"><thead><tr><th>Kode</th><th>Nama</th><th>Kategori</th><th>Harga Perolehan</th><th>Umur (thn)</th><th>Penyusutan/Bln</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="asetTableBody"></tbody></table></div></div>`;
+        document.getElementById('content').innerHTML = html;
+        let tbody = '';
+        (assets || []).forEach(a => {
+            let penyusutanBulanan = (a.harga_perolehan - (a.nilai_residu || 0)) / (a.umur_tahun * 12);
+            tbody += `<tr>
+                <td>${a.kode}</td>
+                <td>${a.nama}</td>
+                <td>${a.kategori}</td>
+                <td class="text-right">Rp ${formatNumber(a.harga_perolehan)}</td>
+                <td class="text-center">${a.umur_tahun} thn</td>
+                <td class="text-right">Rp ${formatNumber(penyusutanBulanan)}</td>
+                <td><span class="status-badge ${a.status === 'aktif' ? 'status-paid' : 'status-draft'}">${a.status}</span></td>
+                <td><button class="action-btn" onclick="alert('Detail aset menyusul')"><i class="fas fa-eye"></i></button></td>
+            </tr>`;
+        });
+        document.getElementById('asetTableBody').innerHTML = tbody || '<tr><td colspan="8">Belum ada data作为</td></tr>';
+    }
+    
+    function showAddAsetForm() {
+        showLoading();
+        getAccountList(currentCompanyId).then(accountsList => {
+            let asetOptions = '<option value="">Pilih Akun Aset</option>'; let akumulasiOptions = '<option value="">Pilih Akun Akumulasi</option>'; let bebanOptions = '<option value="">Pilih Akun Beban</option>';
+            accountsList.forEach(a => {
+                if (a.account_type === 'Aset') { asetOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`; }
+                if (a.account_code.includes('13') && a.account_name.includes('Akumulasi')) { akumulasiOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`; }
+                if (a.account_type === 'Beban') { bebanOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`; }
+            });
+            let today = new Date().toISOString().split('T')[0];
+            let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-plus"></i> Tambah Aset</h2><button class="btn btn-secondary" onclick="loadAsetList()">Kembali</button></div>
+                <div class="form-group"><label>Perusahaan</label><select id="asetCompanyAdd" class="form-control">${companies.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('')}</select></div>
+                <div class="form-group"><label>Kode Aset</label><input type="text" id="asetKode" class="form-control" placeholder="FIX-001"></div>
+                <div class="form-group"><label>Nama Aset</label><input type="text" id="asetNama" class="form-control" placeholder="Toyota Innova"></div>
+                <div class="form-group"><label>Kategori</label><input type="text" id="asetKategori" class="form-control" placeholder="KENDARAAN"></div>
+                <div class="form-group"><label>Umur (tahun)</label><input type="number" id="asetUmur" class="form-control" value="5" min="1"></div>
+                <div class="form-group"><label>Harga Perolehan</label><input type="text" id="asetHarga" class="form-control" onkeyup="formatMoney(this)"></div>
+                <div class="form-group"><label>Nilai Residu (opsional)</label><input type="text" id="asetResidu" class="form-control" onkeyup="formatMoney(this)"></div>
+                <div class="form-group"><label>Tanggal Perolehan</label><input type="date" id="asetTanggal" class="form-control" value="${today}"></div>
+                <div class="form-group"><label>Akun Aset</label><select id="asetAkun" class="form-control searchable-dropdown">${asetOptions}</select></div>
+                <div class="form-group"><label>Akun Akumulasi</label><select id="asetAkumulasi" class="form-control searchable-dropdown">${akumulasiOptions}</select></div>
+                <div class="form-group"><label>Akun Beban Penyusutan</label><select id="asetBeban" class="form-control searchable-dropdown">${bebanOptions}</select></div>
+                <div style="display:flex; gap:1rem; justify-content:flex-end;"><button class="btn btn-primary" onclick="saveAset()">Simpan</button></div>
+                <div id="asetResult"></div></div>`;
+            document.getElementById('content').innerHTML = html;
+            $('.searchable-dropdown').select2({ width: '100%' });
+            hideLoading();
+        });
+    }
+    
+    async function saveAset() {
+        let data = {
+            company_id: parseInt(document.getElementById('asetCompanyAdd').value),
+            kode: document.getElementById('asetKode').value,
+            nama: document.getElementById('asetNama').value,
+            kategori: document.getElementById('asetKategori').value,
+            umur_tahun: parseInt(document.getElementById('asetUmur').value),
+            harga_perolehan: parseRupiah(document.getElementById('asetHarga').value),
+            nilai_residu: parseRupiah(document.getElementById('asetResidu').value) || 0,
+            tgl_perolehan: document.getElementById('asetTanggal').value,
+            akun_aset: document.getElementById('asetAkun').value,
+            akun_akumulasi: document.getElementById('asetAkumulasi').value,
+            akun_beban: document.getElementById('asetBeban').value,
+            status: 'aktif'
+        };
+        if (!data.kode || !data.nama || !data.kategori || !data.umur_tahun || !data.harga_perolehan || !data.tgl_perolehan || !data.akun_aset || !data.akun_akumulasi || !data.akun_beban) { alert('Isi semua field'); return; }
+        showLoading();
+        let { error } = await supabase.from('fixed_assets').insert(data);
+        if (error) { hideLoading(); document.getElementById('asetResult').innerHTML = `<div class="alert alert-error">${error.message}</div>`; return; }
+        hideLoading(); document.getElementById('asetResult').innerHTML = '<div class="alert alert-success">✅ Aset berhasil disimpan!</div>'; setTimeout(() => loadAsetList(), 2000);
+    }
+    
+    // ==================== TRANSAKSI BERULANG ====================
+    async function loadRecurringList() {
+        let { data: recurring } = await supabase.from('recurring_transactions').select('*').order('id', { ascending: false });
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-clock"></i> Transaksi Berulang</h2><button class="btn btn-primary" onclick="showAddRecurringForm()"><i class="fas fa-plus"></i> Tambah</button></div>
+            <div class="filter-item"><label>Perusahaan</label><select id="recCompanyFilter" class="filter-select" onchange="loadRecurringList()"><option value="all">Semua</option>${companies.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('')}</select></div>
+            <div class="table-container"><table class="table"><thead><tr><th>Nama</th><th>Deskripsi</th><th>Total Cicilan</th><th>Mulai</th><th>Progress</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="recurringTableBody"></tbody></table></div></div>`;
+        document.getElementById('content').innerHTML = html;
+        let tbody = '';
+        (recurring || []).forEach(r => {
+            let progress = Math.round((r.bulan_ke / r.total_cicilan) * 100) || 0;
+            let statusClass = r.status === 'aktif' ? 'status-paid' : 'status-draft';
+            tbody += `<tr>
+                <td>${r.nama}</td>
+                <td>${r.deskripsi || '-'}</td>
+                <td>${r.total_cicilan}x</td>
+                <td>${r.mulai}</td>
+                <td>${r.bulan_ke}/${r.total_cicilan} (${progress}%)</td>
+                <td><span class="status-badge ${statusClass}">${r.status}</span></td>
+                <td><button class="action-btn" onclick="alert('Detail menyusul')"><i class="fas fa-eye"></i></button></td>
+            </tr>`;
+        });
+        document.getElementById('recurringTableBody').innerHTML = tbody || '<tr><td colspan="7">Belum ada数据</td></tr>';
+    }
+    
+    function showAddRecurringForm() {
+        getAccountList(currentCompanyId).then(accountsList => {
+            let accountOptions = '<option value="">Pilih Akun</option>'; accountsList.forEach(a => { accountOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`; });
+            let today = new Date().toISOString().split('T')[0];
+            let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-plus"></i> Tambah Transaksi Berulang</h2><button class="btn btn-secondary" onclick="loadRecurringList()">Kembali</button></div>
+                <div class="form-group"><label>Perusahaan</label><select id="recCompanyAdd" class="form-control">${companies.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('')}</select></div>
+                <div class="form-group"><label>Nama Transaksi</label><input type="text" id="recNama" class="form-control" placeholder="Angsuran Kendaraan"></div>
+                <div class="form-group"><label>Deskripsi</label><textarea id="recDesc" class="form-control" rows="2"></textarea></div>
+                <div class="form-group"><label>Total Cicilan (bulan)</label><input type="number" id="recTotal" class="form-control" value="12" min="1"></div>
+                <div class="form-group"><label>Tanggal Mulai</label><input type="date" id="recMulai" class="form-control" value="${today}"></div>
+                <div style="background:#f8f9fa; padding:1rem; border-radius:12px;"><h4>Detail Jurnal</h4><div id="recLines"><div class="rec-line" style="display:grid; grid-template-columns:2fr 1fr 1fr 2fr; gap:0.5rem; margin-bottom:0.5rem;">
+                    <select class="rec-account form-control">${accountOptions}</select>
+                    <input type="text" class="rec-debit form-control" placeholder="Debit" onkeyup="formatMoney(this)">
+                    <input type="text" class="rec-kredit form-control" placeholder="Kredit" onkeyup="formatMoney(this)">
+                    <input type="text" class="rec-ket form-control" placeholder="Keterangan">
+                </div></div>
+                <button class="btn btn-secondary btn-sm" onclick="addRecLine()">+ Tambah Baris</button></div>
+                <div style="display:flex; gap:1rem; justify-content:flex-end;"><button class="btn btn-primary" onclick="saveRecurring()">Simpan</button></div>
+                <div id="recResult"></div></div>`;
+            document.getElementById('content').innerHTML = html;
+            $('.rec-account').select2({ width: '100%' });
+            window.recLineCounter = 1;
+        });
+    }
+    
+    function addRecLine() {
+        let accountOptions = '<option value="">Pilih Akun</option>'; accounts.forEach(a => { accountOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`; });
+        let container = document.getElementById('recLines');
+        let lineId = window.recLineCounter++;
+        let newLine = document.createElement('div'); newLine.className = 'rec-line'; newLine.style.display = 'grid'; newLine.style.gridTemplateColumns = '2fr 1fr 1fr 2fr'; newLine.style.gap = '0.5rem'; newLine.style.marginBottom = '0.5rem';
+        newLine.innerHTML = `<select class="rec-account form-control">${accountOptions}</select><input type="text" class="rec-debit form-control" placeholder="Debit" onkeyup="formatMoney(this)"><input type="text" class="rec-kredit form-control" placeholder="Kredit" onkeyup="formatMoney(this)"><input type="text" class="rec-ket form-control" placeholder="Keterangan">`;
+        container.appendChild(newLine);
+        $(newLine).find('.rec-account').select2({ width: '100%' });
+    }
+    
+    async function saveRecurring() {
+        let lines = []; let totalDebit = 0, totalKredit = 0;
+        document.querySelectorAll('.rec-line').forEach(line => {
+            let account = line.querySelector('.rec-account').value;
+            let debit = parseRupiah(line.querySelector('.rec-debit').value);
+            let kredit = parseRupiah(line.querySelector('.rec-kredit').value);
+            let ket = line.querySelector('.rec-ket').value;
+            if (!account) { alert('Semua akun harus dipilih'); return; }
+            totalDebit += debit; totalKredit += kredit;
+            lines.push({ account_code: account, debit, kredit, keterangan: ket });
+        });
+        if (Math.abs(totalDebit - totalKredit) > 0.01) { alert('Total debit harus sama dengan total kredit'); return; }
+        let data = {
+            company_id: parseInt(document.getElementById('recCompanyAdd').value),
+            nama: document.getElementById('recNama').value,
+            deskripsi: document.getElementById('recDesc').value,
+            total_cicilan: parseInt(document.getElementById('recTotal').value),
+            mulai: document.getElementById('recMulai').value,
+            bulan_ke: 0,
+            status: 'aktif',
+            lines: lines
+        };
+        if (!data.nama || !data.total_cicilan || !data.mulai) { alert('Isi semua field'); return; }
+        showLoading();
+        let { error } = await supabase.from('recurring_transactions').insert({
+            company_id: data.company_id, nama: data.nama, deskripsi: data.deskripsi, total_cicilan: data.total_cicilan,
+            mulai: data.mulai, bulan_ke: 0, status: 'aktif', created_by: currentUser?.email
+        }).select().single();
+        if (error) { hideLoading(); document.getElementById('recResult').innerHTML = `<div class="alert alert-error">${error.message}</div>`; return; }
+        for (let line of lines) {
+            await supabase.from('recurring_lines').insert({ recurring_id: data.id, account_code: line.account_code, debit: line.debit, kredit: line.kredit, keterangan: line.keterangan });
+        }
+        hideLoading(); document.getElementById('recResult').innerHTML = '<div class="alert alert-success">✅ Transaksi berulang disimpan!</div>'; setTimeout(() => loadRecurringList(), 2000);
+    }
+    
+    // ==================== MASTER DATA ====================
+    async function loadCustomerList() {
+        let cust = await getCustomerList(currentCompanyId);
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-users"></i> Data Customer</h2><button class="btn btn-primary" onclick="alert('Fitur tambah customer menyusul')"><i class="fas fa-plus"></i> Tambah Customer</button></div>
+            <div class="table-container"><table class="table"><thead><tr><th>Kode</th><th>Nama</th><th>NPWP</th><th>Alamat</th><th>Telepon</th><th>Email</th></tr></thead><tbody>${cust.map(c=>`<tr><td>${c.code||'-'}</td><td>${c.name}</td><td>${c.npwp||'-'}</td><td>${c.alamat||'-'}</td><td>${c.telp||'-'}</td><td>${c.email||'-'}</td></tr>`).join('')}</tbody></table></div></div>`;
+        document.getElementById('content').innerHTML = html;
+    }
+    
+    async function loadProjectList() {
+        let proj = await getProjectList(currentCompanyId);
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-project-diagram"></i> Data Project</h2><button class="btn btn-primary" onclick="alert('Fitur tambah project menyusul')"><i class="fas fa-plus"></i> Tambah Project</button></div>
+            <div class="table-container"><table class="table"><thead><tr><th>Kode</th><th>Nama</th><th>Company</th></tr></thead><tbody>${proj.map(p=>`<tr><td>${p.code||'-'}</td><td>${p.name}</td><td>${companies.find(c=>c.id==p.company_id)?.nama||'-'}</td></tr>`).join('')}</tbody></table></div></div>`;
+        document.getElementById('content').innerHTML = html;
+    }
+    
+    // ==================== SALDO AWAL ====================
+    async function loadOpeningBalanceForm() {
+        if (currentUserRole !== 'direktur' && currentUserRole !== 'finance') { alert('Hanya direktur dan finance yang bisa input saldo awal'); return; }
+        let accountsList = await getAccountList(currentCompanyId);
+        let asetOptions = '', liabilitasOptions = '', ekuitasOptions = '';
+        accountsList.forEach(a => {
+            if (a.account_type === 'Aset') asetOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`;
+            else if (a.account_type === 'Liabilitas') liabilitasOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`;
+            else if (a.account_type === 'Ekuitas') ekuitasOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`;
+        });
+        let today = new Date().toISOString().split('T')[0];
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-scale-balanced"></i> Saldo Awal</h2><button class="btn btn-primary" onclick="saveOpeningBalance()">Simpan Saldo Awal</button></div>
+            <div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> <strong>PENTING!</strong> Saldo awal hanya dapat diinput SATU KALI.</div>
+            <div class="form-group"><label>Perusahaan</label><select id="openingCompany" class="form-control" onchange="loadOpeningAccounts(this.value)">${companies.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('')}</select></div>
+            <div class="form-group"><label>Tanggal Saldo Awal</label><input type="date" id="openingDate" class="form-control" value="2026-01-01"></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem;"><div style="background:#f8f9fa; padding:1rem; border-radius:12px;"><h3 style="color:var(--primary);">ASET</h3><div id="openingAsetContainer"></div><button class="btn btn-secondary btn-sm" onclick="addOpeningRow('aset')">+ Tambah Aset</button><div class="mt-2 fw-bold">Total Aset: <span id="totalAsetOpening">Rp 0</span></div></div>
+            <div style="background:#f8f9fa; padding:1rem; border-radius:12px;"><h3 style="color:var(--warning);">LIABILITAS</h3><div id="openingLiabilitasContainer"></div><button class="btn btn-secondary btn-sm" onclick="addOpeningRow('liabilitas')">+ Tambah Liabilitas</button><div class="mt-2 fw-bold">Total Liabilitas: <span id="totalLiabilitasOpening">Rp 0</span></div></div>
+            <div style="background:#f8f9fa; padding:1rem; border-radius:12px;"><h3 style="color:var(--success);">EKUITAS</h3><div id="openingEkuitasContainer"></div><button class="btn btn-secondary btn-sm" onclick="addOpeningRow('ekuitas')">+ Tambah Ekuitas</button><div class="mt-2 fw-bold">Total Ekuitas: <span id="totalEkuitasOpening">Rp 0</span></div></div></div>
+            <div style="margin-top:1rem; padding:1rem; border-radius:12px; background:var(--primary); color:white;"><div style="display:flex; justify-content:space-between;"><span><i class="fas fa-balance-scale"></i> <strong>ASET = LIABILITAS + EKUITAS</strong></span><span id="openingBalanceStatus">Belum Balance</span></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; margin-top:0.5rem;"><div>Aset: Rp <span id="statusAset">0</span></div><div>Liabilitas: Rp <span id="statusLiabilitas">0</span></div><div>Ekuitas: Rp <span id="statusEkuitas">0</span></div></div>
+            <div id="openingSelisih">Selisih: Rp 0</div></div></div>`;
+        document.getElementById('content').innerHTML = html;
+        window.openingAccounts = accountsList;
+        addOpeningRow('aset', true); addOpeningRow('liabilitas', true); addOpeningRow('ekuitas', true);
+        window.openingRowCounter = 3;
+    }
+    
+    function addOpeningRow(kategori, isFirst = false) {
+        let containerId = `opening${kategori.charAt(0).toUpperCase() + kategori.slice(1)}Container`;
+        let container = document.getElementById(containerId);
+        if (!container) return;
+        window.openingRowCounter = (window.openingRowCounter || 0) + 1;
+        let rowId = `row-${kategori}-${window.openingRowCounter}`;
+        let accountOptions = '<option value="">Pilih Akun</option>';
+        if (window.openingAccounts) {
+            window.openingAccounts.forEach(acc => {
+                if (kategori === 'aset' && acc.account_type === 'Aset') accountOptions += `<option value="${acc.account_code}">${acc.account_code} - ${acc.account_name}</option>`;
+                else if (kategori === 'liabilitas' && acc.account_type === 'Liabilitas') accountOptions += `<option value="${acc.account_code}">${acc.account_code} - ${acc.account_name}</option>`;
+                else if (kategori === 'ekuitas' && acc.account_type === 'Ekuitas') accountOptions += `<option value="${acc.account_code}">${acc.account_code} - ${acc.account_name}</option>`;
+            });
+        }
+        let row = document.createElement('div'); row.id = rowId; row.style.display = 'grid'; row.style.gridTemplateColumns = '2fr 1fr auto'; row.style.gap = '0.5rem'; row.style.marginBottom = '0.5rem';
+        row.innerHTML = `<select class="form-control opening-account" data-kategori="${kategori}">${accountOptions}</select><input type="text" class="form-control opening-amount" placeholder="Rp" onkeyup="formatMoney(this); calculateOpeningTotal()">${!isFirst ? `<button class="btn btn-danger btn-sm" onclick="removeOpeningRow('${rowId}')"><i class="fas fa-times"></i></button>` : '<div style="width:32px;"></div>'}`;
+        container.appendChild(row);
+    }
+    
+    function removeOpeningRow(rowId) { document.getElementById(rowId)?.remove(); calculateOpeningTotal(); }
+    
+    function calculateOpeningTotal() {
+        let totalAset = 0, totalLiabilitas = 0, totalEkuitas = 0;
+        document.querySelectorAll('#openingAsetContainer .opening-amount').forEach(i => totalAset += parseRupiah(i.value));
+        document.querySelectorAll('#openingLiabilitasContainer .opening-amount').forEach(i => totalLiabilitas += parseRupiah(i.value));
+        document.querySelectorAll('#openingEkuitasContainer .opening-amount').forEach(i => totalEkuitas += parseRupiah(i.value));
+        document.getElementById('totalAsetOpening').innerHTML = `Rp ${formatNumber(totalAset)}`;
+        document.getElementById('totalLiabilitasOpening').innerHTML = `Rp ${formatNumber(totalLiabilitas)}`;
+        document.getElementById('totalEkuitasOpening').innerHTML = `Rp ${formatNumber(totalEkuitas)}`;
+        document.getElementById('statusAset').innerHTML = formatNumber(totalAset);
+        document.getElementById('statusLiabilitas').innerHTML = formatNumber(totalLiabilitas);
+        document.getElementById('statusEkuitas').innerHTML = formatNumber(totalEkuitas);
+        let selisih = totalAset - (totalLiabilitas + totalEkuitas);
+        document.getElementById('openingSelisih').innerHTML = `Selisih: Rp ${formatNumber(selisih)}`;
+        let statusEl = document.getElementById('openingBalanceStatus');
+        if (Math.abs(selisih) < 1) { statusEl.innerHTML = '✅ BALANCE'; statusEl.style.color = '#10b981'; }
+        else { statusEl.innerHTML = '❌ TIDAK BALANCE'; statusEl.style.color = '#ef4444'; }
+    }
+    
+    async function saveOpeningBalance() {
+        let totalAset = parseRupiah(document.getElementById('totalAsetOpening').innerHTML.replace('Rp ', '').replace(/\./g, ''));
+        let totalLiabilitas = parseRupiah(document.getElementById('totalLiabilitasOpening').innerHTML.replace('Rp ', '').replace(/\./g, ''));
+        let totalEkuitas = parseRupiah(document.getElementById('totalEkuitasOpening').innerHTML.replace('Rp ', '').replace(/\./g, ''));
+        if (Math.abs(totalAset - (totalLiabilitas + totalEkuitas)) > 1) { alert('Aset harus sama dengan Liabilitas + Ekuitas!'); return; }
+        let companyId = parseInt(document.getElementById('openingCompany').value);
+        let tanggal = document.getElementById('openingDate').value;
+        let periode = tanggal.substring(0, 7);
+        let lines = [];
+        document.querySelectorAll('#openingAsetContainer .opening-account').forEach((select, idx) => {
+            let account = select.value;
+            let amount = parseRupiah(document.querySelectorAll('#openingAsetContainer .opening-amount')[idx]?.value);
+            if (account && amount > 0) lines.push({ account_code: account, amount: amount, type: 'Aset' });
+        });
+        document.querySelectorAll('#openingLiabilitasContainer .opening-account').forEach((select, idx) => {
+            let account = select.value;
+            let amount = parseRupiah(document.querySelectorAll('#openingLiabilitasContainer .opening-amount')[idx]?.value);
+            if (account && amount > 0) lines.push({ account_code: account, amount: amount, type: 'Liabilitas' });
+        });
+        document.querySelectorAll('#openingEkuitasContainer .opening-account').forEach((select, idx) => {
+            let account = select.value;
+            let amount = parseRupiah(document.querySelectorAll('#openingEkuitasContainer .opening-amount')[idx]?.value);
+            if (account && amount > 0) lines.push({ account_code: account, amount: amount, type: 'Ekuitas' });
+        });
+        if (lines.length === 0) { alert('Tidak ada data saldo awal yang diinput'); return; }
+        showLoading();
+        for (let line of lines) {
+            let { error } = await supabase.from('opening_balances').insert({
+                company_id: companyId, account_code: line.account_code, amount: line.amount, periode: periode, created_by: currentUser?.email
+            });
+            if (error) { hideLoading(); alert(error.message); return; }
+        }
+        hideLoading(); alert('✅ Saldo awal berhasil disimpan!'); showMenu('dashboard');
+    }
     
     async function checkSession() {
-        let { data } = await supabaseClient.auth.getSession();
-        if(data.session) {
-            let { data: profile } = await supabaseClient.from('user_profiles').select('*').eq('email', data.session.user.email).single();
+        let { data } = await supabase.auth.getSession();
+        if (data.session) {
+            let { data: profile } = await supabase.from('user_profiles').select('*').eq('email', data.session.user.email).single();
             currentUser = data.session.user; currentUserRole = profile?.role || 'staff'; currentCompanyId = profile?.company_id || 1;
-            let { data: comps } = await supabaseClient.from('companies').select('*'); companies = comps || [];
+            let { data: comps } = await supabase.from('companies').select('*'); companies = comps || [];
             document.getElementById('loginPage').style.display = 'none'; document.getElementById('appPage').style.display = 'flex';
             document.getElementById('userName').innerText = profile?.name || currentUser.email; document.getElementById('userRole').innerText = currentUserRole;
             document.getElementById('userAvatar').innerText = (profile?.name || currentUser.email).charAt(0).toUpperCase();
