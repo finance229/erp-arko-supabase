@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERP ARKO GROUP</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Select2 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    
+    <!-- Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    
+    <!-- jQuery & Select2 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f3f4f6; color: #1f2937; line-height: 1.5; }
+        :root {
+            --primary: #0f172a; --primary-light: #1e293b; --accent: #3b82f6; --accent-soft: #60a5fa;
+            --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --info: #6366f1;
+            --gray-50: #f9fafb; --gray-100: #f3f4f6; --gray-200: #e5e7eb; --gray-300: #d1d5db;
+            --gray-400: #9ca3af; --gray-500: #6b7280; --gray-600: #4b5563; --gray-700: #374151; --gray-800: #1f2937;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .app { display: flex; min-height: 100vh; }
+        .sidebar { width: 280px; background: white; border-right: 1px solid var(--gray-200); position: fixed; height: 100vh; overflow-y: auto; z-index: 100; }
+        .sidebar-header { padding: 2rem 1.5rem; border-bottom: 1px solid var(--gray-200); }
+        .logo { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--primary), var(--primary-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: 0.75rem; }
+        .logo i { background: linear-gradient(135deg, var(--primary), var(--primary-light)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2rem; }
+        .sidebar-menu { flex: 1; padding: 1.5rem; overflow-y: auto; }
+        .menu-item { display: flex; align-items: center; gap: 1rem; padding: 0.875rem 1rem; color: var(--gray-600); border-radius: 12px; margin-bottom: 0.25rem; transition: all 0.2s; cursor: pointer; font-weight: 500; }
+        .menu-item i { width: 24px; font-size: 1.25rem; color: var(--gray-400); transition: all 0.2s; }
+        .menu-item:hover { background: var(--gray-100); color: var(--primary); }
+        .menu-item:hover i { color: var(--accent); }
+        .menu-item.active { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; box-shadow: var(--shadow-lg); }
+        .menu-item.active i { color: white; }
+        .menu-item.has-dropdown { display: flex; align-items: center; justify-content: space-between; }
+        .dropdown-menu { margin-left: 0.5rem; border-left: 2px dashed var(--gray-300); margin-bottom: 0.5rem; }
+        .menu-item.submenu { padding: 0.6rem 1rem; font-size: 0.9rem; margin-bottom: 0.1rem; }
+        .menu-item.submenu i { font-size: 0.9rem; width: 20px; }
+        .main { flex: 1; margin-left: 280px; padding: 2rem; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; background: white; padding: 1rem 1.5rem; border-radius: 12px; box-shadow: var(--shadow); }
+        .page-title { font-size: 1.5rem; font-weight: 600; color: var(--gray-800); }
+        .user-menu { display: flex; align-items: center; gap: 1rem; }
+        .user-name { font-weight: 600; font-size: 0.875rem; }
+        .user-role { font-size: 0.75rem; color: var(--gray-500); text-transform: capitalize; }
+        .user-avatar { width: 40px; height: 40px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; }
+        .logout-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.2rem; }
+        .card { background: white; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: var(--shadow); }
+        .card h2 { font-size: 1.2rem; margin-bottom: 1rem; border-bottom: 2px solid var(--gray-200); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .form-card { background: white; border-radius: 20px; padding: 2rem; border: 1px solid var(--gray-200); box-shadow: var(--shadow); }
+        .form-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--gray-200); }
+        .form-header h2 { font-size: 1.3rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+        .form-header h2 i { color: var(--accent); }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; margin-bottom: 0.4rem; font-weight: 500; font-size: 0.85rem; color: var(--gray-700); }
+        .form-group label i { margin-right: 0.3rem; color: var(--accent); }
+        .form-control { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--gray-300); border-radius: 10px; font-size: 0.9rem; transition: all 0.2s; }
+        .form-control:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
+        .filter-card { background: white; border-radius: 16px; padding: 1.2rem; margin-bottom: 1.5rem; border: 1px solid var(--gray-200); }
+        .filter-grid { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; }
+        .filter-item { flex: 1; min-width: 150px; }
+        .filter-label { font-size: 0.7rem; font-weight: 600; color: var(--gray-500); margin-bottom: 0.2rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .filter-select { width: 100%; padding: 0.5rem 0.8rem; border: 1px solid var(--gray-300); border-radius: 10px; background: white; }
+        .btn { padding: 0.5rem 1rem; border-radius: 10px; border: none; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-light); transform: translateY(-1px); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.7rem; }
+        .action-btn { background: none; border: none; color: var(--gray-500); cursor: pointer; padding: 0.3rem; border-radius: 6px; transition: all 0.2s; }
+        .action-btn:hover { color: var(--accent); background: var(--gray-100); }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; margin-bottom: 1.5rem; }
+        .stat-card { background: white; border-radius: 16px; padding: 1.2rem; text-align: center; box-shadow: var(--shadow); transition: all 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .stat-value { font-size: 1.6rem; font-weight: 700; color: var(--primary); }
+        .stat-label { font-size: 0.7rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.3rem; }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.5rem; }
+        .chart-card { background: white; border-radius: 16px; padding: 1.2rem; box-shadow: var(--shadow); }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
+        .chart-title { font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 0.3rem; }
+        .chart-title i { color: var(--accent); }
+        .chart-container { height: 220px; position: relative; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--gray-200); font-size: 0.85rem; }
+        th { background: var(--gray-100); font-weight: 600; color: var(--gray-600); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; }
+        tr:hover td { background: var(--gray-50); }
+        .status-badge { padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.7rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.2rem; }
+        .status-draft { background: var(--gray-200); color: var(--gray-600); }
+        .status-submitted { background: #dbeafe; color: #1e40af; }
+        .status-verified { background: #fef3c7; color: #92400e; }
+        .status-paid { background: #d1fae5; color: #065f46; }
+        .status-rejected { background: #fee2e2; color: #991b1b; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+        .modal-content { background: white; border-radius: 20px; padding: 1.5rem; max-width: 550px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; z-index: 9999; display: none; }
+        .loading-spinner { width: 50px; height: 50px; border: 3px solid var(--gray-200); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .alert { padding: 0.8rem 1rem; border-radius: 10px; margin-bottom: 1rem; font-size: 0.85rem; }
+        .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .alert-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .login-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--primary), var(--primary-light)); }
+        .login-card { background: white; border-radius: 24px; padding: 2.5rem; width: 100%; max-width: 420px; text-align: center; box-shadow: var(--shadow-lg); }
+        .login-logo i { font-size: 3rem; color: var(--accent); margin-bottom: 0.5rem; }
+        .login-logo h1 { font-size: 1.8rem; margin-bottom: 0.2rem; color: var(--primary); }
+        .login-logo p { color: var(--gray-500); margin-bottom: 1.5rem; }
+        .welcome-section { background: linear-gradient(135deg, var(--primary), var(--primary-light)); border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .welcome-section h1 { font-size: 1.4rem; display: flex; align-items: center; gap: 0.5rem; }
+        .welcome-date { background: rgba(255,255,255,0.15); padding: 0.4rem 1rem; border-radius: 30px; font-size: 0.8rem; }
+        @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; } .stats-grid { grid-template-columns: 1fr 1fr; } .charts-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div></div>
+
+    <!-- LOGIN PAGE -->
+    <div id="loginPage" class="login-container">
+        <div class="login-card">
+            <div class="login-logo"><i class="fas fa-building"></i><h1>ARKO GROUP</h1><p>ERP System</p></div>
+            <div class="form-group"><label>Email</label><input type="email" id="loginEmail" class="form-control" placeholder="email@example.com"></div>
+            <div class="form-group"><label>Password</label><input type="password" id="loginPassword" class="form-control" placeholder="••••••••"></div>
+            <button class="btn btn-primary" style="width:100%" onclick="login()">Login</button>
+            <div id="loginError" class="alert alert-error" style="display:none; margin-top:1rem;"></div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="appPage" class="app" style="display:none">
+        <div class="sidebar">
+            <div class="sidebar-header"><div class="logo"><i class="fas fa-building"></i> ARKO GROUP</div></div>
+            <div class="sidebar-menu" id="sidebarMenu"></div>
+        </div>
+        <div class="main">
+            <div class="top-bar">
+                <h1 class="page-title" id="pageTitle">Dashboard Keuangan</h1>
+                <div class="user-menu">
+                    <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">Loading...</div></div>
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+            <div id="content"></div>
+        </div>
+    </div>
+
+    <script>
+    // ==================== KONFIGURASI SUPABASE ====================
+    const SUPABASE_URL = 'https://vtkineqwvnuzxxcegofx.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0a2luZXF3dm51enh4Y2Vnb2Z4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMDU4OTMsImV4cCI6MjA5MDg4MTg5M30.7ygetyHX-_-5JDU-pXS2eP3iLgpI_zP6Gqms1gSY0ys';
+    const GAS_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzQDc9CUWZELs7iw9a4lDJJPC74jMMZr5savRc-2GTWnuWpFyUytI_zrYYgaCWZfXrMMQ/exec';
+    const DRIVE_FOLDER_ID = '15OqEW00HkWJrBEJtPnNPV5jwaMZ24wik';
+    
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let currentUser = null, currentUserRole = null, currentCompanyId = 1;
+    let companies = [], accounts = [], projects = [], customers = [];
+    let statusChart = null, companyChart = null;
+    
+    // ==================== FUNGSI HELPER ====================
+    function showLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; }
+    function hideLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
+    function formatNumber(num) { if (!num) return '0'; return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+    function parseRupiah(str) { if (!str) return 0; let cleaned = str.toString().replace(/[^0-9,-]/g, '').replace(',', '.'); return parseFloat(cleaned) || 0; }
+    
+    async function getCustomerList(companyId) { let { data } = await supabaseClient.from('customers').select('*').eq('company_id', companyId); return data || []; }
+    async function getProjectList(companyId) { let { data } = await supabaseClient.from('projects').select('*').eq('company_id', companyId); return data || []; }
+    async function getAccountList(companyId) { let { data } = await supabaseClient.from('chart_of_accounts').select('*').eq('company_id', companyId); return data || []; }
+    // ==================== AUTHENTICATION ====================
+    async function login() {
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        if (!email || !password) { let err = document.getElementById('loginError'); err.innerText = 'Isi email dan password'; err.style.display = 'block'; return; }
+        showLoading();
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) { hideLoading(); let err = document.getElementById('loginError'); err.innerText = error.message; err.style.display = 'block'; return; }
+        const { data: profile } = await supabaseClient.from('user_profiles').select('*').eq('email', email).single();
+        currentUser = data.user; currentUserRole = profile?.role || 'staff'; currentCompanyId = profile?.company_id || 1;
+        const { data: comps } = await supabaseClient.from('companies').select('*'); companies = comps || [];
+        document.getElementById('loginPage').style.display = 'none'; document.getElementById('appPage').style.display = 'flex';
+        document.getElementById('userName').innerText = profile?.name || email; document.getElementById('userRole').innerText = currentUserRole;
+        document.getElementById('userAvatar').innerText = (profile?.name || email).charAt(0).toUpperCase();
+        renderSidebar(); loadDashboard(); hideLoading();
+    }
+    
+    async function logout() { await supabaseClient.auth.signOut(); document.getElementById('loginPage').style.display = 'flex'; document.getElementById('appPage').style.display = 'none'; }
+    
+    function renderSidebar() {
+        let menus = [
+            { icon: 'fa-chart-pie', label: 'Dashboard', action: 'dashboard', roles: ['direktur', 'finance', 'staff'] },
+            { icon: 'fa-book', label: 'Jurnal & Akuntansi', type: 'dropdown', submenus: [
+                { icon: 'fa-pen', label: 'Input Jurnal', action: 'jurnal', roles: ['direktur', 'finance'] },
+                { icon: 'fa-book', label: 'Buku Besar', action: 'ledger', roles: ['direktur', 'finance'] },
+                { icon: 'fa-chart-line', label: 'Laba Rugi', action: 'labarugi', roles: ['direktur', 'finance'] },
+                { icon: 'fa-scale-balanced', label: 'Neraca', action: 'neraca', roles: ['direktur', 'finance'] },
+                { icon: 'fa-book-open', label: 'Jurnal Umum', action: 'jurnal_umum', roles: ['direktur', 'finance'] }
+            ] },
+            { icon: 'fa-file-invoice-dollar', label: 'Invoice & Payment', type: 'dropdown', submenus: [
+                { icon: 'fa-user', label: 'Invoice Penjualan (AR)', action: 'invoice_penjualan', roles: ['direktur', 'finance'] },
+                { icon: 'fa-users', label: 'Invoice Pembelian (AP)', action: 'invoice_pembelian', roles: ['direktur', 'finance'] },
+                { icon: 'fa-money-bill-wave', label: 'Payment Request', action: 'payment', roles: ['direktur', 'finance', 'staff'] }
+            ] },
+            { icon: 'fa-chart-pie', label: 'Manajemen Aset', type: 'dropdown', submenus: [
+                { icon: 'fa-clock', label: 'Transaksi Berulang', action: 'recurring', roles: ['direktur', 'finance'] },
+                { icon: 'fa-chart-pie', label: 'Manajemen Aset', action: 'aset', roles: ['direktur', 'finance'] },
+                { icon: 'fa-scale-balanced', label: 'Saldo Awal', action: 'opening_balance', roles: ['direktur', 'finance'] }
+            ] },
+            { icon: 'fa-database', label: 'Master Data', type: 'dropdown', submenus: [
+                { icon: 'fa-users', label: 'Data Customer', action: 'customers', roles: ['direktur', 'finance'] },
+                { icon: 'fa-project-diagram', label: 'Data Project', action: 'projects', roles: ['direktur', 'finance'] }
+            ] }
+        ];
+        let html = '';
+        menus.forEach(menu => {
+            if (menu.type === 'dropdown') {
+                let hasAccess = menu.submenus.some(sub => sub.roles.includes(currentUserRole));
+                if (!hasAccess) return;
+                html += `<div class="menu-item has-dropdown" onclick="toggleDropdown('${menu.label}')"><i class="fas ${menu.icon}"></i><span style="flex:1;">${menu.label}</span><i class="fas fa-chevron-down" id="arrow-${menu.label}"></i></div><div id="dropdown-${menu.label}" class="dropdown-menu" style="display:none;">`;
+                menu.submenus.forEach(sub => { if (sub.roles.includes(currentUserRole)) html += `<div class="menu-item submenu" onclick="showMenu('${sub.action}')"><i class="fas ${sub.icon}"></i> ${sub.label}</div>`; });
+                html += `</div>`;
+            } else if (menu.roles.includes(currentUserRole)) {
+                html += `<div class="menu-item" onclick="showMenu('${menu.action}')"><i class="fas ${menu.icon}"></i> ${menu.label}</div>`;
+            }
+        });
+        document.getElementById('sidebarMenu').innerHTML = html;
+    }
+    
+    function toggleDropdown(label) { let d = document.getElementById(`dropdown-${label}`); let a = document.getElementById(`arrow-${label}`); if (d.style.display === 'none') { d.style.display = 'block'; if(a) a.style.transform = 'rotate(180deg)'; } else { d.style.display = 'none'; if(a) a.style.transform = 'rotate(0deg)'; } }
+    
+    function showMenu(menu) {
+        document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+        if (event && event.currentTarget) event.currentTarget.classList.add('active');
+        const titles = { dashboard: 'Dashboard', jurnal: 'Input Jurnal', invoice_penjualan: 'Invoice Penjualan', invoice_pembelian: 'Invoice Pembelian', payment: 'Payment Request', ledger: 'Buku Besar', labarugi: 'Laba Rugi', neraca: 'Neraca', jurnal_umum: 'Jurnal Umum', recurring: 'Transaksi Berulang', aset: 'Manajemen Aset', customers: 'Data Customer', projects: 'Data Project', opening_balance: 'Saldo Awal' };
+        document.getElementById('pageTitle').innerText = titles[menu] || 'ERP';
+        if (menu === 'dashboard') loadDashboard();
+        else if (menu === 'jurnal') loadJurnalForm();
+        else if (menu === 'invoice_penjualan') loadInvoiceList();
+        else if (menu === 'invoice_pembelian') loadVendorInvoiceList();
+        else if (menu === 'payment') loadPaymentRequests();
+        else if (menu === 'ledger') loadLedgerForm();
+        else if (menu === 'labarugi') loadLabaRugiForm();
+        else if (menu === 'neraca') loadNeracaForm();
+        else if (menu === 'jurnal_umum') loadJurnalUmum();
+        else if (menu === 'recurring') loadRecurringList();
+        else if (menu === 'aset') loadAsetList();
+        else if (menu === 'customers') loadCustomerList();
+        else if (menu === 'projects') loadProjectList();
+        else if (menu === 'opening_balance') alert('Fitur Saldo Awal menyusul');
+    }
+    
+    // ==================== DASHBOARD ====================
+    async function loadDashboard() {
+        if (statusChart) statusChart.destroy(); if (companyChart) companyChart.destroy();
+        const today = new Date(); const currentMonth = today.getMonth() + 1; const currentYear = today.getFullYear();
+        const greeting = today.getHours() < 12 ? 'Selamat Pagi' : today.getHours() < 18 ? 'Selamat Siang' : 'Selamat Malam';
+        const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        
+        let companyOptions = '<option value="all">Semua Perusahaan</option>';
+        companies.forEach(c => { companyOptions += `<option value="${c.id}">${c.nama}</option>`; });
+        
+        let html = `
+            <div class="welcome-section">
+                <div><h1><i class="fas fa-hand-wave"></i> ${greeting}, ${currentUser?.name || 'User'}!</h1><p><i class="fas fa-chart-pie"></i> Ringkasan keuangan konsolidasi</p></div>
+                <div class="welcome-date"><i class="far fa-calendar-alt"></i> ${today.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' })}</div>
+            </div>
+            <div class="filter-card"><div class="filter-grid">
+                <div class="filter-item"><label class="filter-label">Perusahaan</label><select id="dashboardCompany" class="filter-select">${companyOptions}</select></div>
+                <div class="filter-item"><label class="filter-label">Bulan</label><select id="dashboardMonth" class="filter-select"><option value="all">Semua Bulan</option>${monthNames.map((m,i)=>`<option value="${i+1}" ${i+1==currentMonth?'selected':''}>${m}</option>`).join('')}</select></div>
+                <div class="filter-item"><label class="filter-label">Tahun</label><select id="dashboardYear" class="filter-select"><option value="all">Semua Tahun</option><option value="${currentYear-1}">${currentYear-1}</option><option value="${currentYear}" selected>${currentYear}</option><option value="${currentYear+1}">${currentYear+1}</option></select></div>
+                <div class="filter-item"><button class="btn btn-primary" onclick="refreshDashboard()"><i class="fas fa-sync-alt"></i> Perbarui</button></div>
+            </div></div>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-value" id="totalKas">Rp 0</div><div class="stat-label">Total Kas</div></div>
+                <div class="stat-card"><div class="stat-value" id="totalPending">Rp 0</div><div class="stat-label">Pending Approval</div></div>
+                <div class="stat-card"><div class="stat-value" id="totalApproved">Rp 0</div><div class="stat-label">Sudah Dibayar</div></div>
+                <div class="stat-card"><div class="stat-value" id="totalRequest">0</div><div class="stat-label">Total Request</div></div>
+            </div>
+            <div class="charts-grid">
+                <div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-chart-pie"></i> Status Payment Request</h3><span class="badge" id="periodLabel">${monthNames[currentMonth-1]} ${currentYear}</span></div><div class="chart-container"><canvas id="statusChart"></canvas></div></div>
+                <div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-chart-bar"></i> Per Perusahaan</h3></div><div class="chart-container"><canvas id="companyChart"></canvas></div></div>
+            </div>
+            <div class="card"><h2><i class="fas fa-clock"></i> Payment Request Terbaru</h2>
+            <div style="overflow-x:auto;"><table><thead><tr><th>ID</th><th>Tgl</th><th>Perusahaan</th><th>Deskripsi</th><th>Jumlah</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="recentTableBody"></tbody></table></div></div>`;
+        document.getElementById('content').innerHTML = html;
+        await refreshDashboard();
+    }
+    
+    async function refreshDashboard() {
+        let companyId = document.getElementById('dashboardCompany')?.value || 'all';
+        let month = document.getElementById('dashboardMonth')?.value || 'all';
+        let year = document.getElementById('dashboardYear')?.value || 'all';
+        let query = supabaseClient.from('payment_requests').select('*');
+        if (companyId !== 'all') query = query.eq('company_id', parseInt(companyId));
+        if (month !== 'all' && year !== 'all') { let start = `${year}-${month.padStart(2,'0')}-01`; let end = `${year}-${month.padStart(2,'0')}-31`; query = query.gte('request_date', start).lte('request_date', end); }
+        let { data: payments } = await query.order('created_at', { ascending: false });
+        let totalPending = payments?.filter(p => p.status === 'submitted' || p.status === 'verified').reduce((a,b) => a + (b.amount||0), 0) || 0;
+        let totalApproved = payments?.filter(p => p.status === 'paid').reduce((a,b) => a + (b.amount||0), 0) || 0;
+        document.getElementById('totalKas').innerHTML = `Rp ${formatNumber(totalApproved)}`;
+        document.getElementById('totalPending').innerHTML = `Rp ${formatNumber(totalPending)}`;
+        document.getElementById('totalApproved').innerHTML = `Rp ${formatNumber(totalApproved)}`;
+        document.getElementById('totalRequest').innerHTML = payments?.length || 0;
+        
+        let statusData = { draft: 0, submitted: 0, verified: 0, paid: 0, rejected: 0 };
+        let companyData = { 1:0, 2:0, 3:0, 4:0 };
+        payments?.forEach(p => { statusData[p.status] = (statusData[p.status] || 0) + 1; companyData[p.company_id] = (companyData[p.company_id] || 0) + p.amount; });
+        
+        if (statusChart) statusChart.destroy();
+        statusChart = new Chart(document.getElementById('statusChart'), { type: 'pie', data: { labels: ['Draft','Submitted','Verified','Paid','Rejected'], datasets: [{ data: [statusData.draft,statusData.submitted,statusData.verified,statusData.paid,statusData.rejected], backgroundColor: ['#9ca3af','#3b82f6','#f59e0b','#10b981','#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+        
+        if (companyChart) companyChart.destroy();
+        companyChart = new Chart(document.getElementById('companyChart'), { type: 'bar', data: { labels: ['Arko','MMC','USA','MST'], datasets: [{ data: [companyData[1]/1e6, companyData[2]/1e6, companyData[3]/1e6, companyData[4]/1e6], backgroundColor: '#3b82f6' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => 'Rp ' + v + ' Jt' } } } } });
+        
+        let tbody = ''; (payments || []).slice(0,5).forEach(p => { let company = companies.find(c => c.id == p.company_id)?.nama || '-'; tbody += `<tr><td>#${p.id}</td><td>${p.request_date || '-'}</td><td>${company}</td><td>${p.description || '-'}</td><td>Rp ${formatNumber(p.amount)}</td><td><span class="status-badge status-${p.status}">${p.status}</span></td><td><button class="action-btn" onclick="viewPaymentRequest(${p.id})"><i class="fas fa-eye"></i></button></td></tr>`; });
+        document.getElementById('recentTableBody').innerHTML = tbody || '<tr><td colspan="7">Belum ada数据</td></tr>';
+    }
+    
+    // ==================== PAYMENT REQUESTS ====================
+    async function loadPaymentRequests() {
+        let { data: payments } = await supabaseClient.from('payment_requests').select('*').order('id', { ascending: false });
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-money-bill-wave"></i> Payment Request</h2><button class="btn btn-primary" onclick="showNewPaymentForm()"><i class="fas fa-plus"></i> Buat Request</button></div>
+            <div class="filter-card"><div class="filter-grid"><div class="filter-item"><label class="filter-label">Status</label><select id="paymentStatusFilter" class="filter-select" onchange="filterPaymentRequests()"><option value="all">Semua</option><option value="draft">Draft</option><option value="submitted">Submitted</option><option value="verified">Verified</option><option value="paid">Paid</option></select></div></div></div>
+            <div class="table-container"><table class="table"><thead><tr><th>ID</th><th>Tgl</th><th>Deskripsi</th><th>Jumlah</th><th>Total Transfer</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="paymentTableBody"></tbody></table></div></div>`;
+        document.getElementById('content').innerHTML = html;
+        renderPaymentTable(payments);
+    }
+    
+    function renderPaymentTable(payments) {
+        let statusFilter = document.getElementById('paymentStatusFilter')?.value || 'all';
+        let filtered = statusFilter === 'all' ? payments : payments?.filter(p => p.status === statusFilter);
+        let tbody = '';
+        (filtered || []).forEach(p => {
+            let actions = `<button class="action-btn" onclick="viewPaymentRequest(${p.id})"><i class="fas fa-eye"></i></button>`;
+            if (p.status === 'draft' && currentUserRole === 'staff') actions += ` <button class="action-btn" onclick="submitPaymentRequest(${p.id})" style="color:var(--success);"><i class="fas fa-paper-plane"></i></button>`;
+            if (p.status === 'submitted' && currentUserRole === 'finance') actions += ` <button class="action-btn" onclick="verifyPaymentRequest(${p.id})" style="color:var(--success);"><i class="fas fa-check-circle"></i></button>`;
+            if (p.status === 'verified' && currentUserRole === 'direktur') actions += ` <button class="action-btn" onclick="approvePaymentRequest(${p.id})" style="color:var(--success);"><i class="fas fa-thumbs-up"></i></button>`;
+            tbody += `<tr><td>#${p.id}</td><td>${p.request_date || '-'}</td><td>${p.description || '-'}</td><td>Rp ${formatNumber(p.amount)}</td><td>Rp ${formatNumber(p.total_with_tax || p.amount)}</td><td><span class="status-badge status-${p.status}">${p.status}</span></td><td>${actions}</td></tr>`;
+        });
+        document.getElementById('paymentTableBody').innerHTML = tbody || '<td><td colspan="7">Belum ada data</td></tr>';
+    }
+    
+    function filterPaymentRequests() { loadPaymentRequests(); }
+    
+    function showNewPaymentForm() {
+        let modal = document.createElement('div'); modal.className = 'modal-overlay';
+        modal.innerHTML = `<div class="modal-content"><h3><i class="fas fa-plus"></i> Buat Payment Request</h3>
+            <div class="form-group"><label>Deskripsi</label><input type="text" id="newDesc" class="form-control" placeholder="Contoh: Pembayaran sewa"></div>
+            <div class="form-group"><label>Jumlah (Rp)</label><input type="number" id="newAmount" class="form-control" placeholder="1000000"></div>
+            <div class="form-group"><label>Bank / No Rekening</label><input type="text" id="newBank" class="form-control" placeholder="BCA 1234567890"></div>
+            <div class="form-group"><label>Upload Bukti</label><input type="file" id="newFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png"></div>
+            <div style="display:flex; gap:1rem; margin-top:1rem;"><button class="btn btn-primary" onclick="saveNewPayment()">Simpan</button><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Batal</button></div>
+            <div id="newPaymentMsg" style="margin-top:1rem;"></div></div>`;
+        document.body.appendChild(modal);
+    }
+    
+    async function saveNewPayment() {
+        let desc = document.getElementById('newDesc').value, amount = document.getElementById('newAmount').value, bank = document.getElementById('newBank').value, file = document.getElementById('newFile').files[0];
+        if (!desc || !amount) { document.getElementById('newPaymentMsg').innerHTML = '<div class="alert alert-error">Isi semua field!</div>'; return; }
+        let buktiUrl = '';
+        if (file) {
+            let reader = new FileReader();
+            reader.onload = async (e) => {
+                let base64 = e.target.result;
+                let res = await fetch(GAS_UPLOAD_URL, { method: 'POST', body: JSON.stringify({ action: 'upload', file: base64, name: file.name, mimeType: file.type, folderId: DRIVE_FOLDER_ID }) });
+                let result = await res.json();
+                if (result.success) buktiUrl = result.url;
+                await saveToSupabase(desc, amount, bank, buktiUrl);
+            };
+            reader.readAsDataURL(file);
+        } else { await saveToSupabase(desc, amount, bank, ''); }
+    }
+    
+    async function saveToSupabase(desc, amount, bank, buktiUrl) {
+        let { error } = await supabaseClient.from('payment_requests').insert({ company_id: currentCompanyId, request_date: new Date().toISOString().split('T')[0], description: desc, amount: parseInt(amount), bank_account: bank, bukti_url: buktiUrl, requester_email: currentUser?.email, status: 'draft' });
+        if (error) { document.getElementById('newPaymentMsg').innerHTML = `<div class="alert alert-error">${error.message}</div>`; }
+        else { document.getElementById('newPaymentMsg').innerHTML = '<div class="alert alert-success">✅ Berhasil!</div>'; setTimeout(() => { document.querySelector('.modal-overlay')?.remove(); loadPaymentRequests(); }, 1500); }
+    }
+    
+    async function submitPaymentRequest(id) { await supabaseClient.from('payment_requests').update({ status: 'submitted', submitted_at: new Date() }).eq('id', id); loadPaymentRequests(); }
+    async function verifyPaymentRequest(id) { await supabaseClient.from('payment_requests').update({ status: 'verified', verified_at: new Date(), verified_by: currentUser?.email }).eq('id', id); loadPaymentRequests(); }
+    async function approvePaymentRequest(id) { await supabaseClient.from('payment_requests').update({ status: 'paid', paid_at: new Date(), approved_by: currentUser?.email }).eq('id', id); loadPaymentRequests(); }
+    async function viewPaymentRequest(id) { let { data } = await supabaseClient.from('payment_requests').select('*').eq('id', id).single(); alert(`Payment #${id}\nDeskripsi: ${data.description}\nJumlah: Rp ${formatNumber(data.amount)}\nStatus: ${data.status}\nBukti: ${data.bukti_url || '-'}`); }
+    
+    // ==================== INVOICE ====================
+    async function loadInvoiceList() {
+        let { data: invoices } = await supabaseClient.from('invoices').select('*').order('id', { ascending: false });
+        let customersList = await getCustomerList(currentCompanyId);
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-file-invoice"></i> Invoice Penjualan</h2><button class="btn btn-primary" onclick="alert('Fitur Create Invoice menyusul')"><i class="fas fa-plus"></i> Buat Invoice</button></div>
+            <div class="table-container"><table class="table"><thead><tr><th>No Invoice</th><th>Customer</th><th>Tanggal</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="invoiceTableBody"></tbody></table></div></div>`;
+        document.getElementById('content').innerHTML = html;
+        let tbody = ''; (invoices || []).forEach(inv => { let customer = customersList.find(c => c.id == inv.customer_id); tbody += `<tr><td><strong>${inv.invoice_no || '#'+inv.id}</strong></td><td>${customer?.name || '-'}</td><td>${inv.invoice_date || '-'}</td><td>Rp ${formatNumber(inv.total)}</td><td><span class="status-badge status-${inv.status}">${inv.status}</span></td><td><button class="action-btn" onclick="alert('Detail Invoice menyusul')"><i class="fas fa-eye"></i></button></td></tr>`; });
+        document.getElementById('invoiceTableBody').innerHTML = tbody || '<tr><td colspan="6">Belum ada invoice</td></tr>';
+    }
+    
+    // ==================== VENDOR INVOICE ====================
+    async function loadVendorInvoiceList() {
+        let { data: invoices } = await supabaseClient.from('vendor_invoices').select('*').order('id', { ascending: false });
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-users"></i> Invoice Pembelian (AP)</h2><button class="btn btn-primary" onclick="alert('Fitur tambah invoice vendor menyusul')"><i class="fas fa-plus"></i> Tambah Invoice</button></div>
+            <div class="table-container"><table class="table"><thead><tr><th>Vendor</th><th>No Invoice</th><th>Tanggal</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="vendorTableBody"></tbody></table></div></div>`;
+        document.getElementById('content').innerHTML = html;
+        let tbody = ''; (invoices || []).forEach(inv => { tbody += `<tr><td>${inv.vendor_name || '-'}</td><td>${inv.invoice_no || '-'}</td><td>${inv.invoice_date || '-'}</td><td>Rp ${formatNumber(inv.total)}</td><td><span class="status-badge status-${inv.payment_status}">${inv.payment_status}</span></td><td><button class="action-btn"><i class="fas fa-eye"></i></button></td></tr>`; });
+        document.getElementById('vendorTableBody').innerHTML = tbody || '<tr><td colspan="6">Belum ada data</td></tr>';
+    }
+    
+    // ==================== JURNAL (LENGKAP) ====================
+    async function loadJurnalForm() {
+        accounts = await getAccountList(currentCompanyId);
+        projects = await getProjectList(currentCompanyId);
+        let accountOptions = '<option value="">Pilih Akun</option>';
+        accounts.forEach(a => accountOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`);
+        let projectOptions = '<option value="">Tanpa Project</option>';
+        projects.forEach(p => projectOptions += `<option value="${p.id}">${p.code} - ${p.name}</option>`);
+        
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-pen"></i> Input Jurnal</h2></div>
+            <div class="form-group"><label><i class="fas fa-building"></i> Perusahaan</label><select id="companySelector" class="form-control">${companies.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('')}</select></div>
+            <div class="form-group"><label><i class="fas fa-calendar"></i> Tanggal</label><input type="date" id="jurnalTanggal" class="form-control" value="${new Date().toISOString().split('T')[0]}"></div>
+            <div class="form-group"><label><i class="fas fa-align-left"></i> Deskripsi</label><input type="text" id="jurnalDeskripsi" class="form-control" placeholder="Contoh: Setoran modal"></div>
+            <div class="form-group"><label><i class="fas fa-project-diagram"></i> Project</label><select id="jurnalProject" class="form-control searchable-dropdown">${projectOptions}</select></div>
+            <div style="background:var(--gray-50); padding:1.5rem; border-radius:12px;"><h4 style="margin-bottom:1rem;"><i class="fas fa-list"></i> Detail Jurnal</h4>
+            <div id="jurnalLines"><div class="line-item" style="display:grid; grid-template-columns:2fr 1fr 1fr 1.5fr auto; gap:0.5rem; margin-bottom:0.5rem;">
+                <select class="account-select form-control">${accountOptions}</select>
+                <input type="text" class="debit-input form-control" placeholder="Debit" onkeyup="formatMoney(this)">
+                <input type="text" class="credit-input form-control" placeholder="Kredit" onkeyup="formatMoney(this)">
+                <input type="text" class="desc-input form-control" placeholder="Keterangan">
+                <div style="width:36px;"></div>
+            </div></div>
+            <button class="btn btn-secondary btn-sm" onclick="addJurnalLine()"><i class="fas fa-plus"></i> Tambah Baris</button>
+            <div style="background:var(--primary); color:white; padding:1rem; border-radius:10px; margin-top:1rem; display:flex; justify-content:space-between;"><span>Total Debit - Kredit</span><span id="totalSelisih">Rp 0</span></div></div>
+            <div style="display:flex; gap:1rem; justify-content:flex-end; margin-top:1.5rem;"><button class="btn btn-primary" onclick="saveJurnal()"><i class="fas fa-save"></i> Simpan Jurnal</button></div>
+            <div id="jurnalResult" style="margin-top:1rem;"></div></div>`;
+        document.getElementById('content').innerHTML = html;
+        $('.searchable-dropdown').select2({ width: '100%' });
+    }
+    
+    function addJurnalLine() {
+        let accountOptions = '<option value="">Pilih Akun</option>';
+        accounts.forEach(a => accountOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`);
+        let lines = document.getElementById('jurnalLines');
+        let newLine = document.createElement('div'); newLine.className = 'line-item'; newLine.style.display = 'grid'; newLine.style.gridTemplateColumns = '2fr 1fr 1fr 1.5fr auto'; newLine.style.gap = '0.5rem'; newLine.style.marginBottom = '0.5rem';
+        newLine.innerHTML = `<select class="account-select form-control">${accountOptions}</select><input type="text" class="debit-input form-control" placeholder="Debit" onkeyup="formatMoney(this)"><input type="text" class="credit-input form-control" placeholder="Kredit" onkeyup="formatMoney(this)"><input type="text" class="desc-input form-control" placeholder="Keterangan"><button class="btn btn-danger btn-sm" onclick="this.closest('.line-item').remove(); updateJurnalTotal()"><i class="fas fa-trash"></i></button>`;
+        lines.appendChild(newLine);
+    }
+    
+    function updateJurnalTotal() { let totalDebit=0,totalCredit=0; document.querySelectorAll('.line-item').forEach(item=>{ totalDebit+=parseRupiah(item.querySelector('.debit-input')?.value); totalCredit+=parseRupiah(item.querySelector('.credit-input')?.value); }); document.getElementById('totalSelisih').innerHTML = `Rp ${formatNumber(totalDebit-totalCredit)}`; }
+    
+    async function saveJurnal() {
+        let lines = []; let totalDebit=0,totalCredit=0;
+        document.querySelectorAll('.line-item').forEach(item=>{
+            let account = item.querySelector('.account-select').value;
+            let debit = parseRupiah(item.querySelector('.debit-input').value);
+            let credit = parseRupiah(item.querySelector('.credit-input').value);
+            let desc = item.querySelector('.desc-input').value;
+            if(!account) { alert('Pilih akun'); throw new Error(); }
+            totalDebit+=debit; totalCredit+=credit;
+            lines.push({ account_code: account, debit, credit, description: desc });
+        });
+        if(Math.abs(totalDebit-totalCredit)>0.01) { alert('Total debit harus sama dengan total kredit'); return; }
+        showLoading();
+        let { error } = await supabaseClient.from('journals').insert({
+            company_id: parseInt(document.getElementById('companySelector').value),
+            journal_date: document.getElementById('jurnalTanggal').value,
+            period: document.getElementById('jurnalTanggal').value.substring(0,7),
+            description: document.getElementById('jurnalDeskripsi').value,
+            project_id: document.getElementById('jurnalProject').value || null,
+            created_by: currentUser?.email,
+            status: 'posted'
+        }).select().single();
+        if(error) { hideLoading(); document.getElementById('jurnalResult').innerHTML = `<div class="alert alert-error">${error.message}</div>`; return; }
+        for(let line of lines) {
+            await supabaseClient.from('journal_lines').insert({ journal_id: journalData.id, account_code: line.account_code, debit: line.debit, credit: line.credit, description: line.description });
+        }
+        hideLoading(); document.getElementById('jurnalResult').innerHTML = '<div class="alert alert-success">✅ Jurnal berhasil disimpan!</div>';
+        setTimeout(()=>loadJurnalForm(),2000);
+    }
+    
+    // ==================== BUKU BESAR ====================
+    async function loadLedgerForm() {
+        accounts = await getAccountList(currentCompanyId);
+        let accountOptions = '<option value="">Pilih Akun</option>';
+        accounts.forEach(a => accountOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`);
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-book"></i> Buku Besar</h2></div>
+            <div class="form-group"><label>Perusahaan</label><select id="ledgerCompany" class="form-control">${companies.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('')}</select></div>
+            <div class="form-group"><label>Akun</label><select id="ledgerAccount" class="form-control searchable-dropdown">${accountOptions}</select></div>
+            <div class="form-group"><label>Periode Mulai</label><input type="date" id="ledgerStart" class="form-control" value="${new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]}"></div>
+            <div class="form-group"><label>Periode Akhir</label><input type="date" id="ledgerEnd" class="form-control" value="${new Date().toISOString().split('T')[0]}"></div>
+            <button class="btn btn-primary" onclick="showLedger()"><i class="fas fa-search"></i> Tampilkan</button>
+            <div id="ledgerResult" style="margin-top:1.5rem;"></div></div>`;
+        document.getElementById('content').innerHTML = html;
+        $('.searchable-dropdown').select2({ width: '100%' });
+    }
+    
+    async function showLedger() {
+        let companyId = parseInt(document.getElementById('ledgerCompany').value);
+        let accountCode = document.getElementById('ledgerAccount').value;
+        let startDate = document.getElementById('ledgerStart').value;
+        let endDate = document.getElementById('ledgerEnd').value;
+        if(!accountCode) { alert('Pilih akun'); return; }
+        showLoading();
+        let { data: journals } = await supabaseClient.from('journals').select('*').eq('company_id', companyId).gte('journal_date', startDate).lte('journal_date', endDate);
+        let { data: lines } = await supabaseClient.from('journal_lines').select('*').in('journal_id', journals.map(j=>j.id));
+        let filtered = lines.filter(l=>l.account_code===accountCode);
+        let balance = 0; let html = '<table class="table"><thead><tr><th>Tanggal</th><th>Deskripsi</th><th>Debit</th><th>Kredit</th><th>Saldo</th></tr></thead><tbody>';
+        for(let line of filtered) {
+            let journal = journals.find(j=>j.id===line.journal_id);
+            let change = line.debit - line.credit;
+            balance += change;
+            html += `<tr><td>${journal.journal_date}</td><td>${journal.description}</td><td class="text-right">${line.debit>0?formatNumber(line.debit):''}</td><td class="text-right">${line.credit>0?formatNumber(line.credit):''}</td><td class="text-right">${formatNumber(balance)}</td></tr>`;
+        }
+        html += '</tbody></table>';
+        document.getElementById('ledgerResult').innerHTML = html;
+        hideLoading();
+    }
+    
+    // ==================== LABA RUGI ====================
+    async function loadLabaRugiForm() {
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-chart-line"></i> Laba Rugi</h2></div>
+            <div class="form-group"><label>Perusahaan</label><select id="lrCompany" class="form-control">${companies.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('')}</select></div>
+            <div class="form-group"><label>Periode Mulai</label><input type="date" id="lrStart" class="form-control" value="${new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]}"></div>
+            <div class="form-group"><label>Periode Akhir</label><input type="date" id="lrEnd" class="form-control" value="${new Date().toISOString().split('T')[0]}"></div>
+            <button class="btn btn-primary" onclick="showLabaRugi()"><i class="fas fa-search"></i> Tampilkan</button>
+            <div id="lrResult" style="margin-top:1.5rem;"></div></div>`;
+        document.getElementById('content').innerHTML = html;
+    }
+    
+    async function showLabaRugi() {
+        let companyId = parseInt(document.getElementById('lrCompany').value);
+        let startDate = document.getElementById('lrStart').value;
+        let endDate = document.getElementById('lrEnd').value;
+        showLoading();
+        let { data: journals } = await supabaseClient.from('journals').select('*').eq('company_id', companyId).gte('journal_date', startDate).lte('journal_date', endDate);
+        let { data: lines } = await supabaseClient.from('journal_lines').select('*').in('journal_id', journals.map(j=>j.id));
+        let { data: coa } = await supabaseClient.from('chart_of_accounts').select('*').eq('company_id', companyId);
+        let pendapatan = [], beban = [];
+        let totalPendapatan = 0, totalBeban = 0;
+        for(let acc of coa.filter(a=>a.account_type==='Pendapatan')) {
+            let amount = lines.filter(l=>l.account_code===acc.account_code).reduce((sum,l)=>sum + (l.credit - l.debit),0);
+            if(amount!==0) { pendapatan.push({name:acc.account_name, amount}); totalPendapatan+=amount; }
+        }
+        for(let acc of coa.filter(a=>a.account_type==='Beban')) {
+            let amount = lines.filter(l=>l.account_code===acc.account_code).reduce((sum,l)=>sum + (l.debit - l.credit),0);
+            if(amount!==0) { beban.push({name:acc.account_name, amount}); totalBeban+=amount; }
+        }
+        let html = `<div class="card"><h3>PENDAPATAN</h3><table class="table">${pendapatan.map(p=>`<tr><td>${p.name}</td><td class="text-right">Rp ${formatNumber(p.amount)}</td></tr>`).join('')}<tr class="fw-bold"><td><strong>Total Pendapatan</strong></td><td class="text-right"><strong>Rp ${formatNumber(totalPendapatan)}</strong></td></tr></table>
+        <h3 class="mt-3">BEBAN</h3><table class="table">${beban.map(b=>`<tr><td>${b.name}</td><td class="text-right">Rp ${formatNumber(b.amount)}</td></tr>`).join('')}<tr class="fw-bold"><td><strong>Total Beban</strong></td><td class="text-right"><strong>Rp ${formatNumber(totalBeban)}</strong></td></tr></table>
+        <div class="alert alert-success mt-3"><strong>LABA BERSIH: Rp ${formatNumber(totalPendapatan - totalBeban)}</strong></div>`;
+        document.getElementById('lrResult').innerHTML = html;
+        hideLoading();
+    }
+    
+    // ==================== NERACA ====================
+    async function loadNeracaForm() {
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-scale-balanced"></i> Neraca</h2></div>
+            <div class="form-group"><label>Perusahaan</label><select id="neracaCompany" class="form-control">${companies.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('')}</select></div>
+            <div class="form-group"><label>Per Tanggal</label><input type="date" id="neracaDate" class="form-control" value="${new Date().toISOString().split('T')[0]}"></div>
+            <button class="btn btn-primary" onclick="showNeraca()"><i class="fas fa-search"></i> Tampilkan</button>
+            <div id="neracaResult" style="margin-top:1.5rem;"></div></div>`;
+        document.getElementById('content').innerHTML = html;
+    }
+    
+    async function showNeraca() {
+        let companyId = parseInt(document.getElementById('neracaCompany').value);
+        let asOfDate = document.getElementById('neracaDate').value;
+        showLoading();
+        let { data: journals } = await supabaseClient.from('journals').select('*').eq('company_id', companyId).lte('journal_date', asOfDate);
+        let { data: lines } = await supabaseClient.from('journal_lines').select('*').in('journal_id', journals.map(j=>j.id));
+        let { data: coa } = await supabaseClient.from('chart_of_accounts').select('*').eq('company_id', companyId);
+        let aset = [], liabilitas = [], ekuitas = [];
+        let totalAset = 0, totalLiabilitas = 0, totalEkuitas = 0;
+        for(let acc of coa) {
+            let amount = lines.filter(l=>l.account_code===acc.account_code).reduce((sum,l)=>sum + ((acc.normal_balance==='D'?l.debit-l.credit:l.credit-l.debit)),0);
+            if(amount===0) continue;
+            if(acc.account_type==='Aset') { aset.push({name:acc.account_name, amount}); totalAset+=amount; }
+            else if(acc.account_type==='Liabilitas') { liabilitas.push({name:acc.account_name, amount}); totalLiabilitas+=amount; }
+            else if(acc.account_type==='Ekuitas') { ekuitas.push({name:acc.account_name, amount}); totalEkuitas+=amount; }
+        }
+        let html = `<div class="row"><div class="col-md-6"><div class="card"><h3>ASET</h3><table class="table">${aset.map(a=>`<tr><td>${a.name}</td><td class="text-right">Rp ${formatNumber(a.amount)}</td></tr>`).join('')}<tr class="fw-bold"><td>Total Aset</td><td class="text-right">Rp ${formatNumber(totalAset)}</td></tr></table></div></div>
+        <div class="col-md-6"><div class="card"><h3>LIABILITAS</h3><table class="table">${liabilitas.map(l=>`<tr><td>${l.name}</td><td class="text-right">Rp ${formatNumber(l.amount)}</td></tr>`).join('')}<tr class="fw-bold"><td>Total Liabilitas</td><td class="text-right">Rp ${formatNumber(totalLiabilitas)}</td></tr></table>
+        <h3 class="mt-3">EKUITAS</h3><table class="table">${ekuitas.map(e=>`<tr><td>${e.name}</td><td class="text-right">Rp ${formatNumber(e.amount)}</td></tr>`).join('')}<tr class="fw-bold"><td>Total Ekuitas</td><td class="text-right">Rp ${formatNumber(totalEkuitas)}</td></tr></table></div></div>`;
+        document.getElementById('neracaResult').innerHTML = html;
+        hideLoading();
+    }
+    
+    // ==================== JURNAL UMUM ====================
+    async function loadJurnalUmum() {
+        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-book-open"></i> Jurnal Umum</h2></div>
+            <div class="filter-grid"><div class="filter-item"><label>Perusahaan</label><select id="juCompany" class="filter-select"><option value="all">Semua</option>${companies.map(c=>`<option value="${c.id}">${c.nama}</option>`).join('')}</select></div>
+            <div class="filter-item"><label>Tanggal Mulai</label><input type="date" id="juStart" class="filter-select" value="${new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]}"></div>
+            <div class="filter-item"><label>Tanggal Akhir</label><input type="date" id="juEnd" class="filter-select" value="${new Date().toISOString().split('T')[0]}"></div>
+            <div class="filter-item"><button class="btn btn-primary" onclick="refreshJurnalUmum()">Tampilkan</button></div></div>
+            <div id="jurnalUmumContainer" style="margin-top:1.5rem;"></div></div>`;
+        document.getElementById('content').innerHTML = html;
+        refreshJurnalUmum();
+    }
+    
+    async function refreshJurnalUmum() {
+        let companyId = document.getElementById('juCompany').value;
+        let startDate = document.getElementById('juStart').value;
+        let endDate = document.getElementById('juEnd').value;
+        showLoading();
+        let query = supabaseClient.from('journals').select('*, journal_lines(*)').gte('journal_date', startDate).lte('journal_date', endDate).order('journal_date', {ascending:false});
+        if(companyId!=='all') query = query.eq('company_id', parseInt(companyId));
+        let { data } = await query;
+        let html = '<div class="table-container"><table class="table"><thead><tr><th>Tanggal</th><th>Deskripsi</th><th>Akun</th><th>Debit</th><th>Kredit</th></tr></thead><tbody>';
+        for(let j of data) {
+            for(let line of j.journal_lines) {
+                html += `<tr><td>${j.journal_date}</td><td>${j.description}</td><td>${line.account_code}</td><td class="text-right">${line.debit>0?formatNumber(line.debit):''}</td><td class="text-right">${line.credit>0?formatNumber(line.credit):''}</td></tr>`;
+            }
+        }
+        html += '</tbody></table></div>';
+        document.getElementById('jurnalUmumContainer').innerHTML = html;
+        hideLoading();
+    }
+    
+    // ==================== LAINNYA (placeholder) ====================
+    async function loadRecurringList() { document.getElementById('content').innerHTML = '<div class="card"><h2>Transaksi Berulang</h2><p>Fitur dalam pengembangan</p></div>'; }
+    async function loadAsetList() { document.getElementById('content').innerHTML = '<div class="card"><h2>Manajemen Aset</h2><p>Fitur dalam pengembangan</p></div>'; }
+    async function loadCustomerList() { let cust = await getCustomerList(currentCompanyId); let html = `<div class="card"><h2>Data Customer</h2><div class="table-container"><table class="table"><thead><tr><th>Kode</th><th>Nama</th><th>NPWP</th><th>Telepon</th></tr></thead><tbody>${cust.map(c=>`<tr><td>${c.code||'-'}</td><td>${c.name}</td><td>${c.npwp||'-'}</td><td>${c.telp||'-'}</td></tr>`).join('')}</tbody></table></div></div>`; document.getElementById('content').innerHTML = html; }
+    async function loadProjectList() { let proj = await getProjectList(currentCompanyId); let html = `<div class="card"><h2>Data Project</h2><div class="table-container"><table class="table"><thead><tr><th>Kode</th><th>Nama</th></tr></thead><tbody>${proj.map(p=>`<td>${p.code||'-'}</td><td>${p.name}</td></tr>`).join('')}</tbody></table></div></div>`; document.getElementById('content').innerHTML = html; }
+    
+    async function checkSession() {
+        let { data } = await supabaseClient.auth.getSession();
+        if(data.session) {
+            let { data: profile } = await supabaseClient.from('user_profiles').select('*').eq('email', data.session.user.email).single();
+            currentUser = data.session.user; currentUserRole = profile?.role || 'staff'; currentCompanyId = profile?.company_id || 1;
+            let { data: comps } = await supabaseClient.from('companies').select('*'); companies = comps || [];
+            document.getElementById('loginPage').style.display = 'none'; document.getElementById('appPage').style.display = 'flex';
+            document.getElementById('userName').innerText = profile?.name || currentUser.email; document.getElementById('userRole').innerText = currentUserRole;
+            document.getElementById('userAvatar').innerText = (profile?.name || currentUser.email).charAt(0).toUpperCase();
+            renderSidebar(); loadDashboard();
+        }
+    }
+    checkSession();
+    </script>
+</body>
+</html>
