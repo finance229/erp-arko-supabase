@@ -468,14 +468,29 @@
     }
     
     // ==================== PAYMENT REQUESTS ====================
-    async function loadPaymentRequests() {
-        let { data: payments } = await supabaseClient.from('payment_requests').select('*').order('id', { ascending: false });
-        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-money-bill-wave"></i> Payment Request</h2><div><button class="btn btn-primary" onclick="showNewPaymentForm()"><i class="fas fa-plus"></i> Buat Request</button><button class="btn btn-secondary" onclick="exportTableToExcel('payment_requests')"><i class="fas fa-file-excel"></i> Export Excel</button></div></div>
-            <div class="filter-card"><div class="filter-grid"><div class="filter-item"><label class="filter-label">Status</label><select id="paymentStatusFilter" class="filter-select" onchange="filterPaymentRequests()"><option value="all">Semua</option><option value="draft">Draft</option><option value="submitted">Submitted</option><option value="verified">Verified</option><option value="paid">Paid</option></select></div></div></div>
-            <div class="table-responsive"><table class="table"><thead><tr><th>ID</th><th>Tgl</th><th>Deskripsi</th><th>Jumlah</th><th>Total Transfer</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="paymentTableBody"></tbody></table></div></div>`;
-        document.getElementById('content').innerHTML = html;
-        renderPaymentTable(payments);
-    }
+   async function loadPaymentRequests() {
+    let companyId = document.getElementById('paymentCompanyFilter')?.value || 'all';
+    let query = supabaseClient.from('payment_requests').select('*');
+    if (companyId !== 'all') query = query.eq('company_id', parseInt(companyId));
+    let { data: payments } = await query.order('id', { ascending: false });
+    
+    let companyFilterHtml = `<div class="filter-item">
+        <label class="filter-label">Perusahaan</label>
+        <select id="paymentCompanyFilter" class="filter-select" onchange="loadPaymentRequests()">
+            <option value="all">Semua Perusahaan</option>
+            ${companies.map(c => `<option value="${c.id}">${c.nama}</option>`).join('')}
+        </select>
+    </div>`;
+    
+    let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-money-bill-wave"></i> Payment Request</h2><div><button class="btn btn-primary" onclick="showNewPaymentForm()"><i class="fas fa-plus"></i> Buat Request</button><button class="btn btn-secondary" onclick="exportTableToExcel('payment_requests')"><i class="fas fa-file-excel"></i> Export Excel</button></div></div>
+        <div class="filter-card"><div class="filter-grid">
+            ${companyFilterHtml}
+            <div class="filter-item"><label class="filter-label">Status</label><select id="paymentStatusFilter" class="filter-select" onchange="filterPaymentRequests()"><option value="all">Semua</option><option value="draft">Draft</option><option value="submitted">Submitted</option><option value="verified">Verified</option><option value="paid">Paid</option></select></div>
+        </div></div>
+        <div class="table-responsive"><table class="table"><thead><tr><th>ID</th><th>Tgl</th><th>Deskripsi</th><th>Jumlah</th><th>Total Transfer</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="paymentTableBody"></tbody></table></div></div>`;
+    document.getElementById('content').innerHTML = html;
+    renderPaymentTable(payments);
+}
     
     function renderPaymentTable(payments) {
         let statusFilter = document.getElementById('paymentStatusFilter')?.value || 'all';
@@ -504,10 +519,13 @@
     
     function filterPaymentRequests() { loadPaymentRequests(); }
     
-    function showNewPaymentForm() {
-        let modal = document.createElement('div'); modal.className = 'modal-overlay';
-        modal.innerHTML = `<div class="modal-content"><h3><i class="fas fa-plus"></i> Buat Payment Request</h3>
-            <div class="form-group"><label>Deskripsi</label><input type="text" id="newDesc" class="form-control" placeholder="Contoh: Pembayaran sewa"></div>
+   function showNewPaymentForm() {
+    let companyOptions = '<option value="">Pilih Perusahaan</option>';
+    companies.forEach(c => { companyOptions += `<option value="${c.id}">${c.nama}</option>`; });
+    let modal = document.createElement('div'); modal.className = 'modal-overlay';
+    modal.innerHTML = `<div class="modal-content"><h3><i class="fas fa-plus"></i> Buat Payment Request</h3>
+        <div class="form-group"><label>Perusahaan</label><select id="newPaymentCompany" class="form-control">${companyOptions}</select></div>
+        <div class="form-group"><label>Deskripsi</label><input type="text" id="newDesc" class="form-control" placeholder="Contoh: Pembayaran sewa"></div>
             <div class="form-group"><label>Jumlah (Rp)</label><input type="number" id="newAmount" class="form-control" placeholder="1000000"></div>
             <div class="form-group"><label>Bank / No Rekening</label><input type="text" id="newBank" class="form-control" placeholder="BCA 1234567890"></div>
             <div class="form-group"><label>Upload Bukti</label><input type="file" id="newFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png"></div>
@@ -517,28 +535,38 @@
     }
     
     async function saveNewPayment() {
-        let desc = document.getElementById('newDesc').value, amount = document.getElementById('newAmount').value, bank = document.getElementById('newBank').value, file = document.getElementById('newFile').files[0];
-        if (!desc || !amount) { document.getElementById('newPaymentMsg').innerHTML = '<div class="alert alert-error">Isi semua field!</div>'; return; }
-        let buktiUrl = '';
-        if (file) {
-            let reader = new FileReader();
-            reader.onload = async (e) => {
-                let base64 = e.target.result;
-                let res = await fetch(GAS_UPLOAD_URL, { method: 'POST', body: JSON.stringify({ action: 'upload', file: base64, name: file.name, mimeType: file.type, folderId: DRIVE_FOLDER_ID }) });
-                let result = await res.json();
-                if (result.success) buktiUrl = result.url;
-                await saveToSupabase(desc, amount, bank, buktiUrl);
-            };
-            reader.readAsDataURL(file);
-        } else { await saveToSupabase(desc, amount, bank, ''); }
-    }
-    
-    async function saveToSupabase(desc, amount, bank, buktiUrl) {
-        let { error } = await supabaseClient.from('payment_requests').insert({ company_id: currentCompanyId, request_date: new Date().toISOString().split('T')[0], description: desc, amount: parseInt(amount), bank_account: bank, bukti_url: buktiUrl, requester_email: currentUser?.email, status: 'draft' });
-        if (error) { document.getElementById('newPaymentMsg').innerHTML = `<div class="alert alert-error">${error.message}</div>`; }
-        else { document.getElementById('newPaymentMsg').innerHTML = '<div class="alert alert-success">✅ Berhasil!</div>'; setTimeout(() => { document.querySelector('.modal-overlay')?.remove(); loadPaymentRequests(); loadDashboard(); }, 1500); }
-    }
-    
+    let companyId = document.getElementById('newPaymentCompany').value;
+    if (!companyId) { alert('Pilih perusahaan'); return; }
+    let desc = document.getElementById('newDesc').value, amount = document.getElementById('newAmount').value, bank = document.getElementById('newBank').value, file = document.getElementById('newFile').files[0];
+    if (!desc || !amount) { document.getElementById('newPaymentMsg').innerHTML = '<div class="alert alert-error">Isi semua field!</div>'; return; }
+    let buktiUrl = '';
+    if (file) {
+        let reader = new FileReader();
+        reader.onload = async (e) => {
+            let base64 = e.target.result;
+            let res = await fetch(GAS_UPLOAD_URL, { method: 'POST', body: JSON.stringify({ action: 'upload', file: base64, name: file.name, mimeType: file.type, folderId: DRIVE_FOLDER_ID }) });
+            let result = await res.json();
+            if (result.success) buktiUrl = result.url;
+            await saveToSupabase(desc, amount, bank, buktiUrl, companyId);
+        };
+        reader.readAsDataURL(file);
+    } else { await saveToSupabase(desc, amount, bank, '', companyId); }
+}
+
+async function saveToSupabase(desc, amount, bank, buktiUrl, companyId) {
+    let { error } = await supabaseClient.from('payment_requests').insert({ 
+        company_id: parseInt(companyId), 
+        request_date: new Date().toISOString().split('T')[0], 
+        description: desc, 
+        amount: parseInt(amount), 
+        bank_account: bank, 
+        bukti_url: buktiUrl, 
+        requester_email: currentUser?.email, 
+        status: 'draft' 
+    });
+    if (error) { document.getElementById('newPaymentMsg').innerHTML = `<div class="alert alert-error">${error.message}</div>`; }
+    else { document.getElementById('newPaymentMsg').innerHTML = '<div class="alert alert-success">✅ Berhasil!</div>'; setTimeout(() => { document.querySelector('.modal-overlay')?.remove(); loadPaymentRequests(); loadDashboard(); }, 1500); }
+}    
     async function submitPaymentRequest(id) { await supabaseClient.from('payment_requests').update({ status: 'submitted', submitted_at: new Date() }).eq('id', id); loadPaymentRequests(); loadDashboard(); }
     
     async function viewPaymentRequest(id) {
@@ -762,20 +790,23 @@
             let bankOptions = '<option value="">Pilih Bank Tujuan</option>'; banks.forEach(b => { bankOptions += `<option value="${b.code}">${b.display}</option>`; });
             let dueDate = new Date(); dueDate.setMonth(dueDate.getMonth() + 1);
             let ppnRate = (currentCompanyId === 2 || currentCompanyId === 3) ? 1.1 : 11;
-            let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-plus"></i> Buat Invoice Baru</h2><button class="btn btn-secondary" onclick="loadInvoiceList()">Kembali</button></div>
-                <div class="form-group"><label>No Invoice</label><input type="text" id="invoiceNo" class="form-control" value="${invoiceNo}" readonly></div>
-                <div class="form-group"><label>Customer</label><select id="createInvoiceCustomer" class="form-control searchable-dropdown" required>${customerOptions}</select></div>
-                <div class="form-group"><label>Project</label><select id="createInvoiceProject" class="form-control searchable-dropdown">${projectOptions}</select></div>
-                <div class="form-group"><label>Akun Pendapatan</label><select id="createInvoiceRevenueAccount" class="form-control searchable-dropdown" required>${revenueOptions}</select></div>
-                <div class="form-group"><label>Bank Tujuan</label><select id="createInvoiceBank" class="form-control searchable-dropdown" required>${bankOptions}</select></div>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;"><div class="form-group"><label>Tanggal Invoice</label><input type="date" id="createInvoiceDate" class="form-control" value="${today.toISOString().split('T')[0]}"></div>
-                <div class="form-group"><label>Jatuh Tempo</label><input type="date" id="createInvoiceDueDate" class="form-control" value="${dueDate.toISOString().split('T')[0]}"></div></div>
-                <div style="background:#f8f9fa; padding:1rem; border-radius:12px;"><h4>Detail Barang/Jasa</h4><div id="invoiceItemsContainer"></div><button class="btn btn-secondary btn-sm" onclick="addInvoiceItem()">+ Tambah Item</button></div>
-                <div style="margin:1rem 0;"><label><input type="checkbox" id="createInvoicePPN" checked onchange="calculateInvoiceTotal()"> Kena PPN ${ppnRate}%</label></div>
-                <div style="background:var(--primary); color:white; padding:1rem; border-radius:12px;"><div style="display:flex; justify-content:space-between;"><span>Subtotal</span><span id="invoiceSubtotal">Rp 0</span></div><div style="display:flex; justify-content:space-between;"><span>PPN ${ppnRate}%</span><span id="invoicePPN">Rp 0</span></div><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>TOTAL</span><span id="invoiceTotal">Rp 0</span></div></div>
-                <div class="form-group"><label>Catatan</label><textarea id="createInvoiceNotes" class="form-control" rows="2"></textarea></div>
-                <div style="display:flex; gap:1rem; justify-content:flex-end;"><button class="btn btn-secondary" onclick="loadInvoiceList()">Batal</button><button class="btn btn-primary" onclick="saveInvoice()">Simpan Invoice</button></div>
-                <div id="createInvoiceResult"></div></div>`;
+            let companySelectHtml = `<div class="form-group"><label>Perusahaan</label><select id="createInvoiceCompany" class="form-control" onchange="changeCreateInvoiceCompany(this.value)">${companies.map(c => `<option value="${c.id}" ${c.id == currentCompanyId ? 'selected' : ''}>${c.nama}</option>`).join('')}</select></div>`;
+
+let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-plus"></i> Buat Invoice Baru</h2><button class="btn btn-secondary" onclick="loadInvoiceList()">Kembali</button></div>
+    ${companySelectHtml}
+    <div class="form-group"><label>No Invoice</label><input type="text" id="invoiceNo" class="form-control" value="${invoiceNo}" readonly></div>
+    <div class="form-group"><label>Customer</label><select id="createInvoiceCustomer" class="form-control searchable-dropdown" required>${customerOptions}</select></div>
+    <div class="form-group"><label>Project</label><select id="createInvoiceProject" class="form-control searchable-dropdown">${projectOptions}</select></div>
+    <div class="form-group"><label>Akun Pendapatan</label><select id="createInvoiceRevenueAccount" class="form-control searchable-dropdown" required>${revenueOptions}</select></div>
+    <div class="form-group"><label>Bank Tujuan</label><select id="createInvoiceBank" class="form-control searchable-dropdown" required>${bankOptions}</select></div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;"><div class="form-group"><label>Tanggal Invoice</label><input type="date" id="createInvoiceDate" class="form-control" value="${today.toISOString().split('T')[0]}"></div>
+    <div class="form-group"><label>Jatuh Tempo</label><input type="date" id="createInvoiceDueDate" class="form-control" value="${dueDate.toISOString().split('T')[0]}"></div></div>
+    <div style="background:#f8f9fa; padding:1rem; border-radius:12px;"><h4>Detail Barang/Jasa</h4><div id="invoiceItemsContainer"></div><button class="btn btn-secondary btn-sm" onclick="addInvoiceItem()">+ Tambah Item</button></div>
+    <div style="margin:1rem 0;"><label><input type="checkbox" id="createInvoicePPN" checked onchange="calculateInvoiceTotal()"> Kena PPN ${ppnRate}%</label></div>
+    <div style="background:var(--primary); color:white; padding:1rem; border-radius:12px;"><div style="display:flex; justify-content:space-between;"><span>Subtotal</span><span id="invoiceSubtotal">Rp 0</span></div><div style="display:flex; justify-content:space-between;"><span>PPN ${ppnRate}%</span><span id="invoicePPN">Rp 0</span></div><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>TOTAL</span><span id="invoiceTotal">Rp 0</span></div></div>
+    <div class="form-group"><label>Catatan</label><textarea id="createInvoiceNotes" class="form-control" rows="2"></textarea></div>
+    <div style="display:flex; gap:1rem; justify-content:flex-end;"><button class="btn btn-secondary" onclick="loadInvoiceList()">Batal</button><button class="btn btn-primary" onclick="saveInvoice()">Simpan Invoice</button></div>
+    <div id="createInvoiceResult"></div></div>`;
             document.getElementById('content').innerHTML = html;
             $('.searchable-dropdown').select2({ width: '100%' });
             window.invoiceItemCounter = 1;
@@ -784,7 +815,50 @@
             hideLoading();
         });
     }
+
+    async function changeCreateInvoiceCompany(companyId) {
+    currentCompanyId = parseInt(companyId);
+    showLoading();
+    await Promise.all([getCustomerList(currentCompanyId), getProjectList(currentCompanyId), getRevenueAccounts(currentCompanyId), getBankList(currentCompanyId)]);
+    // Update dropdowns
+    let customerOptions = '<option value="">Pilih Customer</option>';
+    customers.forEach(c => { customerOptions += `<option value="${c.id}">${c.name}</option>`; });
+    let projectOptions = '<option value="">Tanpa Project</option>';
+    projects.forEach(p => { projectOptions += `<option value="${p.id}">${p.code} - ${p.name}</option>`; });
+    let revenueOptions = '<option value="">Pilih Akun Pendapatan</option>';
+    revenueAccounts.forEach(acc => { revenueOptions += `<option value="${acc.account_code}">${acc.account_code} - ${acc.account_name}</option>`; });
+    let bankOptions = '<option value="">Pilih Bank Tujuan</option>';
+    let banks = await getBankList(currentCompanyId);
+    banks.forEach(b => { bankOptions += `<option value="${b.code}">${b.display}</option>`; });
     
+    document.getElementById('createInvoiceCustomer').innerHTML = customerOptions;
+    document.getElementById('createInvoiceProject').innerHTML = projectOptions;
+    document.getElementById('createInvoiceRevenueAccount').innerHTML = revenueOptions;
+    document.getElementById('createInvoiceBank').innerHTML = bankOptions;
+    
+    // Reinitialize Select2
+    $('#createInvoiceCustomer, #createInvoiceProject, #createInvoiceRevenueAccount, #createInvoiceBank').select2({ width: '100%' });
+    
+    // Update nomor invoice berdasarkan perusahaan baru
+    let company = companies.find(c => c.id == currentCompanyId);
+    let companyCode = company?.kode || 'ARK';
+    let today = new Date();
+    let yearMonth = today.getFullYear().toString() + String(today.getMonth() + 1).padStart(2, '0');
+    let { data: existing } = await supabaseClient.from('invoices').select('invoice_no').eq('company_id', currentCompanyId);
+    let lastNumber = 0;
+    (existing || []).forEach(inv => {
+        if (inv.invoice_no && inv.invoice_no.startsWith(companyCode + '/INV/' + yearMonth)) {
+            let num = parseInt(inv.invoice_no.split('/').pop());
+            if (num > lastNumber) lastNumber = num;
+        }
+    });
+    let invoiceNo = companyCode + '/INV/' + yearMonth + '/' + (lastNumber + 1).toString().padStart(3, '0');
+    document.getElementById('invoiceNo').value = invoiceNo;
+    
+    calculateInvoiceTotal();
+    hideLoading();
+}
+            
     function renderInvoiceItem(id) {
         return `<div class="invoice-item" id="invoice-item-${id}" style="display:grid; grid-template-columns:3fr 1fr 1fr 1fr 1fr auto; gap:0.5rem; margin-bottom:0.5rem;">
             <input type="text" class="item-name form-control" placeholder="Nama Item" value="Item ${id+1}">
@@ -1698,30 +1772,44 @@
     }
 }
                 // ==================== MANAJEMEN ASET ====================
-    async function loadAsetList() {
-        let { data: assets } = await supabaseClient.from('fixed_assets').select('*').order('id', { ascending: false });
-        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-chart-pie"></i> Manajemen Aset</h2><div><button class="btn btn-primary" onclick="showAddAsetForm()"><i class="fas fa-plus"></i> Tambah Aset</button><button class="btn btn-secondary" onclick="exportTableToExcel('fixed_assets')"><i class="fas fa-file-excel"></i> Export Excel</button></div></div>
-            <div class="table-responsive"><table class="table"><thead><tr><th>Kode</th><th>Nama</th><th>Kategori</th><th>Harga Perolehan</th><th>Umur (thn)</th><th>Penyusutan/Bln</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="asetTableBody"></tbody></table></div></div>`;
-        document.getElementById('content').innerHTML = html;
-        let tbody = '';
-        (assets || []).forEach(a => {
-            let penyusutanBulanan = (a.harga_perolehan - (a.nilai_residu || 0)) / (a.umur_tahun * 12);
-            let statusClass = a.status === 'aktif' ? 'status-paid' : 'status-draft';
-            tbody += `<tr>
-                <td>${a.kode}</td>
-                <td>${a.nama}</td>
-                <td>${a.kategori}</td>
-                <td class="text-right">Rp ${formatNumber(a.harga_perolehan)}</td>
-                <td class="text-center">${a.umur_tahun} thn</td>
-                <td class="text-right">Rp ${formatNumber(penyusutanBulanan)}</td>
-                <td><span class="status-badge ${statusClass}">${a.status}</span></td>
-                <td><button class="action-btn" onclick="viewAsetDetail(${a.id})"><i class="fas fa-eye"></i></button>
-                <button class="action-btn" onclick="editAset(${a.id})"><i class="fas fa-edit"></i></button>
-                <button class="action-btn" onclick="deleteAset(${a.id})"><i class="fas fa-trash"></i></button></td>
-            </tr>`;
-        });
-        document.getElementById('asetTableBody').innerHTML = tbody || '<tr><td colspan="8">Belum ada数据</td>';
-    }
+  async function loadAsetList() {
+    let companyFilter = document.getElementById('asetCompanyFilter')?.value || 'all';
+    let query = supabaseClient.from('fixed_assets').select('*');
+    if (companyFilter !== 'all') query = query.eq('company_id', parseInt(companyFilter));
+    let { data: assets } = await query.order('id', { ascending: false });
+    
+    let companyFilterHtml = `<div class="filter-item">
+        <label>Perusahaan</label>
+        <select id="asetCompanyFilter" class="filter-select" onchange="loadAsetList()">
+            <option value="all">Semua Perusahaan</option>
+            ${companies.map(c => `<option value="${c.id}">${c.nama}</option>`).join('')}
+        </select>
+    </div>`;
+    
+    let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-chart-pie"></i> Manajemen Aset</h2><div><button class="btn btn-primary" onclick="showAddAsetForm()"><i class="fas fa-plus"></i> Tambah Aset</button><button class="btn btn-secondary" onclick="exportTableToExcel('fixed_assets')"><i class="fas fa-file-excel"></i> Export Excel</button></div></div>
+        <div class="filter-card"><div class="filter-grid">${companyFilterHtml}</div></div>
+        <div class="table-responsive"><table class="table"><thead><tr><th>Kode</th><th>Nama</th><th>Kategori</th><th>Harga Perolehan</th><th>Umur (thn)</th><th>Penyusutan/Bln</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="asetTableBody"></tbody></table></div></div>`;
+    document.getElementById('content').innerHTML = html;
+    
+    let tbody = '';
+    (assets || []).forEach(a => {
+        let penyusutanBulanan = (a.harga_perolehan - (a.nilai_residu || 0)) / (a.umur_tahun * 12);
+        let statusClass = a.status === 'aktif' ? 'status-paid' : 'status-draft';
+        tbody += `<tr>
+            <td>${a.kode}</td>
+            <td>${a.nama}</td>
+            <td>${a.kategori}</td>
+            <td class="text-right">Rp ${formatNumber(a.harga_perolehan)}</td>
+            <td class="text-center">${a.umur_tahun} thn</td>
+            <td class="text-right">Rp ${formatNumber(penyusutanBulanan)}</td>
+            <td><span class="status-badge ${statusClass}">${a.status}</span></td>
+            <td><button class="action-btn" onclick="viewAsetDetail(${a.id})"><i class="fas fa-eye"></i></button>
+            <button class="action-btn" onclick="editAset(${a.id})"><i class="fas fa-edit"></i></button>
+            <button class="action-btn" onclick="deleteAset(${a.id})"><i class="fas fa-trash"></i></button></td>
+        </tr>`;
+    });
+    document.getElementById('asetTableBody').innerHTML = tbody || '<tr><td colspan="8">Belum ada数据</td>';
+}
     
     async function viewAsetDetail(id) {
         let { data: a } = await supabaseClient.from('fixed_assets').select('*').eq('id', id).single();
