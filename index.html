@@ -354,15 +354,20 @@
         await refreshDashboard();
     }
     
-    async function refreshDashboard() {
-        let companyId = document.getElementById('dashboardCompany')?.value || 'all';
-        let month = document.getElementById('dashboardMonth')?.value || 'all';
-        let year = document.getElementById('dashboardYear')?.value || 'all';
-        
-        let query = supabaseClient.from('payment_requests').select('*');
-        if (companyId !== 'all') query = query.eq('company_id', parseInt(companyId));
-        if (month !== 'all' && year !== 'all') { let start = `${year}-${month.padStart(2,'0')}-01`; let end = `${year}-${month.padStart(2,'0')}-31`; query = query.gte('request_date', start).lte('request_date', end); }
-        let { data: payments } = await query.order('created_at', { ascending: false });
+  async function refreshDashboard() {
+    let companyId = document.getElementById('dashboardCompany')?.value || 'all';
+    let month = document.getElementById('dashboardMonth')?.value || 'all';
+    let year = document.getElementById('dashboardYear')?.value || 'all';
+    
+    let query = supabaseClient.from('payment_requests').select('*');
+    if (companyId !== 'all') query = query.eq('company_id', parseInt(companyId));
+    if (month !== 'all' && year !== 'all') { 
+        let lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+        let start = `${year}-${month.padStart(2,'0')}-01`;
+        let end = `${year}-${month.padStart(2,'0')}-${lastDay}`;
+        query = query.gte('request_date', start).lte('request_date', end);
+    }
+    let { data: payments } = await query.order('created_at', { ascending: false });
         
         let { data: invoices } = await supabaseClient.from('invoices').select('*');
         let totalPiutang = (invoices || []).reduce((a,b) => a + ((b.total||0) - (b.paid_amount||0)), 0);
@@ -1373,20 +1378,25 @@
     }
     
     async function loadJournalList() {
-        let { data: journals } = await supabaseClient.from('journals').select('*').order('id', { ascending: false });
-        let tbody = '';
-        (journals || []).forEach(j => {
-            tbody += `<tr>
-                <td>${j.id}</td>
-                <td>${j.journal_date}</td>
-                <td>${j.description}</td>
-                <td>${j.reference || '-'}</td>
-                <td><span class="status-badge status-paid">${j.status}</span></td>
-                <td><button class="action-btn" onclick="editJournal(${j.id})"><i class="fas fa-edit"></i></button><button class="action-btn" onclick="deleteJournal(${j.id})"><i class="fas fa-trash"></i></button></td>
-            </tr>`;
-        });
-        document.getElementById('journalListBody').innerHTML = tbody || '<tr><td colspan="6">Belum ada jurnal</td>';
+    let { data: journals, error } = await supabaseClient.from('journals').select('*').order('id', { ascending: false });
+    if (error) {
+        console.error(error);
+        document.getElementById('journalListBody').innerHTML = `<tr><td colspan="6">Error: ${error.message}</td></tr>`;
+        return;
     }
+    let tbody = '';
+    for (let j of (journals || [])) {
+        tbody += `<tr>
+            <td>${j.id}</td>
+            <td>${j.journal_date}</td>
+            <td>${j.description}</td>
+            <td>${j.reference || '-'}</td>
+            <td><span class="status-badge status-paid">${j.status}</span></td>
+            <td><button class="action-btn" onclick="editJournal(${j.id})"><i class="fas fa-edit"></i></button><button class="action-btn" onclick="deleteJournal(${j.id})"><i class="fas fa-trash"></i></button></td>
+        </tr>`;
+    }
+    document.getElementById('journalListBody').innerHTML = tbody || '<tr><td colspan="6">Belum ada jurnal</td></tr>';
+}
     
     async function editJournal(id) {
         let { data: journal } = await supabaseClient.from('journals').select('*, journal_lines(*)').eq('id', id).single();
@@ -1615,15 +1625,55 @@
     }
     
     async function refreshJurnalUmum() {
-        let companyId = document.getElementById('juCompany').value;
-        let startDate = document.getElementById('juStart').value;
-        let endDate = document.getElementById('juEnd').value;
-        showLoading();
-        let query = supabaseClient.from('journals').select('*, journal_lines(*)').gte('journal_date', startDate).lte('journal_date', endDate).order('journal_date', { ascending: false });
+    let companyId = document.getElementById('juCompany').value;
+    let startDate = document.getElementById('juStart').value;
+    let endDate = document.getElementById('juEnd').value;
+    
+    if (!startDate || !endDate) {
+        document.getElementById('jurnalUmumContainer').innerHTML = '<div class="alert alert-warning">Pilih periode tanggal</div>';
+        return;
+    }
+    
+    showLoading();
+    try {
+        // Ambil journals
+        let query = supabaseClient.from('journals').select('*')
+            .gte('journal_date', startDate)
+            .lte('journal_date', endDate)
+            .order('journal_date', { ascending: false });
         if (companyId !== 'all') query = query.eq('company_id', parseInt(companyId));
-        let { data } = await query;
+        
+        let { data: journals, error: err1 } = await query;
+        if (err1) throw err1;
+        
+        if (!journals || journals.length === 0) {
+            document.getElementById('jurnalUmumContainer').innerHTML = '<div class="alert alert-info">Tidak ada jurnal pada periode ini</div>';
+            hideLoading();
+            return;
+        }
+        
+        // Ambil semua journal_lines untuk journal_ids tersebut
+        const journalIds = journals.map(j => j.id);
+        let { data: lines, error: err2 } = await supabaseClient
+            .from('journal_lines')
+            .select('*')
+            .in('journal_id', journalIds);
+        if (err2) throw err2;
+        
+        // Map lines berdasarkan journal_id
+        const linesMap = {};
+        (lines || []).forEach(line => {
+            if (!linesMap[line.journal_id]) linesMap[line.journal_id] = [];
+            linesMap[line.journal_id].push(line);
+        });
+        
+        // Gabungkan
+        const dataWithLines = journals.map(j => ({ ...j, journal_lines: linesMap[j.id] || [] }));
+        
+        // Render HTML
         let html = '<div class="table-responsive"><table class="table"><thead><tr><th>Tanggal</th><th>Deskripsi</th><th>Referensi</th><th>Akun</th><th>Debit</th><th>Kredit</th><th>Aksi</th></tr></thead><tbody>';
-        for (let j of data) {
+        
+        for (let j of dataWithLines) {
             let firstLine = true;
             for (let line of j.journal_lines) {
                 html += `<tr>
@@ -1638,8 +1688,14 @@
         }
         html += '</tbody></table></div>';
         document.getElementById('jurnalUmumContainer').innerHTML = html;
+        
+    } catch (err) {
+        console.error('Error refreshJurnalUmum:', err);
+        document.getElementById('jurnalUmumContainer').innerHTML = `<div class="alert alert-error">Error: ${err.message}</div>`;
+    } finally {
         hideLoading();
     }
+}
                 // ==================== MANAJEMEN ASET ====================
     async function loadAsetList() {
         let { data: assets } = await supabaseClient.from('fixed_assets').select('*').order('id', { ascending: false });
