@@ -224,6 +224,7 @@
     async function getAccountList(companyId) { let { data } = await supabaseClient.from('chart_of_accounts').select('*').eq('company_id', companyId); return data || []; }
     async function getVendorList(companyId) { let { data } = await supabaseClient.from('vendors').select('*').eq('company_id', companyId); return data || []; }
     async function getBankList(companyId) { let { data } = await supabaseClient.from('chart_of_accounts').select('*').eq('company_id', companyId).ilike('account_name', '%Bank%'); return data.map(b => ({ code: b.account_code, name: b.account_name, display: b.account_name })); }
+    async function getRevenueAccounts(companyId) {let { data } = await supabaseClient.from('chart_of_accounts').select('*').eq('company_id', companyId).eq('account_type', 'Pendapatan');return data || [];}
     
     // ==================== AUTHENTICATION ====================
     async function handleLogin() {
