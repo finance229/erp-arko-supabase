@@ -205,7 +205,7 @@
     const GAS_UPLOAD_URL = 'https://script.google.com/macros/s/AKfycbzQDc9CUWZELs7iw9a4lDJJPC74jMMZr5savRc-2GTWnuWpFyUytI_zrYYgaCWZfXrMMQ/exec';
     const DRIVE_FOLDER_ID = '15OqEW00HkWJrBEJtPnNPV5jwaMZ24wik';
     
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let currentUser = null, currentUserRole = null, currentCompanyId = 1;
     let companies = [], accounts = [], projects = [], customers = [], vendors = [];
     let statusChart = null, companyChart = null;
@@ -221,12 +221,12 @@
     function formatMoney(input) { let v = input.value.replace(/\./g, '').replace(/[^0-9]/g, ''); input.value = v ? new Intl.NumberFormat('id-ID').format(parseInt(v)) : ''; }
     function formatDate(dateStr) { if (!dateStr) return '-'; let d = new Date(dateStr); return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' }); }
     
-    async function getCustomerList(companyId) { let { data } = await supabase.from('customers').select('*').eq('company_id', companyId); return data || []; }
-    async function getProjectList(companyId) { let { data } = await supabase.from('projects').select('*').eq('company_id', companyId); return data || []; }
-    async function getAccountList(companyId) { let { data } = await supabase.from('chart_of_accounts').select('*').eq('company_id', companyId); return data || []; }
-    async function getRevenueAccounts(companyId) { let { data } = await supabase.from('chart_of_accounts').select('*').eq('company_id', companyId).eq('account_type', 'Pendapatan'); return data || []; }
-    async function getBankList(companyId) { let { data } = await supabase.from('chart_of_accounts').select('*').eq('company_id', companyId).ilike('account_name', '%Bank%'); return data.map(b => ({ code: b.account_code, name: b.account_name, display: b.account_name })); }
-    async function getVendorList(companyId) { let { data } = await supabase.from('vendors').select('*').eq('company_id', companyId); return data || []; }
+    async function getCustomerList(companyId) { let { data } = await sb.from('customers').select('*').eq('company_id', companyId); return data || []; }
+    async function getProjectList(companyId) { let { data } = await sb.from('projects').select('*').eq('company_id', companyId); return data || []; }
+    async function getAccountList(companyId) { let { data } = await sb.from('chart_of_accounts').select('*').eq('company_id', companyId); return data || []; }
+    async function getRevenueAccounts(companyId) { let { data } = await sb.from('chart_of_accounts').select('*').eq('company_id', companyId).eq('account_type', 'Pendapatan'); return data || []; }
+    async function getBankList(companyId) { let { data } = await sb.from('chart_of_accounts').select('*').eq('company_id', companyId).ilike('account_name', '%Bank%'); return data.map(b => ({ code: b.account_code, name: b.account_name, display: b.account_name })); }
+    async function getVendorList(companyId) { let { data } = await sb.from('vendors').select('*').eq('company_id', companyId); return data || []; }
     async function getTaxConfig(companyId) { let configs = { 1: { ppn_rate: 11, is_pkp: true }, 2: { ppn_rate: 1.1, is_pkp: false }, 3: { ppn_rate: 1.1, is_pkp: false }, 4: { ppn_rate: 11, is_pkp: true } }; return configs[companyId] || { ppn_rate: 11, is_pkp: true }; }
     
     // ==================== AUTHENTICATION ====================
@@ -235,18 +235,18 @@
         const password = document.getElementById('loginPassword').value;
         if (!email || !password) { let err = document.getElementById('loginError'); err.innerText = 'Isi email dan password'; err.style.display = 'block'; return; }
         showLoading();
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
         if (error) { hideLoading(); let err = document.getElementById('loginError'); err.innerText = error.message; err.style.display = 'block'; return; }
-        const { data: profile } = await supabase.from('user_profiles').select('*').eq('email', email).single();
+        const { data: profile } = await sb.from('user_profiles').select('*').eq('email', email).single();
         currentUser = data.user; currentUserRole = profile?.role || 'staff'; currentCompanyId = profile?.company_id || 1;
-        const { data: comps } = await supabase.from('companies').select('*'); companies = comps || [];
+        const { data: comps } = await sb.from('companies').select('*'); companies = comps || [];
         document.getElementById('loginPage').style.display = 'none'; document.getElementById('appPage').style.display = 'flex';
         document.getElementById('userName').innerText = profile?.name || email; document.getElementById('userRole').innerText = currentUserRole;
         document.getElementById('userAvatar').innerText = (profile?.name || email).charAt(0).toUpperCase();
         renderSidebar(); loadDashboard(); hideLoading();
     }
     
-    async function logout() { await supabase.auth.signOut(); document.getElementById('loginPage').style.display = 'flex'; document.getElementById('appPage').style.display = 'none'; }
+    async function logout() { await sb.auth.signOut(); document.getElementById('loginPage').style.display = 'flex'; document.getElementById('appPage').style.display = 'none'; }
     
     function renderSidebar() {
         let menus = [
@@ -352,12 +352,12 @@
         let month = document.getElementById('dashboardMonth')?.value || 'all';
         let year = document.getElementById('dashboardYear')?.value || 'all';
         
-        let query = supabase.from('payment_requests').select('*');
+        let query = sb.from('payment_requests').select('*');
         if (companyId !== 'all') query = query.eq('company_id', parseInt(companyId));
         if (month !== 'all' && year !== 'all') { let start = `${year}-${month.padStart(2,'0')}-01`; let end = `${year}-${month.padStart(2,'0')}-31`; query = query.gte('request_date', start).lte('request_date', end); }
         let { data: payments } = await query.order('created_at', { ascending: false });
         
-        let { data: invoices } = await supabase.from('invoices').select('*');
+        let { data: invoices } = await sb.from('invoices').select('*');
         let totalPiutang = (invoices || []).reduce((a,b) => a + ((b.total||0) - (b.paid_amount||0)), 0);
         let totalApproved = (payments || []).filter(p => p.status === 'paid').reduce((a,b) => a + (b.amount||0), 0) || 0;
         let totalPending = (payments || []).filter(p => p.status === 'submitted' || p.status === 'verified').reduce((a,b) => a + (b.amount||0), 0) || 0;
@@ -414,7 +414,7 @@
     // ==================== PAYMENT REQUESTS ====================
        async function loadPaymentRequests() {
         showLoading();
-        let query = supabase.from('payment_requests').select('*');
+        let query = sb.from('payment_requests').select('*');
         
         // Aturan akses berdasarkan role
         if (currentUserRole === 'staff') {
@@ -621,15 +621,15 @@
     }
     
     async function saveToSupabase(desc, amount, bank, buktiUrl) {
-        let { error } = await supabase.from('payment_requests').insert({ company_id: currentCompanyId, request_date: new Date().toISOString().split('T')[0], description: desc, amount: parseInt(amount), bank_account: bank, bukti_url: buktiUrl, requester_email: currentUser?.email, status: 'draft' });
+        let { error } = await sb.from('payment_requests').insert({ company_id: currentCompanyId, request_date: new Date().toISOString().split('T')[0], description: desc, amount: parseInt(amount), bank_account: bank, bukti_url: buktiUrl, requester_email: currentUser?.email, status: 'draft' });
         if (error) { document.getElementById('newPaymentMsg').innerHTML = `<div class="alert alert-error">${error.message}</div>`; }
         else { document.getElementById('newPaymentMsg').innerHTML = '<div class="alert alert-success">✅ Berhasil!</div>'; setTimeout(() => { document.querySelector('.modal-overlay')?.remove(); loadPaymentRequests(); loadDashboard(); }, 1500); }
     }
     
-    async function submitPaymentRequest(id) { await supabase.from('payment_requests').update({ status: 'submitted', submitted_at: new Date() }).eq('id', id); loadPaymentRequests(); loadDashboard(); }
+    async function submitPaymentRequest(id) { await sb.from('payment_requests').update({ status: 'submitted', submitted_at: new Date() }).eq('id', id); loadPaymentRequests(); loadDashboard(); }
     
     async function viewPaymentRequest(id) {
-        let { data: req } = await supabase.from('payment_requests').select('*').eq('id', id).single();
+        let { data: req } = await sb.from('payment_requests').select('*').eq('id', id).single();
         let modal = document.createElement('div'); modal.className = 'modal-overlay';
         modal.innerHTML = `<div class="modal-content"><h3><i class="fas fa-file-invoice"></i> Detail Payment Request #${req.id}</h3>
             <div><strong>Tanggal:</strong> ${req.request_date}</div><div><strong>Deskripsi:</strong> ${req.description}</div><div><strong>Jumlah:</strong> Rp ${formatNumber(req.amount)}</div><div><strong>Status:</strong> <span class="status-badge status-${req.status}">${req.status}</span></div><div><strong>Voucher:</strong> ${req.voucher_no || '-'}</div>
@@ -641,7 +641,7 @@
     function editPaymentRequest(id) { alert('Fitur edit payment request menyusul'); }
     
         async function verifyPaymentRequest(id) {
-        let { data: req } = await supabase.from('payment_requests').select('*').eq('id', id).single();
+        let { data: req } = await sb.from('payment_requests').select('*').eq('id', id).single();
         let taxConfig = await getTaxConfig(req.company_id);
         accounts = await getAccountList(req.company_id);
         let projectsList = await getProjectList(req.company_id);
@@ -750,10 +750,10 @@
         }
         
         let req = window.currentVerifikasiReq;
-        let { data: project } = await supabase.from('projects').select('*').eq('code', projectCode).eq('company_id', req.company_id).single();
+        let { data: project } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', req.company_id).single();
         if (!project) { budgetDiv.style.display = 'none'; return; }
         
-        let { data: payments } = await supabase.from('payment_requests').select('amount, total_with_tax')
+        let { data: payments } = await sb.from('payment_requests').select('amount, total_with_tax')
             .eq('project_code', projectCode).eq('company_id', req.company_id)
             .in('status', ['verified', 'paid']);
         let terpakai = (payments || []).reduce((a,b) => a + (b.total_with_tax || b.amount || 0), 0);
@@ -817,7 +817,7 @@
         let basePattern = `${companyCode}/${year}/${month}`;
         if (projectCode && projectCode !== '') basePattern += `/${projectCode}`;
         
-        let { data: existing } = await supabase.from('payment_requests').select('voucher_no');
+        let { data: existing } = await sb.from('payment_requests').select('voucher_no');
         let lastNumber = 0;
         (existing || []).forEach(v => {
             if (v.voucher_no && v.voucher_no.startsWith(basePattern)) {
@@ -859,9 +859,9 @@
             if (!projectCode) { alert('Isi kode project'); return; }
             if (!projectName) { alert('Isi nama project'); return; }
             
-            let { data: existing } = await supabase.from('projects').select('*').eq('company_id', req.company_id).eq('code', projectCode);
+            let { data: existing } = await sb.from('projects').select('*').eq('company_id', req.company_id).eq('code', projectCode);
             if (!existing || existing.length === 0) {
-                await supabase.from('projects').insert({
+                await sb.from('projects').insert({
                     company_id: req.company_id, code: projectCode, name: projectName,
                     budget: projectBudget || 0, is_unlimited: projectBudget === 0, created_by: currentUser?.email
                 });
@@ -879,7 +879,7 @@
         let basePattern = `${companyCode}/${year}/${month}`;
         if (projectCode && projectCode !== '') basePattern += `/${projectCode}`;
         
-        let { data: existing } = await supabase.from('payment_requests').select('voucher_no');
+        let { data: existing } = await sb.from('payment_requests').select('voucher_no');
         let lastNumber = 0;
         (existing || []).forEach(v => {
             if (v.voucher_no && v.voucher_no.startsWith(basePattern)) {
@@ -889,13 +889,13 @@
         });
         let voucherNo = `${basePattern}/${(lastNumber + 1).toString().padStart(3, '0')}`;
         
-        await supabase.from('payment_requests').update({
+        await sb.from('payment_requests').update({
             status: 'verified', verified_at: new Date(), verified_by: currentUser?.email,
             debit_account: debitAccount, credit_account: creditAccount, voucher_no: voucherNo,
             ppn: ppn, pph: pph, total_with_tax: total, project_code: projectCode
         }).eq('id', id);
         
-        await supabase.from('payment_logs').insert({
+        await sb.from('payment_logs').insert({
             request_id: id, user_email: currentUser?.email, user_role: currentUserRole,
             old_status: 'submitted', new_status: 'verified',
             keterangan: `Verifikasi, Voucher: ${voucherNo}, Project: ${projectCode || '-'}`
@@ -908,7 +908,7 @@
         async function deletePaymentRequest(id) {
         if (!confirm('Hapus payment request ini? Tindakan tidak bisa dibatalkan!')) return;
         showLoading();
-        let { error } = await supabase.from('payment_requests').delete().eq('id', id);
+        let { error } = await sb.from('payment_requests').delete().eq('id', id);
         hideLoading();
         if (error) {
             showToast('Gagal menghapus: ' + error.message, 'error');
@@ -923,14 +923,14 @@
         if (!alasan) return;
         
         showLoading();
-        await supabase.from('payment_requests').update({ 
+        await sb.from('payment_requests').update({ 
             status: 'rejected', 
             rejected_at: new Date(),
             rejected_by: currentUser?.email,
             rejection_reason: alasan
         }).eq('id', id);
         
-        await supabase.from('payment_logs').insert({
+        await sb.from('payment_logs').insert({
             request_id: id,
             user_email: currentUser?.email,
             user_role: currentUserRole,
@@ -946,7 +946,7 @@
     }
     
         async function approvePaymentRequest(id) {
-        let { data: req } = await supabase.from('payment_requests').select('*').eq('id', id).single();
+        let { data: req } = await sb.from('payment_requests').select('*').eq('id', id).single();
         
         let confirmed = confirm(
             `SETUJUI PEMBAYARAN INI?\n\n` +
@@ -960,12 +960,12 @@
         if (!confirmed) return;
         
         showLoading();
-        let lastJournal = await supabase.from('journals').select('id').order('id', { ascending: false }).limit(1);
+        let lastJournal = await sb.from('journals').select('id').order('id', { ascending: false }).limit(1);
         let journalId = (lastJournal.data?.[0]?.id || 0) + 1;
         let now = new Date();
         let dateStr = now.toISOString().split('T')[0];
         
-        await supabase.from('journals').insert({ 
+        await sb.from('journals').insert({ 
             id: journalId, 
             company_id: req.company_id, 
             journal_date: dateStr, 
@@ -976,29 +976,29 @@
             status: 'posted' 
         });
         
-        await supabase.from('journal_lines').insert([
+        await sb.from('journal_lines').insert([
             { journal_id: journalId, account_code: req.debit_account, debit: req.amount, credit: 0, description: `Beban dari ${req.voucher_no}` },
             { journal_id: journalId, account_code: req.credit_account, debit: 0, credit: req.total_with_tax || req.amount, description: `Transfer ke vendor dari ${req.voucher_no}` }
         ]);
         
         if (req.ppn > 0) {
             let suffix = companies.find(c => c.id == req.company_id)?.singkatan || 'A';
-            await supabase.from('journal_lines').insert({ journal_id: journalId, account_code: `1131-${suffix}`, debit: req.ppn, credit: 0, description: `PPN Masukan dari ${req.voucher_no}` });
+            await sb.from('journal_lines').insert({ journal_id: journalId, account_code: `1131-${suffix}`, debit: req.ppn, credit: 0, description: `PPN Masukan dari ${req.voucher_no}` });
         }
         
         if (req.pph > 0) {
             let suffix = companies.find(c => c.id == req.company_id)?.singkatan || 'A';
-            await supabase.from('journal_lines').insert({ journal_id: journalId, account_code: `2103-03-${suffix}`, debit: 0, credit: req.pph, description: `Utang PPh 23 dari ${req.voucher_no}` });
+            await sb.from('journal_lines').insert({ journal_id: journalId, account_code: `2103-03-${suffix}`, debit: 0, credit: req.pph, description: `Utang PPh 23 dari ${req.voucher_no}` });
         }
         
-        await supabase.from('payment_requests').update({ 
+        await sb.from('payment_requests').update({ 
             status: 'paid', 
             paid_at: now, 
             approved_by: currentUser?.email, 
             journal_id: journalId 
         }).eq('id', id);
         
-        await supabase.from('payment_logs').insert({ 
+        await sb.from('payment_logs').insert({ 
             request_id: id, 
             user_email: currentUser?.email, 
             user_role: currentUserRole, 
@@ -1022,7 +1022,7 @@
     
     // ==================== INVOICE PENJUALAN (AR) ====================
     async function loadInvoiceList() {
-        let { data: invoices } = await supabase.from('invoices').select('*').order('id', { ascending: false });
+        let { data: invoices } = await sb.from('invoices').select('*').order('id', { ascending: false });
         let customersList = await getCustomerList(currentCompanyId);
         let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-file-invoice"></i> Invoice Penjualan</h2><div><button class="btn btn-primary" onclick="showCreateInvoiceForm()"><i class="fas fa-plus"></i> Buat Invoice</button><button class="btn btn-secondary" onclick="exportTableToExcel('invoices')"><i class="fas fa-file-excel"></i> Export Excel</button></div></div>
             <div class="filter-card"><div class="filter-grid"><div class="filter-item"><label class="filter-label">Status</label><select id="invoiceStatusFilter" class="filter-select" onchange="filterInvoices()"><option value="all">Semua</option><option value="draft">Draft</option><option value="posted">Posted</option><option value="partial">Partial</option><option value="paid">Paid</option></select></div>
@@ -1035,7 +1035,7 @@
     }
     
     async function filterInvoices() {
-        let { data: invoices } = await supabase.from('invoices').select('*').order('id', { ascending: false });
+        let { data: invoices } = await sb.from('invoices').select('*').order('id', { ascending: false });
         let customersList = await getCustomerList(currentCompanyId);
         let statusFilter = document.getElementById('invoiceStatusFilter')?.value || 'all';
         let monthFilter = document.getElementById('invoiceMonthFilter')?.value || 'all';
@@ -1080,7 +1080,7 @@
             let companyCode = company?.kode || 'ARK';
             let today = new Date();
             let yearMonth = today.getFullYear().toString() + String(today.getMonth() + 1).padStart(2, '0');
-            let { data: existing } = await supabase.from('invoices').select('invoice_no').eq('company_id', currentCompanyId);
+            let { data: existing } = await sb.from('invoices').select('invoice_no').eq('company_id', currentCompanyId);
             let lastNumber = 0;
             (existing || []).forEach(inv => {
                 if (inv.invoice_no && inv.invoice_no.startsWith(companyCode + '/INV/' + yearMonth)) {
@@ -1177,37 +1177,37 @@
         let ppn = parseRupiah(document.getElementById('invoicePPN').innerHTML.replace('Rp ', '').replace(/\./g, ''));
         let total = parseRupiah(document.getElementById('invoiceTotal').innerHTML.replace('Rp ', '').replace(/\./g, ''));
         showLoading();
-        let { data, error } = await supabase.from('invoices').insert({
+        let { data, error } = await sb.from('invoices').insert({
             company_id: currentCompanyId, customer_id: customerId, project_id: projectId, revenue_account: revenueAccount, bank_code: bankCode,
             invoice_date: invoiceDate, due_date: dueDate, notes: notes, dpp: subtotal, ppn: ppn, total: total, status: 'draft', invoice_no: invoiceNo, created_by: currentUser?.email
         }).select().single();
         if (error) { hideLoading(); document.getElementById('createInvoiceResult').innerHTML = `<div class="alert alert-error">${error.message}</div>`; return; }
-        for (let item of items) { await supabase.from('invoice_items').insert({ invoice_id: data.id, description: item.description, quantity: item.quantity, price: item.unitPrice, discount: item.discount, amount: item.amount }); }
+        for (let item of items) { await sb.from('invoice_items').insert({ invoice_id: data.id, description: item.description, quantity: item.quantity, price: item.unitPrice, discount: item.discount, amount: item.amount }); }
         hideLoading(); document.getElementById('createInvoiceResult').innerHTML = `<div class="alert alert-success">✅ Invoice ${invoiceNo} berhasil dibuat!</div>`; setTimeout(() => loadInvoiceList(), 2000);
     }
     
     async function postInvoice(id) {
         if (!confirm('Posting invoice akan membuat jurnal otomatis. Lanjutkan?')) return;
         showLoading();
-        let { data: invoice } = await supabase.from('invoices').select('*').eq('id', id).single();
+        let { data: invoice } = await sb.from('invoices').select('*').eq('id', id).single();
         let suffix = companies.find(c => c.id == invoice.company_id)?.singkatan || 'A';
         let piutangAkun = `1111-${suffix}`;
         let ppnAkun = `2103-01-${suffix}`;
-        let lastJournal = await supabase.from('journals').select('id').order('id', { ascending: false }).limit(1);
+        let lastJournal = await sb.from('journals').select('id').order('id', { ascending: false }).limit(1);
         let journalId = (lastJournal.data?.[0]?.id || 0) + 1;
-        await supabase.from('journals').insert({ id: journalId, company_id: invoice.company_id, journal_date: invoice.invoice_date, period: invoice.invoice_date.substring(0,7), description: `Penjualan Invoice ${invoice.invoice_no}`, reference: invoice.invoice_no, created_by: currentUser?.email, status: 'posted' });
-        await supabase.from('journal_lines').insert({ journal_id: journalId, account_code: piutangAkun, debit: invoice.total, credit: 0, description: `Piutang dari invoice ${invoice.invoice_no}` });
-        await supabase.from('journal_lines').insert({ journal_id: journalId, account_code: invoice.revenue_account, debit: 0, credit: invoice.dpp, description: `Pendapatan invoice ${invoice.invoice_no}` });
-        if (invoice.ppn > 0) { await supabase.from('journal_lines').insert({ journal_id: journalId, account_code: ppnAkun, debit: 0, credit: invoice.ppn, description: `PPN Keluaran invoice ${invoice.invoice_no}` }); }
-        await supabase.from('invoices').update({ status: 'posted' }).eq('id', id);
+        await sb.from('journals').insert({ id: journalId, company_id: invoice.company_id, journal_date: invoice.invoice_date, period: invoice.invoice_date.substring(0,7), description: `Penjualan Invoice ${invoice.invoice_no}`, reference: invoice.invoice_no, created_by: currentUser?.email, status: 'posted' });
+        await sb.from('journal_lines').insert({ journal_id: journalId, account_code: piutangAkun, debit: invoice.total, credit: 0, description: `Piutang dari invoice ${invoice.invoice_no}` });
+        await sb.from('journal_lines').insert({ journal_id: journalId, account_code: invoice.revenue_account, debit: 0, credit: invoice.dpp, description: `Pendapatan invoice ${invoice.invoice_no}` });
+        if (invoice.ppn > 0) { await sb.from('journal_lines').insert({ journal_id: journalId, account_code: ppnAkun, debit: 0, credit: invoice.ppn, description: `PPN Keluaran invoice ${invoice.invoice_no}` }); }
+        await sb.from('invoices').update({ status: 'posted' }).eq('id', id);
         hideLoading(); alert(`✅ Invoice berhasil diposting! Jurnal ID: ${journalId}`); loadInvoiceList(); loadDashboard();
     }
     
     async function deleteInvoice(id) {
         if (!confirm('Hapus invoice ini? Tindakan tidak bisa dibatalkan!')) return;
         showLoading();
-        await supabase.from('invoice_items').delete().eq('invoice_id', id);
-        await supabase.from('invoices').delete().eq('id', id);
+        await sb.from('invoice_items').delete().eq('invoice_id', id);
+        await sb.from('invoices').delete().eq('id', id);
         hideLoading(); alert('Invoice berhasil dihapus'); loadInvoiceList();
     }
     
@@ -1218,7 +1218,7 @@
     async function recordPayment(invoiceId) {
         let amount = prompt('Jumlah pembayaran:', '0');
         if (!amount) return;
-        let { data: invoice } = await supabase.from('invoices').select('*').eq('id', invoiceId).single();
+        let { data: invoice } = await sb.from('invoices').select('*').eq('id', invoiceId).single();
         let sisa = invoice.total - (invoice.paid_amount || 0);
         if (parseFloat(amount) > sisa) { alert(`Maksimal pembayaran Rp ${formatNumber(sisa)}`); return; }
         let newPaid = (invoice.paid_amount || 0) + parseFloat(amount);
@@ -1226,23 +1226,23 @@
         let suffix = companies.find(c => c.id == invoice.company_id)?.singkatan || 'A';
         let bankAkun = invoice.bank_code;
         let piutangAkun = `1111-${suffix}`;
-        let lastJournal = await supabase.from('journals').select('id').order('id', { ascending: false }).limit(1);
+        let lastJournal = await sb.from('journals').select('id').order('id', { ascending: false }).limit(1);
         let journalId = (lastJournal.data?.[0]?.id || 0) + 1;
-        await supabase.from('journals').insert({ id: journalId, company_id: invoice.company_id, journal_date: new Date().toISOString().split('T')[0], period: new Date().toISOString().substring(0,7), description: `Penerimaan pembayaran invoice ${invoice.invoice_no}`, reference: invoice.invoice_no, created_by: currentUser?.email, status: 'posted' });
-        await supabase.from('journal_lines').insert({ journal_id: journalId, account_code: bankAkun, debit: parseFloat(amount), credit: 0, description: `Penerimaan dari invoice ${invoice.invoice_no}` });
-        await supabase.from('journal_lines').insert({ journal_id: journalId, account_code: piutangAkun, debit: 0, credit: parseFloat(amount), description: `Lunasi piutang invoice ${invoice.invoice_no}` });
-        await supabase.from('invoices').update({ paid_amount: newPaid, status: newStatus, last_payment_date: new Date().toISOString().split('T')[0] }).eq('id', invoiceId);
+        await sb.from('journals').insert({ id: journalId, company_id: invoice.company_id, journal_date: new Date().toISOString().split('T')[0], period: new Date().toISOString().substring(0,7), description: `Penerimaan pembayaran invoice ${invoice.invoice_no}`, reference: invoice.invoice_no, created_by: currentUser?.email, status: 'posted' });
+        await sb.from('journal_lines').insert({ journal_id: journalId, account_code: bankAkun, debit: parseFloat(amount), credit: 0, description: `Penerimaan dari invoice ${invoice.invoice_no}` });
+        await sb.from('journal_lines').insert({ journal_id: journalId, account_code: piutangAkun, debit: 0, credit: parseFloat(amount), description: `Lunasi piutang invoice ${invoice.invoice_no}` });
+        await sb.from('invoices').update({ paid_amount: newPaid, status: newStatus, last_payment_date: new Date().toISOString().split('T')[0] }).eq('id', invoiceId);
         alert(`✅ Pembayaran Rp ${formatNumber(amount)} dicatat. Sisa: Rp ${formatNumber(sisa - amount)}`);
         loadInvoiceList(); loadDashboard();
     }
     
     async function previewInvoicePDF(invoiceId) {
         showLoading();
-        let { data: invoice } = await supabase.from('invoices').select('*').eq('id', invoiceId).single();
-        let { data: items } = await supabase.from('invoice_items').select('*').eq('invoice_id', invoiceId);
-        let { data: company } = await supabase.from('companies').select('*').eq('id', invoice.company_id).single();
-        let { data: customer } = await supabase.from('customers').select('*').eq('id', invoice.customer_id).single();
-        let { data: bank } = await supabase.from('chart_of_accounts').select('*').eq('company_id', invoice.company_id).eq('account_code', invoice.bank_code).single();
+        let { data: invoice } = await sb.from('invoices').select('*').eq('id', invoiceId).single();
+        let { data: items } = await sb.from('invoice_items').select('*').eq('invoice_id', invoiceId);
+        let { data: company } = await sb.from('companies').select('*').eq('id', invoice.company_id).single();
+        let { data: customer } = await sb.from('customers').select('*').eq('id', invoice.customer_id).single();
+        let { data: bank } = await sb.from('chart_of_accounts').select('*').eq('company_id', invoice.company_id).eq('account_code', invoice.bank_code).single();
         let ppnRate = (invoice.company_id === 2 || invoice.company_id === 3) ? '1.1%' : '11%';
         let itemsHtml = ''; let no = 1;
         items.forEach(item => { itemsHtml += `<tr><td>${no++}</td>.html${item.description}</td><td class="text-center">${item.quantity}</td><td class="text-right">Rp ${formatNumber(item.price)}</td><td class="text-right">Rp ${formatNumber(item.discount)}</td><td class="text-right">Rp ${formatNumber(item.amount)}</td></tr>`; });
@@ -1257,7 +1257,7 @@
     
     // ==================== VENDOR INVOICE (AP) ====================
     async function loadVendorInvoiceList() {
-        let { data: invoices } = await supabase.from('vendor_invoices').select('*').order('id', { ascending: false });
+        let { data: invoices } = await sb.from('vendor_invoices').select('*').order('id', { ascending: false });
         let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-users"></i> Invoice Pembelian (AP)</h2><div><button class="btn btn-primary" onclick="alert('Fitur tambah invoice vendor menyusul')"><i class="fas fa-plus"></i> Tambah Invoice</button><button class="btn btn-secondary" onclick="exportTableToExcel('vendor_invoices')"><i class="fas fa-file-excel"></i> Export Excel</button></div></div>
             <div class="filter-card"><div class="filter-grid"><div class="filter-item"><label class="filter-label">Status</label><select id="vendorStatusFilter" class="filter-select" onchange="filterVendorInvoices()"><option value="all">Semua</option><option value="unpaid">Belum Dibayar</option><option value="partial">Sebagian</option><option value="paid">Lunas</option></select></div>
             <div class="filter-item"><label class="filter-label">Bulan</label><select id="vendorMonthFilter" class="filter-select"><option value="all">Semua</option>${Array(12).fill().map((_,i)=>`<option value="${i+1}">${['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'][i]}</option>`).join('')}</select></div>
@@ -1271,7 +1271,7 @@
     }
     
     async function filterVendorInvoices() {
-        let { data: invoices } = await supabase.from('vendor_invoices').select('*').order('id', { ascending: false });
+        let { data: invoices } = await sb.from('vendor_invoices').select('*').order('id', { ascending: false });
         let statusFilter = document.getElementById('vendorStatusFilter')?.value || 'all';
         let monthFilter = document.getElementById('vendorMonthFilter')?.value || 'all';
         let yearFilter = document.getElementById('vendorYearFilter')?.value || 'all';
@@ -1319,7 +1319,7 @@
     }
     
     async function viewVendorInvoiceDetail(id) {
-        let { data: invoice } = await supabase.from('vendor_invoices').select('*').eq('id', id).single();
+        let { data: invoice } = await sb.from('vendor_invoices').select('*').eq('id', id).single();
         let sisa = (invoice.total || 0) - (invoice.paid_amount || 0);
         alert(`Detail Invoice Vendor\nVendor: ${invoice.vendor_name}\nNo Invoice: ${invoice.invoice_no}\nTanggal: ${invoice.invoice_date}\nTotal: Rp ${formatNumber(invoice.total)}\nDibayar: Rp ${formatNumber(invoice.paid_amount)}\nSisa: Rp ${formatNumber(sisa)}\nStatus: ${invoice.payment_status}\nFile: ${invoice.file_url || '-'}`);
     }
@@ -1327,7 +1327,7 @@
     async function submitVendorPayment(id) {
         let amount = prompt('Jumlah pembayaran:', '0');
         if (!amount) return;
-        let { data: invoice } = await supabase.from('vendor_invoices').select('*').eq('id', id).single();
+        let { data: invoice } = await sb.from('vendor_invoices').select('*').eq('id', id).single();
         let sisa = invoice.total - (invoice.paid_amount || 0);
         if (parseFloat(amount) > sisa) { alert(`Maksimal pembayaran Rp ${formatNumber(sisa)}`); return; }
         let newPaid = (invoice.paid_amount || 0) + parseFloat(amount);
@@ -1336,14 +1336,14 @@
         if (!bankCode) return;
         let suffix = companies.find(c => c.id == invoice.company_id)?.singkatan || 'A';
         let utangAkun = `2111-${suffix}`;
-        let lastJournal = await supabase.from('journals').select('id').order('id', { ascending: false }).limit(1);
+        let lastJournal = await sb.from('journals').select('id').order('id', { ascending: false }).limit(1);
         let journalId = (lastJournal.data?.[0]?.id || 0) + 1;
-        await supabase.from('journals').insert({ id: journalId, company_id: invoice.company_id, journal_date: new Date().toISOString().split('T')[0], period: new Date().toISOString().substring(0,7), description: `Pembayaran invoice ${invoice.invoice_no}`, reference: invoice.invoice_no, created_by: currentUser?.email, status: 'posted' });
-        await supabase.from('journal_lines').insert([
+        await sb.from('journals').insert({ id: journalId, company_id: invoice.company_id, journal_date: new Date().toISOString().split('T')[0], period: new Date().toISOString().substring(0,7), description: `Pembayaran invoice ${invoice.invoice_no}`, reference: invoice.invoice_no, created_by: currentUser?.email, status: 'posted' });
+        await sb.from('journal_lines').insert([
             { journal_id: journalId, account_code: utangAkun, debit: parseFloat(amount), credit: 0, description: `Pembayaran invoice ${invoice.invoice_no}` },
             { journal_id: journalId, account_code: bankCode, debit: 0, credit: parseFloat(amount), description: `Transfer ke ${invoice.vendor_name}` }
         ]);
-        await supabase.from('vendor_invoices').update({ paid_amount: newPaid, payment_status: newStatus, last_payment_date: new Date().toISOString().split('T')[0] }).eq('id', id);
+        await sb.from('vendor_invoices').update({ paid_amount: newPaid, payment_status: newStatus, last_payment_date: new Date().toISOString().split('T')[0] }).eq('id', id);
         alert(`✅ Pembayaran Rp ${formatNumber(amount)} dicatat. Sisa: Rp ${formatNumber(sisa - amount)}`);
         loadVendorInvoiceList(); loadDashboard();
     }
@@ -1365,11 +1365,11 @@
     async function exportTableToExcel(tableName) { alert('Fitur export excel menyusul'); }
     
     async function checkSession() {
-        let { data } = await supabase.auth.getSession();
+        let { data } = await sb.auth.getSession();
         if (data.session) {
-            let { data: profile } = await supabase.from('user_profiles').select('*').eq('email', data.session.user.email).single();
+            let { data: profile } = await sb.from('user_profiles').select('*').eq('email', data.session.user.email).single();
             currentUser = data.session.user; currentUserRole = profile?.role || 'staff'; currentCompanyId = profile?.company_id || 1;
-            let { data: comps } = await supabase.from('companies').select('*'); companies = comps || [];
+            let { data: comps } = await sb.from('companies').select('*'); companies = comps || [];
             document.getElementById('loginPage').style.display = 'none'; document.getElementById('appPage').style.display = 'flex';
             document.getElementById('userName').innerText = profile?.name || currentUser.email; document.getElementById('userRole').innerText = currentUserRole;
             document.getElementById('userAvatar').innerText = (profile?.name || currentUser.email).charAt(0).toUpperCase();
