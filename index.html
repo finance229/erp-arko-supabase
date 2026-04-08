@@ -463,7 +463,8 @@
     
     // ==================== PAYMENT REQUESTS ====================
     async function loadPaymentRequests() {
-    let query = supabase.from('payment_requests').select('*');
+    // Ganti supabase menjadi _supabase
+    let query = _supabase.from('payment_requests').select('*');
     
     // Jika staff, hanya lihat request milik sendiri
     if (currentUserRole === 'staff') {
@@ -522,7 +523,8 @@
     async function deletePaymentRequest(id) {
     if (!confirm('Hapus payment request ini? Tindakan tidak bisa dibatalkan!')) return;
     showLoading();
-    let { error } = await supabase.from('payment_requests').delete().eq('id', id);
+    // Ganti supabase menjadi _supabase
+    let { error } = await _supabase.from('payment_requests').delete().eq('id', id);
     hideLoading();
     if (error) {
         alert('Gagal menghapus: ' + error.message);
