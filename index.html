@@ -463,39 +463,76 @@
     
     // ==================== PAYMENT REQUESTS ====================
     async function loadPaymentRequests() {
-        let { data: payments } = await _supabase.from('payment_requests').select('*').order('id', { ascending: false });
-        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-money-bill-wave"></i> Payment Request</h2><div><button class="btn btn-primary" onclick="showNewPaymentForm()"><i class="fas fa-plus"></i> Buat Request</button><button class="btn btn-secondary" onclick="exportTableToExcel('payment_requests')"><i class="fas fa-file-excel"></i> Export Excel</button></div></div>
-            <div class="filter-card"><div class="filter-grid"><div class="filter-item"><label class="filter-label">Status</label><select id="paymentStatusFilter" class="filter-select" onchange="filterPaymentRequests()"><option value="all">Semua</option><option value="draft">Draft</option><option value="submitted">Submitted</option><option value="verified">Verified</option><option value="paid">Paid</option></select></div></div></div>
-            <div class="table-container"><table class="table"><thead><tr><th>ID</th><th>Tgl</th><th>Deskripsi</th><th>Jumlah</th><th>Total Transfer</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="paymentTableBody"></tbody></table></div></div>`;
-        document.getElementById('content').innerHTML = html;
-        renderPaymentTable(payments);
+    let query = supabase.from('payment_requests').select('*');
+    
+    // Jika staff, hanya lihat request milik sendiri
+    if (currentUserRole === 'staff') {
+        query = query.eq('requester_email', currentUser?.email);
     }
     
+    let { data: payments } = await query.order('id', { ascending: false });
+    
+    let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-money-bill-wave"></i> Payment Request</h2><div><button class="btn btn-primary" onclick="showNewPaymentForm()"><i class="fas fa-plus"></i> Buat Request</button><button class="btn btn-secondary" onclick="exportTableToExcel('payment_requests')"><i class="fas fa-file-excel"></i> Export Excel</button></div></div>
+        <div class="filter-card"><div class="filter-grid"><div class="filter-item"><label class="filter-label">Status</label><select id="paymentStatusFilter" class="filter-select" onchange="filterPaymentRequests()"><option value="all">Semua</option><option value="draft">Draft</option><option value="submitted">Submitted</option><option value="verified">Verified</option><option value="paid">Paid</option></select></div></div></div>
+        <div class="table-container"><table class="table"><thead><tr><th>ID</th><th>Tgl</th><th>Deskripsi</th><th>Jumlah</th><th>Total Transfer</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="paymentTableBody"></tbody></table></div></div>`;
+    
+    document.getElementById('content').innerHTML = html;
+    renderPaymentTable(payments);
+}
     function renderPaymentTable(payments) {
-        let statusFilter = document.getElementById('paymentStatusFilter')?.value || 'all';
-        let filtered = statusFilter === 'all' ? payments : payments?.filter(p => p.status === statusFilter);
-        let tbody = '';
-        (filtered || []).forEach(p => {
-            let actions = `<button class="action-btn" onclick="viewPaymentRequest(${p.id})" title="Detail"><i class="fas fa-eye"></i></button>`;
-            if (p.status === 'draft' && currentUserRole === 'staff' && p.requester_email === currentUser?.email) 
-                actions += ` <button class="action-btn" onclick="submitPaymentRequest(${p.id})" title="Ajukan" style="color:var(--success);"><i class="fas fa-paper-plane"></i></button> <button class="action-btn" onclick="editPaymentRequest(${p.id})" title="Edit" style="color:var(--warning);"><i class="fas fa-edit"></i></button>`;
-            if (p.status === 'submitted' && currentUserRole === 'finance') 
-                actions += ` <button class="action-btn" onclick="verifyPaymentRequest(${p.id})" title="Verifikasi" style="color:var(--success);"><i class="fas fa-check-circle"></i></button>`;
-            if (p.status === 'verified' && currentUserRole === 'direktur') 
-                actions += ` <button class="action-btn" onclick="approvePaymentRequest(${p.id})" title="Approve" style="color:var(--success);"><i class="fas fa-thumbs-up"></i></button>`;
-            tbody += `<tr>
-                <td>#${p.id}</td>
-                <td>${p.request_date || '-'}</td>
-                <td>${p.description || '-'}</td>
-                <td class="text-right">Rp ${formatNumber(p.amount)}</td>
-                <td class="text-right">Rp ${formatNumber(p.total_with_tax || p.amount)}</td>
-                <td><span class="status-badge status-${p.status}">${p.status}</span></td>
-                <td>${actions}</td>
-            </tr>`;
-        });
-        document.getElementById('paymentTableBody').innerHTML = tbody || '<tr><td colspan="7">Belum ada data</td></tr>';
+    let statusFilter = document.getElementById('paymentStatusFilter')?.value || 'all';
+    let filtered = statusFilter === 'all' ? payments : payments?.filter(p => p.status === statusFilter);
+    let tbody = '';
+    (filtered || []).forEach(p => {
+        let actions = `<button class="action-btn" onclick="viewPaymentRequest(${p.id})" title="Detail"><i class="fas fa-eye"></i></button>`;
+
+        // SEMUA ROLE bisa submit
+        if (p.status === 'draft') {
+            actions += ` <button class="action-btn" onclick="submitPaymentRequest(${p.id})" title="Ajukan" style="color:var(--success);"><i class="fas fa-paper-plane"></i></button>`;
+            
+            // HANYA PEMBUAT yang bisa edit & hapus (AMAN!)
+            if (p.requester_email === currentUser?.email) {
+                actions += ` <button class="action-btn" onclick="editPaymentRequest(${p.id})" title="Edit" style="color:var(--warning);"><i class="fas fa-edit"></i></button>`;
+                actions += ` <button class="action-btn" onclick="deletePaymentRequest(${p.id})" title="Hapus" style="color:var(--danger);"><i class="fas fa-trash"></i></button>`;
+            }
+        }
+
+        // Verifikasi (khusus finance)
+        if (p.status === 'submitted' && currentUserRole === 'finance') {
+            actions += ` <button class="action-btn" onclick="verifyPaymentRequest(${p.id})" title="Verifikasi" style="color:var(--success);"><i class="fas fa-check-circle"></i></button>`;
+        }
+
+        // Approval (khusus direktur)
+        if (p.status === 'verified' && currentUserRole === 'direktur') {
+            actions += ` <button class="action-btn" onclick="approvePaymentRequest(${p.id})" title="Approve" style="color:var(--success);"><i class="fas fa-thumbs-up"></i></button>`;
+        }
+
+        tbody += `<tr>
+            <td>#${p.id}</td>
+            <td>${p.request_date || '-'}</td>
+            <td>${p.description || '-'}</td>
+            <td class="text-right">Rp ${formatNumber(p.amount)}</td>
+            <td class="text-right">Rp ${formatNumber(p.total_with_tax || p.amount)}</td>
+            <td><span class="status-badge status-${p.status}">${p.status}</span></td>
+            <td>${actions}</td>
+        </tr>`;
+    });
+    document.getElementById('paymentTableBody').innerHTML = tbody || '<tr><td colspan="7">Belum ada data</td></tr>';
+}
+    async function deletePaymentRequest(id) {
+    if (!confirm('Hapus payment request ini? Tindakan tidak bisa dibatalkan!')) return;
+    showLoading();
+    let { error } = await supabase.from('payment_requests').delete().eq('id', id);
+    hideLoading();
+    if (error) {
+        alert('Gagal menghapus: ' + error.message);
+    } else {
+        alert('Payment request berhasil dihapus');
+        loadPaymentRequests();
+        loadDashboard();
     }
-    
+}
+        
     function filterPaymentRequests() { loadPaymentRequests(); }
     
     function showNewPaymentForm() {
