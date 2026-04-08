@@ -413,23 +413,24 @@
     
     // ==================== PAYMENT REQUESTS ====================
        async function loadPaymentRequests() {
-        showLoading();
-        let query = sb.from('payment_requests').select('*');
-        
-        // Aturan akses berdasarkan role
-        if (currentUserRole === 'staff') {
-            // Staff hanya lihat draft milik sendiri
-            query = query.eq('requester_email', currentUser?.email);
-        } else if (currentUserRole === 'finance') {
-            // Finance lihat semua yang statusnya submitted (belum diverifikasi)
-            query = query.in('status', ['submitted', 'verified', 'paid', 'rejected']);
-        } else if (currentUserRole === 'direktur') {
-            // Direktur lihat semua yang sudah diverifikasi (menunggu approve)
-            query = query.in('status', ['verified', 'paid', 'rejected']);
-        }
-        
-        let { data: payments } = await query.order('id', { ascending: false });
-        allPaymentsData = payments || [];
+    showLoading();
+    let query = sb.from('payment_requests').select('*');
+    
+    // Aturan akses berdasarkan role
+    if (currentUserRole === 'staff') {
+        // Staff hanya lihat draft milik sendiri + semua status lainnya
+        query = query.eq('requester_email', currentUser?.email);
+    } else if (currentUserRole === 'finance') {
+        // Finance lihat SEMUA (draft, submitted, verified, paid, rejected)
+        // Tidak perlu filter status
+        // query = query (semua data)
+    } else if (currentUserRole === 'direktur') {
+        // Direktur lihat SEMUA
+        // query = query (semua data)
+    }
+    
+    let { data: payments } = await query.order('id', { ascending: false });
+    allPaymentsData = payments || [];
         
         // Ambil daftar perusahaan unik untuk filter
         let uniqueCompanies = [...new Set(allPaymentsData.map(p => p.company_id))];
@@ -542,22 +543,25 @@
             let actions = `<button class="action-btn" onclick="viewPaymentRequest(${p.id})" title="Detail"><i class="fas fa-eye"></i></button>`;
             
             // Staff: hanya bisa submit/edit/hapus draft milik sendiri
-            if (p.status === 'draft' && currentUserRole === 'staff' && p.requester_email === currentUser?.email) {
-                actions += ` <button class="action-btn" onclick="submitPaymentRequest(${p.id})" title="Ajukan" style="color:var(--success);"><i class="fas fa-paper-plane"></i></button>`;
-                actions += ` <button class="action-btn" onclick="editPaymentRequest(${p.id})" title="Edit" style="color:var(--warning);"><i class="fas fa-edit"></i></button>`;
-                actions += ` <button class="action-btn" onclick="deletePaymentRequest(${p.id})" title="Hapus" style="color:var(--danger);"><i class="fas fa-trash"></i></button>`;
-            }
-            
-            // Finance: verifikasi atau tolak request yang submitted
-            if (p.status === 'submitted' && currentUserRole === 'finance') {
-                actions += ` <button class="action-btn" onclick="verifyPaymentRequest(${p.id})" title="Verifikasi" style="color:var(--success);"><i class="fas fa-check-circle"></i></button>`;
-                actions += ` <button class="action-btn" onclick="rejectPaymentRequest(${p.id})" title="Tolak" style="color:var(--danger);"><i class="fas fa-times-circle"></i></button>`;
-            }
-            
-            // Direktur: approve request yang sudah diverifikasi
-            if (p.status === 'verified' && currentUserRole === 'direktur') {
-                actions += ` <button class="action-btn" onclick="approvePaymentRequest(${p.id})" title="Approve" style="color:var(--success);"><i class="fas fa-thumbs-up"></i></button>`;
-            }
+           // Finance: verifikasi atau tolak request yang submitted
+if (p.status === 'submitted' && (currentUserRole === 'finance' || currentUserRole === 'direktur')) {
+    actions += ` <button class="action-btn" onclick="verifyPaymentRequest(${p.id})" title="Verifikasi" style="color:var(--success);"><i class="fas fa-check-circle"></i></button>`;
+    actions += ` <button class="action-btn" onclick="rejectPaymentRequest(${p.id})" title="Tolak" style="color:var(--danger);"><i class="fas fa-times-circle"></i></button>`;
+}
+
+// Direktur: approve request yang sudah diverifikasi
+if (p.status === 'verified' && currentUserRole === 'direktur') {
+    actions += ` <button class="action-btn" onclick="approvePaymentRequest(${p.id})" title="Approve" style="color:var(--success);"><i class="fas fa-thumbs-up"></i></button>`;
+}
+
+// Staff: submit draft sendiri
+if (p.status === 'draft' && p.requester_email === currentUser?.email) {
+    if (currentUserRole === 'staff') {
+        actions += ` <button class="action-btn" onclick="submitPaymentRequest(${p.id})" title="Ajukan" style="color:var(--success);"><i class="fas fa-paper-plane"></i></button>`;
+    }
+    actions += ` <button class="action-btn" onclick="editPaymentRequest(${p.id})" title="Edit" style="color:var(--warning);"><i class="fas fa-edit"></i></button>`;
+    actions += ` <button class="action-btn" onclick="deletePaymentRequest(${p.id})" title="Hapus" style="color:var(--danger);"><i class="fas fa-trash"></i></button>`;
+}
             
             tbody += `<tr>
                 <td>#${p.id}</td>
@@ -835,75 +839,122 @@
     }
     
     async function submitVerifikasiDenganProject(id) {
-        let debitAccount = document.getElementById('debitAccount').value;
-        let creditAccount = document.getElementById('creditAccount').value;
-        let kenaPPN = document.getElementById('kenaPPN')?.checked || false;
-        let kenaPPh = document.getElementById('kenaPPh')?.checked || false;
-        
-        let req = window.currentVerifikasiReq;
-        let taxConfig = window.currentTaxConfig;
-        let ppn = kenaPPN ? Math.round(req.amount * (taxConfig.ppn_rate / 100)) : 0;
-        let pph = kenaPPh ? Math.round(req.amount * 0.02) : 0;
-        let total = req.amount + ppn - pph;
-        
-        if (!debitAccount || !creditAccount) { alert('Pilih akun debit dan kredit'); return; }
-        
-        let projectSelect = document.getElementById('verifyProject');
-        let projectCode = '';
-        
-        if (projectSelect.value === 'NEW') {
-            projectCode = document.getElementById('newProjectCode')?.value.toUpperCase().trim();
-            let projectName = document.getElementById('newProjectName')?.value.trim();
-            let projectBudget = parseRupiah(document.getElementById('newProjectBudget')?.value);
-            
-            if (!projectCode) { alert('Isi kode project'); return; }
-            if (!projectName) { alert('Isi nama project'); return; }
-            
-            let { data: existing } = await sb.from('projects').select('*').eq('company_id', req.company_id).eq('code', projectCode);
-            if (!existing || existing.length === 0) {
-                await sb.from('projects').insert({
-                    company_id: req.company_id, code: projectCode, name: projectName,
-                    budget: projectBudget || 0, is_unlimited: projectBudget === 0, created_by: currentUser?.email
-                });
-            }
-        } else {
-            projectCode = projectSelect.value;
-        }
-        
-        let company = companies.find(c => c.id == req.company_id);
-        let companyCode = company?.kode || 'ARK';
-        let now = new Date();
-        let year = now.getFullYear();
-        let month = String(now.getMonth() + 1).padStart(2, '0');
-        
-        let basePattern = `${companyCode}/${year}/${month}`;
-        if (projectCode && projectCode !== '') basePattern += `/${projectCode}`;
-        
-        let { data: existing } = await sb.from('payment_requests').select('voucher_no');
-        let lastNumber = 0;
-        (existing || []).forEach(v => {
-            if (v.voucher_no && v.voucher_no.startsWith(basePattern)) {
-                let num = parseInt(v.voucher_no.split('/').pop());
-                if (num > lastNumber) lastNumber = num;
-            }
-        });
-        let voucherNo = `${basePattern}/${(lastNumber + 1).toString().padStart(3, '0')}`;
-        
-        await sb.from('payment_requests').update({
-            status: 'verified', verified_at: new Date(), verified_by: currentUser?.email,
-            debit_account: debitAccount, credit_account: creditAccount, voucher_no: voucherNo,
-            ppn: ppn, pph: pph, total_with_tax: total, project_code: projectCode
-        }).eq('id', id);
-        
-        await sb.from('payment_logs').insert({
-            request_id: id, user_email: currentUser?.email, user_role: currentUserRole,
-            old_status: 'submitted', new_status: 'verified',
-            keterangan: `Verifikasi, Voucher: ${voucherNo}, Project: ${projectCode || '-'}`
-        });
-        
-        showToast(`✅ Diverifikasi! Voucher: ${voucherNo}`, 'success');
-        setTimeout(() => { document.querySelector('.modal-overlay')?.remove(); loadPaymentRequests(); loadDashboard(); }, 1500);
+    console.log("=== START SUBMIT VERIFIKASI ===");
+    console.log("Request ID:", id);
+    
+    let debitAccount = document.getElementById('debitAccount').value;
+    let creditAccount = document.getElementById('creditAccount').value;
+    let kenaPPN = document.getElementById('kenaPPN')?.checked || false;
+    let kenaPPh = document.getElementById('kenaPPh')?.checked || false;
+    
+    console.log("debitAccount:", debitAccount);
+    console.log("creditAccount:", creditAccount);
+    console.log("kenaPPN:", kenaPPN);
+    console.log("kenaPPh:", kenaPPh);
+    
+    let req = window.currentVerifikasiReq;
+    let taxConfig = window.currentTaxConfig;
+    
+    if (!req) {
+        console.error("req tidak ditemukan!");
+        alert("Error: Data request tidak ditemukan");
+        return;
     }
+    
+    let ppn = kenaPPN ? Math.round(req.amount * (taxConfig.ppn_rate / 100)) : 0;
+    let pph = kenaPPh ? Math.round(req.amount * 0.02) : 0;
+    let total = req.amount + ppn - pph;
+    
+    console.log("PPN:", ppn, "PPh:", pph, "Total:", total);
+    
+    if (!debitAccount || !creditAccount) { 
+        alert('Pilih akun debit dan kredit'); 
+        return; 
+    }
+    
+    let projectSelect = document.getElementById('verifyProject');
+    let projectCode = '';
+    
+    if (projectSelect.value === 'NEW') {
+        projectCode = document.getElementById('newProjectCode')?.value.toUpperCase().trim();
+        let projectName = document.getElementById('newProjectName')?.value.trim();
+        let projectBudget = parseRupiah(document.getElementById('newProjectBudget')?.value);
+        
+        if (!projectCode) { alert('Isi kode project'); return; }
+        if (!projectName) { alert('Isi nama project'); return; }
+        
+        let { data: existing } = await sb.from('projects').select('*').eq('company_id', req.company_id).eq('code', projectCode);
+        if (!existing || existing.length === 0) {
+            await sb.from('projects').insert({
+                company_id: req.company_id, code: projectCode, name: projectName,
+                budget: projectBudget || 0, is_unlimited: projectBudget === 0, created_by: currentUser?.email
+            });
+            console.log("Project baru dibuat:", projectCode);
+        }
+    } else {
+        projectCode = projectSelect.value;
+    }
+    
+    let company = companies.find(c => c.id == req.company_id);
+    let companyCode = company?.kode || 'ARK';
+    let now = new Date();
+    let year = now.getFullYear();
+    let month = String(now.getMonth() + 1).padStart(2, '0');
+    
+    let basePattern = `${companyCode}/${year}/${month}`;
+    if (projectCode && projectCode !== '') basePattern += `/${projectCode}`;
+    
+    let { data: existing } = await sb.from('payment_requests').select('voucher_no');
+    let lastNumber = 0;
+    (existing || []).forEach(v => {
+        if (v.voucher_no && v.voucher_no.startsWith(basePattern)) {
+            let num = parseInt(v.voucher_no.split('/').pop());
+            if (num > lastNumber) lastNumber = num;
+        }
+    });
+    let voucherNo = `${basePattern}/${(lastNumber + 1).toString().padStart(3, '0')}`;
+    
+    console.log("Voucher No:", voucherNo);
+    
+    // UPDATE status ke VERIFIED
+    let { error: updateError } = await sb.from('payment_requests').update({
+        status: 'verified', 
+        verified_at: new Date(), 
+        verified_by: currentUser?.email,
+        debit_account: debitAccount, 
+        credit_account: creditAccount, 
+        voucher_no: voucherNo,
+        ppn: ppn, 
+        pph: pph, 
+        total_with_tax: total, 
+        project_code: projectCode
+    }).eq('id', id);
+    
+    if (updateError) {
+        console.error("Error update:", updateError);
+        alert("Gagal verifikasi: " + updateError.message);
+        return;
+    }
+    
+    console.log("Update berhasil!");
+    
+    // Insert ke payment_logs
+    await sb.from('payment_logs').insert({
+        request_id: id, 
+        user_email: currentUser?.email, 
+        user_role: currentUserRole,
+        old_status: 'submitted', 
+        new_status: 'verified',
+        keterangan: `Verifikasi, Voucher: ${voucherNo}, Project: ${projectCode || '-'}`
+    });
+    
+    showToast(`✅ Diverifikasi! Voucher: ${voucherNo}`, 'success');
+    setTimeout(() => { 
+        document.querySelector('.modal-overlay')?.remove(); 
+        loadPaymentRequests(); 
+        loadDashboard(); 
+    }, 1500);
+}
 
         async function deletePaymentRequest(id) {
         if (!confirm('Hapus payment request ini? Tindakan tidak bisa dibatalkan!')) return;
