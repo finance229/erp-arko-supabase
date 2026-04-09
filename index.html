@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP ARKO GROUP - Premium Payment Request</title>
+    <title>ERP ARKO GROUP - Payment Request Premium</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -193,11 +193,43 @@
             color: white;
             margin-bottom: 1rem;
         }
-        .budget-title { font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.3rem; }
-        .budget-amount { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; }
-        .budget-stats { display: flex; justify-content: space-between; font-size: 0.65rem; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.1); }
-        .progress-budget { background: rgba(255,255,255,0.2); border-radius: 30px; height: 24px; width: 100%; overflow: hidden; }
-        .progress-fill { height: 100%; border-radius: 30px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; color: white; font-size: 10px; font-weight: 700; transition: width 0.5s ease; }
+        .budget-title {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-bottom: 0.3rem;
+        }
+        .budget-amount {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .budget-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.65rem;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .progress-budget {
+            background: rgba(255,255,255,0.2);
+            border-radius: 30px;
+            height: 24px;
+            width: 100%;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            transition: width 0.5s ease;
+        }
         .progress-fill.safe { background: linear-gradient(90deg, #10b981, #34d399); }
         .progress-fill.warning { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
         .progress-fill.danger { background: linear-gradient(90deg, #ea580c, #f97316); }
@@ -218,6 +250,17 @@
         .verification-summary td:first-child { width: 40%; }
         .verification-summary td:last-child { text-align: right; font-weight: bold; }
         .voucher-preview { background: var(--gray-50); padding: 1rem; border-radius: 12px; text-align: center; font-size: 1.2rem; font-weight: bold; color: var(--accent); font-family: monospace; }
+        .preview-budget-card {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+        }
+        .preview-budget-warning {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+        }
     </style>
 </head>
 <body>
@@ -240,7 +283,7 @@
         </div>
         <div class="main">
             <div class="top-bar">
-                <h1 class="page-title" id="pageTitle">Dashboard</h1>
+                <h1 class="page-title" id="pageTitle">Payment Request</h1>
                 <div class="user-menu">
                     <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">Loading...</div></div>
                     <div class="user-avatar" id="userAvatar">U</div>
@@ -261,7 +304,6 @@
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let currentUser = null, currentUserRole = null, currentCompanyId = 1;
     let companies = [], accounts = [], projects = [], customers = [], vendors = [];
-    let statusChart = null, companyChart = null, trendChart = null, arapChart = null;
     let revenueAccounts = [];
     
     // ==================== PAYMENT REQUEST GLOBAL VARIABLES ====================
@@ -320,7 +362,7 @@
         document.getElementById('loginPage').style.display = 'none'; document.getElementById('appPage').style.display = 'flex';
         document.getElementById('userName').innerText = profile?.name || email; document.getElementById('userRole').innerText = currentUserRole;
         document.getElementById('userAvatar').innerText = (profile?.name || email).charAt(0).toUpperCase();
-        renderSidebar(); loadDashboard(); hideLoading();
+        renderSidebar(); loadPaymentRequests(); hideLoading();
     }
     
     async function logout() { await sb.auth.signOut(); document.getElementById('loginPage').style.display = 'flex'; document.getElementById('appPage').style.display = 'none'; }
@@ -328,164 +370,28 @@
     function renderSidebar() {
         let menus = [
             { icon: 'fa-chart-pie', label: 'Dashboard', action: 'dashboard', roles: ['direktur', 'finance', 'staff'] },
-            { icon: 'fa-book', label: 'Jurnal & Akuntansi', type: 'dropdown', submenus: [
-                { icon: 'fa-pen', label: 'Input Jurnal', action: 'jurnal', roles: ['direktur', 'finance'] },
-                { icon: 'fa-book', label: 'Buku Besar', action: 'ledger', roles: ['direktur', 'finance'] },
-                { icon: 'fa-chart-line', label: 'Laba Rugi', action: 'labarugi', roles: ['direktur', 'finance'] },
-                { icon: 'fa-scale-balanced', label: 'Neraca', action: 'neraca', roles: ['direktur', 'finance'] },
-                { icon: 'fa-book-open', label: 'Jurnal Umum', action: 'jurnal_umum', roles: ['direktur', 'finance'] }
-            ] },
-            { icon: 'fa-file-invoice-dollar', label: 'Invoice & Payment', type: 'dropdown', submenus: [
-                { icon: 'fa-user', label: 'Invoice Penjualan (AR)', action: 'invoice_penjualan', roles: ['direktur', 'finance'] },
-                { icon: 'fa-users', label: 'Invoice Pembelian (AP)', action: 'invoice_pembelian', roles: ['direktur', 'finance'] },
-                { icon: 'fa-money-bill-wave', label: 'Payment Request', action: 'payment', roles: ['direktur', 'finance', 'staff'] }
-            ] },
-            { icon: 'fa-chart-pie', label: 'Manajemen Aset', type: 'dropdown', submenus: [
-                { icon: 'fa-clock', label: 'Transaksi Berulang', action: 'recurring', roles: ['direktur', 'finance'] },
-                { icon: 'fa-chart-pie', label: 'Manajemen Aset', action: 'aset', roles: ['direktur', 'finance'] },
-                { icon: 'fa-scale-balanced', label: 'Saldo Awal', action: 'opening_balance', roles: ['direktur', 'finance'] }
-            ] },
-            { icon: 'fa-database', label: 'Master Data', type: 'dropdown', submenus: [
-                { icon: 'fa-users', label: 'Data Customer', action: 'customers', roles: ['direktur', 'finance'] },
-                { icon: 'fa-project-diagram', label: 'Data Project', action: 'projects', roles: ['direktur', 'finance'] },
-                { icon: 'fa-truck', label: 'Data Vendor', action: 'vendors', roles: ['direktur', 'finance'] }
-            ] },
-            { icon: 'fa-download', label: 'Export & Backup', action: 'export', roles: ['direktur', 'finance'] }
+            { icon: 'fa-money-bill-wave', label: 'Payment Request', action: 'payment', roles: ['direktur', 'finance', 'staff'] }
         ];
         let html = '';
         menus.forEach(menu => {
-            if (menu.type === 'dropdown') {
-                let hasAccess = menu.submenus.some(sub => sub.roles.includes(currentUserRole));
-                if (!hasAccess) return;
-                html += `<div class="menu-item has-dropdown" onclick="toggleDropdown('${menu.label}')"><i class="fas ${menu.icon}"></i><span style="flex:1;">${menu.label}</span><i class="fas fa-chevron-down" id="arrow-${menu.label}"></i></div><div id="dropdown-${menu.label}" class="dropdown-menu" style="display:none;">`;
-                menu.submenus.forEach(sub => { if (sub.roles.includes(currentUserRole)) html += `<div class="menu-item submenu" onclick="showMenu('${sub.action}')"><i class="fas ${sub.icon}"></i> ${sub.label}</div>`; });
-                html += `</div>`;
-            } else if (menu.roles.includes(currentUserRole)) {
+            if (menu.roles.includes(currentUserRole)) {
                 html += `<div class="menu-item" onclick="showMenu('${menu.action}')"><i class="fas ${menu.icon}"></i> ${menu.label}</div>`;
             }
         });
         document.getElementById('sidebarMenu').innerHTML = html;
     }
     
-    function toggleDropdown(label) { let d = document.getElementById(`dropdown-${label}`); let a = document.getElementById(`arrow-${label}`); if (d.style.display === 'none') { d.style.display = 'block'; if(a) a.style.transform = 'rotate(180deg)'; } else { d.style.display = 'none'; if(a) a.style.transform = 'rotate(0deg)'; } }
-    
     function showMenu(menu) {
         document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
         if (event && event.currentTarget) event.currentTarget.classList.add('active');
-        const titles = { dashboard: 'Dashboard', jurnal: 'Input Jurnal', invoice_penjualan: 'Invoice Penjualan', invoice_pembelian: 'Invoice Pembelian', payment: 'Payment Request', ledger: 'Buku Besar', labarugi: 'Laba Rugi', neraca: 'Neraca', jurnal_umum: 'Jurnal Umum', recurring: 'Transaksi Berulang', aset: 'Manajemen Aset', customers: 'Data Customer', projects: 'Data Project', vendors: 'Data Vendor', opening_balance: 'Saldo Awal', export: 'Export & Backup' };
-        document.getElementById('pageTitle').innerText = titles[menu] || 'ERP';
-        if (menu === 'dashboard') loadDashboard();
-        else if (menu === 'jurnal') loadJurnalForm();
-        else if (menu === 'invoice_penjualan') loadInvoiceList();
-        else if (menu === 'invoice_pembelian') loadVendorInvoiceList();
-        else if (menu === 'payment') loadPaymentRequests();
-        else if (menu === 'ledger') loadLedgerForm();
-        else if (menu === 'labarugi') loadLabaRugiForm();
-        else if (menu === 'neraca') loadNeracaForm();
-        else if (menu === 'jurnal_umum') loadJurnalUmum();
-        else if (menu === 'recurring') loadRecurringList();
-        else if (menu === 'aset') loadAsetList();
-        else if (menu === 'customers') loadCustomerList();
-        else if (menu === 'projects') loadProjectList();
-        else if (menu === 'vendors') loadVendorList();
-        else if (menu === 'opening_balance') loadOpeningBalanceForm();
-        else if (menu === 'export') loadExportBackupForm();
+        if (menu === 'payment') loadPaymentRequests();
+        else if (menu === 'dashboard') loadDashboard();
     }
     
-    // ==================== DASHBOARD ====================
+    // ==================== DASHBOARD SEDERHANA ====================
     async function loadDashboard() {
-        if (statusChart) statusChart.destroy(); if (companyChart) companyChart.destroy();
-        const today = new Date(); const currentMonth = today.getMonth() + 1; const currentYear = today.getFullYear();
-        const greeting = today.getHours() < 12 ? 'Selamat Pagi' : today.getHours() < 18 ? 'Selamat Siang' : 'Selamat Malam';
-        const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-        let companyOptions = '<option value="all">Semua Perusahaan</option>';
-        companies.forEach(c => { companyOptions += `<option value="${c.id}">${c.nama}</option>`; });
-        let html = `<div class="welcome-section"><div><h1><i class="fas fa-hand-wave"></i> ${greeting}, ${currentUser?.name || 'User'}!</h1><p>Ringkasan keuangan konsolidasi</p></div><div class="welcome-date">${today.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' })}</div></div>
-            <div class="filter-card"><div class="filter-grid"><div class="filter-item"><label class="filter-label">Perusahaan</label><select id="dashboardCompany" class="filter-select">${companyOptions}</select></div>
-            <div class="filter-item"><label class="filter-label">Bulan</label><select id="dashboardMonth" class="filter-select"><option value="all">Semua Bulan</option>${monthNames.map((m,i)=>`<option value="${i+1}" ${i+1==currentMonth?'selected':''}>${m}</option>`).join('')}</select></div>
-            <div class="filter-item"><label class="filter-label">Tahun</label><select id="dashboardYear" class="filter-select"><option value="all">Semua Tahun</option><option value="${currentYear-1}">${currentYear-1}</option><option value="${currentYear}" selected>${currentYear}</option><option value="${currentYear+1}">${currentYear+1}</option></select></div>
-            <div class="filter-item"><button class="btn btn-primary" onclick="refreshDashboard()">Perbarui</button></div></div></div>
-            <div class="stats-grid"><div class="stat-card"><div class="stat-value" id="totalKas">Rp 0</div><div class="stat-label">Total Kas</div></div>
-            <div class="stat-card"><div class="stat-value" id="totalPiutang">Rp 0</div><div class="stat-label">Piutang Usaha</div></div>
-            <div class="stat-card"><div class="stat-value" id="totalUtang">Rp 0</div><div class="stat-label">Utang Usaha</div></div>
-            <div class="stat-card"><div class="stat-value" id="labaBersih">Rp 0</div><div class="stat-label">Laba Bersih</div></div>
-            <div class="stat-card"><div class="stat-value" id="totalAset">Rp 0</div><div class="stat-label">Total Aset</div></div>
-            <div class="stat-card"><div class="stat-value" id="totalPending">Rp 0</div><div class="stat-label">Pending Approval</div></div>
-            <div class="stat-card"><div class="stat-value" id="totalDue">Rp 0</div><div class="stat-label">Jatuh Tempo</div></div>
-            <div class="stat-card"><div class="stat-value" id="totalDepresiasi">Rp 0</div><div class="stat-label">Penyusutan</div></div></div>
-            <div class="charts-grid"><div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-chart-pie"></i> Status Payment Request</h3><span id="periodLabel">${monthNames[currentMonth-1]} ${currentYear}</span></div><div class="chart-container"><canvas id="statusChart"></canvas></div></div>
-            <div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-chart-bar"></i> Per Perusahaan</h3></div><div class="chart-container"><canvas id="companyChart"></canvas></div></div></div>
-            <div class="charts-grid"><div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-chart-line"></i> Trend Payment (6 Bulan)</h3></div><div class="chart-container"><canvas id="trendChart"></canvas></div></div>
-            <div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-scale-balanced"></i> AR vs AP</h3></div><div class="chart-container"><canvas id="arapChart"></canvas></div></div></div>
-            <div class="card"><h2><i class="fas fa-bell"></i> Aktivitas Terbaru</h2><div id="activityList"></div></div>
-            <div class="card"><h2><i class="fas fa-exclamation-circle"></i> Perlu Tindakan Segera</h2><div id="priorityTableBody"></div></div>
-            <div class="card"><h2><i class="fas fa-clock"></i> Payment Request Terbaru</h2><div style="overflow-x:auto;"><table><thead><tr><th>ID</th><th>Tgl</th><th>Perusahaan</th><th>Deskripsi</th><th>Jumlah</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="recentTableBody"></tbody></table></div></div>`;
+        let html = `<div class="card"><h2><i class="fas fa-chart-pie"></i> Dashboard</h2><p>Selamat datang di ERP ARKO GROUP</p></div>`;
         document.getElementById('content').innerHTML = html;
-        await refreshDashboard();
-    }
-    
-    async function refreshDashboard() {
-        let companyId = document.getElementById('dashboardCompany')?.value || 'all';
-        let month = document.getElementById('dashboardMonth')?.value || 'all';
-        let year = document.getElementById('dashboardYear')?.value || 'all';
-        
-        let query = sb.from('payment_requests').select('*');
-        if (companyId !== 'all') query = query.eq('company_id', parseInt(companyId));
-        if (month !== 'all' && year !== 'all') { let start = `${year}-${month.padStart(2,'0')}-01`; let end = `${year}-${month.padStart(2,'0')}-31`; query = query.gte('request_date', start).lte('request_date', end); }
-        let { data: payments } = await query.order('created_at', { ascending: false });
-        
-        let { data: invoices } = await sb.from('invoices').select('*');
-        let totalPiutang = (invoices || []).reduce((a,b) => a + ((b.total||0) - (b.paid_amount||0)), 0);
-        let totalApproved = (payments || []).filter(p => p.status === 'paid').reduce((a,b) => a + (b.amount||0), 0) || 0;
-        let totalPending = (payments || []).filter(p => p.status === 'submitted' || p.status === 'verified').reduce((a,b) => a + (b.amount||0), 0) || 0;
-        
-        document.getElementById('totalKas').innerHTML = `Rp ${formatNumber(totalApproved)}`;
-        document.getElementById('totalPiutang').innerHTML = `Rp ${formatNumber(totalPiutang)}`;
-        document.getElementById('totalPending').innerHTML = `Rp ${formatNumber(totalPending)}`;
-        
-        let statusData = { draft: 0, submitted: 0, verified: 0, paid: 0, rejected: 0 };
-        let companyData = { 1:0, 2:0, 3:0, 4:0 };
-        let monthlyData = {};
-        (payments || []).forEach(p => { 
-            statusData[p.status] = (statusData[p.status] || 0) + 1; 
-            companyData[p.company_id] = (companyData[p.company_id] || 0) + p.amount;
-            let date = new Date(p.request_date);
-            let monthKey = date.getMonth() + 1;
-            monthlyData[monthKey] = (monthlyData[monthKey] || 0) + p.amount;
-        });
-        
-        if (statusChart) statusChart.destroy();
-        statusChart = new Chart(document.getElementById('statusChart'), { type: 'pie', data: { labels: ['Draft','Submitted','Verified','Paid','Rejected'], datasets: [{ data: [statusData.draft,statusData.submitted,statusData.verified,statusData.paid,statusData.rejected], backgroundColor: ['#9ca3af','#3b82f6','#f59e0b','#10b981','#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
-        
-        if (companyChart) companyChart.destroy();
-        companyChart = new Chart(document.getElementById('companyChart'), { type: 'bar', data: { labels: ['Arko','MMC','USA','MST'], datasets: [{ data: [companyData[1]/1e6, companyData[2]/1e6, companyData[3]/1e6, companyData[4]/1e6], backgroundColor: '#3b82f6' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => 'Rp ' + v + ' Jt' } } } } });
-        
-        let trendValues = []; for (let i = 9; i <= 12; i++) trendValues.push((monthlyData[i] || 0)/1e6); for (let i = 1; i <= 2; i++) trendValues.push((monthlyData[i] || 0)/1e6);
-        if (trendChart) trendChart.destroy();
-        trendChart = new Chart(document.getElementById('trendChart'), { type: 'line', data: { labels: ['Sep','Okt','Nov','Des','Jan','Feb'], datasets: [{ data: trendValues, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => 'Rp ' + v + ' Jt' } } } } });
-        
-        if (arapChart) arapChart.destroy();
-        arapChart = new Chart(document.getElementById('arapChart'), { type: 'bar', data: { labels: ['Piutang (AR)', 'Utang (AP)'], datasets: [{ data: [totalPiutang/1e6, 0], backgroundColor: ['#3b82f6', '#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false } });
-        
-        let tbody = ''; (payments || []).slice(0,5).forEach(p => { let company = companies.find(c => c.id == p.company_id)?.nama || '-'; tbody += `<tr><td>#${p.id}</td>.html${p.request_date || '-'}</td>.html${company}</td>.html${p.description || '-'}</td><td class="text-right">Rp ${formatNumber(p.amount)}</td>.html<span class="status-badge status-${p.status}">${p.status}</span></td>.html<button class="action-btn" onclick="viewPaymentRequest(${p.id})"><i class="fas fa-eye"></i></button></td></tr>`; });
-        document.getElementById('recentTableBody').innerHTML = tbody || '<tr><td colspan="7">Belum ada数据</td></tr>';
-        
-        let priorities = (payments || []).filter(p => p.status === 'submitted' || p.status === 'verified');
-        let priorityHtml = '<div class="table-container"><table class="table"><thead><tr><th>Tipe</th><th>Referensi</th><th>Keterangan</th><th>Jumlah</th><th>Status</th><th>Aksi</th></tr></thead><tbody>';
-        priorities.forEach(p => {
-            let actionBtn = p.status === 'submitted' && currentUserRole === 'finance' ? `<button class="btn btn-success btn-sm" onclick="verifyPaymentRequest(${p.id})">Verifikasi</button>` : (p.status === 'verified' && currentUserRole === 'direktur' ? `<button class="btn btn-success btn-sm" onclick="approvePaymentRequest(${p.id})">Approve</button>` : '');
-            priorityHtml += `<tr><td>Payment</td><td>#${p.id}</td><td>${p.description}</td><td class="text-right">Rp ${formatNumber(p.amount)}</td><td><span class="status-badge status-${p.status}">${p.status}</span></td><td>${actionBtn}</td></tr>`;
-        });
-        priorityHtml += '</tbody><tr></div>';
-        document.getElementById('priorityTableBody').innerHTML = priorities.length ? priorityHtml : '<p style="padding:1rem; text-align:center;">Tidak ada yang perlu ditindaklanjuti</p>';
-        
-        let activityHtml = '<div class="activity-list">';
-        (payments || []).slice(0,10).forEach(p => {
-            let statusIcon = p.status === 'submitted' ? '📤' : p.status === 'verified' ? '✓' : p.status === 'paid' ? '💰' : '📝';
-            activityHtml += `<div class="activity-item" style="display:flex; align-items:center; gap:0.8rem; padding:0.5rem 0; border-bottom:1px solid var(--gray-200);"><div style="width:32px; text-align:center;">${statusIcon}</div><div><strong>Payment Request #${p.id}</strong> ${p.status === 'submitted' ? 'diajukan ke finance' : p.status === 'verified' ? 'diverifikasi finance' : p.status === 'paid' ? 'disetujui direktur' : 'dibuat'}<br><small>${p.request_date} - Rp ${formatNumber(p.amount)}</small></div></div>`;
-        });
-        activityHtml += '</div>';
-        document.getElementById('activityList').innerHTML = activityHtml || '<p>Belum ada aktivitas</p>';
     }
     
     // ==================== PAYMENT REQUESTS PREMIUM ====================
@@ -524,7 +430,7 @@
                         </select></div>
                     </div>
                 </div>
-                <div class="table-container"><table class="table"><thead><tr><th>ID</th><th>Tgl</th><th>Perusahaan</th><th>Deskripsi</th><th class="text-right">Jumlah</th><th class="text-right">Total Transfer</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="paymentTableBody"><tr><td colspan="8" class="text-center">Loading...</td></tr></tbody></table></div>
+                <div class="table-container"><table class="table"><thead><tr><th>ID</th><th>Tgl</th><th>Perusahaan</th><th>Deskripsi</th><th class="text-right">Jumlah</th><th class="text-right">Total Transfer</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="paymentTableBody"><tr><td colspan="8" class="text-center">Loading...<\/td><\/tr><\/tbody><\/table><\/div>
                 <div class="pagination-container">
                     <div><select id="paymentPageSizeSelect" class="page-size-select" onchange="changePaymentPageSize()"><option value="20">20</option><option value="50" selected>50</option><option value="100">100</option></select> per halaman</div>
                     <div><span id="paymentShowingInfo" class="page-info">Menampilkan 0-0 dari 0 request</span></div>
@@ -544,38 +450,64 @@
     function changePaymentPageSize() { currentPaymentPageSize = parseInt(document.getElementById('paymentPageSizeSelect').value); currentPaymentPage = 1; refreshPaymentRequests(); }
     
     async function refreshPaymentRequests() {
-        const month = document.getElementById('paymentMonthFilter')?.value || 'all';
-        const year = document.getElementById('paymentYearFilter')?.value || 'all';
-        const statusFilter = document.getElementById('paymentStatusFilter')?.value || 'all';
-        showSkeletonLoader('paymentTableBody', 5);
+    const month = document.getElementById('paymentMonthFilter')?.value || 'all';
+    const year = document.getElementById('paymentYearFilter')?.value || 'all';
+    const statusFilter = document.getElementById('paymentStatusFilter')?.value || 'all';
+    showSkeletonLoader('paymentTableBody', 5);
+    
+    try {
+        let query = sb.from('payment_requests').select('*');
         
-        try {
-            let query = sb.from('payment_requests').select('*');
-            if (currentUserRole === 'staff') query = query.eq('requester_email', currentUser?.email);
-            if (month !== 'all' && year !== 'all') {
-                const startDate = `${year}-${month.padStart(2,'0')}-01`;
-                const lastDay = new Date(year, month, 0).getDate();
-                query = query.gte('request_date', startDate).lte('request_date', `${year}-${month.padStart(2,'0')}-${lastDay}`);
-            } else if (year !== 'all') {
-                query = query.gte('request_date', `${year}-01-01`).lte('request_date', `${year}-12-31`);
-            }
-            let { data: payments, error } = await query.order('id', { ascending: false });
-            if (error) throw error;
-            let filtered = payments || [];
-            if (statusFilter !== 'all') filtered = filtered.filter(p => p.status === statusFilter);
-            totalPaymentItems = filtered.length;
-            totalPaymentPages = Math.ceil(totalPaymentItems / currentPaymentPageSize);
-            if (currentPaymentPage > totalPaymentPages) currentPaymentPage = 1;
-            const start = (currentPaymentPage - 1) * currentPaymentPageSize;
-            const pageData = filtered.slice(start, start + currentPaymentPageSize);
-            await renderPaymentTable(pageData, currentPaymentPage, totalPaymentPages, totalPaymentItems);
-        } catch (error) { console.error(error); showToast('Gagal memuat data', 'error'); }
+        // ========== ATURAN AKSES BERDASARKAN ROLE ==========
+        if (currentUserRole === 'staff') {
+            // Staff: hanya lihat request sendiri (SEMUA STATUS)
+            query = query.eq('requester_email', currentUser?.email);
+        } else if (currentUserRole === 'finance') {
+            // Finance: lihat semua request KECUALI draft milik orang lain
+            // Tampilkan: submitted, verified, paid, rejected + draft milik sendiri
+            query = query.or(`and(status.eq.draft,requester_email.eq.${currentUser?.email}),and(status.neq.draft,status.neq.null)`);
+        } else if (currentUserRole === 'direktur') {
+            // Direktur: lihat semua request KECUALI draft milik orang lain
+            // Tampilkan: submitted, verified, paid, rejected + draft milik sendiri
+            query = query.or(`and(status.eq.draft,requester_email.eq.${currentUser?.email}),and(status.neq.draft,status.neq.null)`);
+        }
+        
+        // Filter bulan & tahun
+        if (month !== 'all' && year !== 'all') {
+            const startDate = `${year}-${month.padStart(2,'0')}-01`;
+            const lastDay = new Date(year, month, 0).getDate();
+            query = query.gte('request_date', startDate).lte('request_date', `${year}-${month.padStart(2,'0')}-${lastDay}`);
+        } else if (year !== 'all') {
+            query = query.gte('request_date', `${year}-01-01`).lte('request_date', `${year}-12-31`);
+        }
+        
+        let { data: payments, error } = await query.order('id', { ascending: false });
+        if (error) throw error;
+        
+        let filtered = payments || [];
+        
+        // Filter status (client-side)
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(p => p.status === statusFilter);
+        }
+        
+        totalPaymentItems = filtered.length;
+        totalPaymentPages = Math.ceil(totalPaymentItems / currentPaymentPageSize);
+        if (currentPaymentPage > totalPaymentPages) currentPaymentPage = 1;
+        const start = (currentPaymentPage - 1) * currentPaymentPageSize;
+        const pageData = filtered.slice(start, start + currentPaymentPageSize);
+        await renderPaymentTable(pageData, currentPaymentPage, totalPaymentPages, totalPaymentItems);
+        
+    } catch (error) { 
+        console.error(error); 
+        showToast('Gagal memuat data', 'error'); 
     }
+}
     
     async function renderPaymentTable(requests, currentPage, totalPages, totalItems) {
         const tbody = document.getElementById('paymentTableBody');
         if (!tbody) return;
-        if (!requests || requests.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="text-center">Tidak ada data</td></tr>'; updatePaymentPaginationControls(currentPage, totalPages, totalItems); return; }
+        if (!requests || requests.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="text-center">Tidak ada数据<\/td><\/tr>'; updatePaymentPaginationControls(currentPage, totalPages, totalItems); return; }
         
         let html = '';
         for (const r of requests) {
@@ -588,12 +520,14 @@
             else if (r.status === 'rejected') { statusClass = 'status-rejected'; statusIcon = '<i class="fas fa-times"></i>'; }
             
             let actions = `<button class="action-btn" onclick="viewPaymentRequest(${r.id})"><i class="fas fa-eye"></i></button>`;
-            if (r.status === 'draft' && currentUserRole === 'staff' && r.requester_email === currentUser?.email) {
+            if (r.status === 'draft' && r.requester_email === currentUser?.email) {
                 actions += `<button class="action-btn" onclick="editPaymentRequest(${r.id})" style="color:var(--warning);"><i class="fas fa-edit"></i></button>`;
                 actions += `<button class="action-btn" onclick="deletePaymentRequest(${r.id})" style="color:var(--danger);"><i class="fas fa-trash"></i></button>`;
-                actions += `<button class="action-btn" onclick="submitPaymentRequest(${r.id})" style="color:var(--success);"><i class="fas fa-paper-plane"></i></button>`;
+                if (currentUserRole === 'staff') {
+                    actions += `<button class="action-btn" onclick="submitPaymentRequest(${r.id})" style="color:var(--success);"><i class="fas fa-paper-plane"></i></button>`;
+                }
             }
-            if (r.status === 'submitted' && currentUserRole === 'finance') {
+            if (r.status === 'submitted' && (currentUserRole === 'finance' || currentUserRole === 'direktur')) {
                 actions += `<button class="action-btn" onclick="verifyPaymentRequest(${r.id})" style="color:var(--success);"><i class="fas fa-check-circle"></i></button>`;
                 actions += `<button class="action-btn" onclick="rejectPaymentRequest(${r.id})" style="color:var(--danger);"><i class="fas fa-times-circle"></i></button>`;
             }
@@ -784,7 +718,7 @@
                 logs.forEach(log => { logsHtml += `<div class="history-log"><div class="history-log-header"><span class="history-log-status">${log.new_status}</span><span class="history-log-time">${new Date(log.created_at).toLocaleString()}</span></div><div class="history-log-keterangan">${log.keterangan || '-'}</div><div class="history-log-user">${log.user_email || '-'}</div></div>`; });
             } else { logsHtml = '<p style="text-align:center;color:var(--gray-500);">Belum ada riwayat</p>'; }
             const modal = document.createElement('div'); modal.className = 'modal-overlay';
-            modal.innerHTML = `<div class="modal-content"><div style="padding:20px;"><h3><i class="fas fa-file-invoice"></i> Detail Payment Request #${req.id}</h3><table class="payment-detail-table"><tr><td>Tanggal</td><td>${req.request_date || '-'}</td></tr><tr><td>Perusahaan</td><td>${company}</td></tr><tr><td>Deskripsi</td><td>${req.description || '-'}</td></tr><tr><td>Jumlah (DPP)</td><td>Rp ${formatNumber(req.amount)}</td></tr>${req.ppn > 0 ? `<tr><td>PPN ${req.ppn_rate || 11}%</td><td>Rp ${formatNumber(req.ppn)}</td></tr>` : ''}${req.pph > 0 ? `<tr><td>PPh 23 2%</td><td>Rp ${formatNumber(req.pph)}</td></tr>` : ''}<tr><td>Total Transfer</td><td><strong>Rp ${formatNumber(req.total_with_tax || req.amount)}</strong></td></tr><tr><td>Status</td><td><span class="status-badge status-${req.status}">${req.status}</span></td></tr>${req.voucher_no ? `<tr><td>Voucher</td><td><code>${req.voucher_no}</code></td></tr>` : ''}${req.project_code ? `<tr><td>Project</td><td>${req.project_code}</td></tr>` : ''}${req.bukti_url ? `<tr><td>Bukti</td><td><a href="${req.bukti_url}" target="_blank" class="btn btn-primary btn-sm">Lihat Bukti</a></td></tr>` : ''}</table><div style="margin-top:20px;"><h4>Riwayat Perubahan</h4><div style="max-height:300px;overflow-y:auto;">${logsHtml}</div></div><div style="display:flex;justify-content:flex-end;margin-top:20px;"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Tutup</button></div></div></div>`;
+            modal.innerHTML = `<div class="modal-content"><div style="padding:20px;"><h3><i class="fas fa-file-invoice"></i> Detail Payment Request #${req.id}</h3><table class="payment-detail-table"><tr><td>Tanggal</td><td>${req.request_date || '-'}</td></tr><tr><td>Perusahaan</td><td>${company}</td></tr><tr><td>Deskripsi</td><td>${req.description || '-'}</td><tr><td>Jumlah (DPP)</td><td>Rp ${formatNumber(req.amount)}</td></tr>${req.ppn > 0 ? `<tr><td>PPN ${req.ppn_rate || 11}%</td><td>Rp ${formatNumber(req.ppn)}</td></tr>` : ''}${req.pph > 0 ? `<tr><td>PPh 23 2%</td><td>Rp ${formatNumber(req.pph)}</td></tr>` : ''}<tr><td>Total Transfer</td><td><strong>Rp ${formatNumber(req.total_with_tax || req.amount)}</strong></td></tr><tr><td>Status</td><td><span class="status-badge status-${req.status}">${req.status}</span></td></tr>${req.voucher_no ? `<tr><td>Voucher</td><td><code>${req.voucher_no}</code></td></tr>` : ''}${req.project_code ? `<tr><td>Project</td><td>${req.project_code}</td></tr>` : ''}${req.bukti_url ? `<tr><td>Bukti</td><td><a href="${req.bukti_url}" target="_blank" class="btn btn-primary btn-sm">Lihat Bukti</a></td></tr>` : ''}</table><div style="margin-top:20px;"><h4>Riwayat Perubahan</h4><div style="max-height:300px;overflow-y:auto;">${logsHtml}</div></div><div style="display:flex;justify-content:flex-end;margin-top:20px;"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Tutup</button></div></div></div>`;
             document.body.appendChild(modal);
         } catch (error) { showToast('Gagal memuat detail: ' + error.message, 'error'); }
         finally { hideLoading(); }
@@ -815,157 +749,445 @@
             const ppnNote = taxConfig.is_pkp ? `PPN ${taxConfig.ppn_rate}% (bisa dikreditkan)` : `PPN ${taxConfig.ppn_rate}% (tidak bisa dikreditkan, final)`;
             
             const modal = document.createElement('div'); modal.className = 'modal-overlay';
-            modal.innerHTML = `<div class="modal-content" style="max-width:700px;"><div style="padding:20px;"><h3><i class="fas fa-check-circle" style="color:var(--success);"></i> Verifikasi Payment Request #${req.id}</h3><div class="alert alert-info">${companyName} | ${ppnNote}</div><div style="background:var(--gray-50);padding:15px;border-radius:8px;margin-bottom:20px;"><p><strong>Deskripsi:</strong> ${req.description}</p><p><strong>Jumlah Diajukan:</strong> Rp ${formatNumber(req.amount)}</p></div><div class="form-group"><label>Project</label><select id="verifyProject" class="form-control searchable-dropdown" onchange="updateBudgetDisplay()">${projectOptions}<option value="NEW">+ BUAT PROJECT BARU</option></select></div><div id="newProjectInput" style="display:none;margin-bottom:20px;"><div class="form-group"><label>Kode Project</label><input type="text" id="newProjectCode" class="form-control" placeholder="UNQ, INT" onkeyup="this.value=this.value.toUpperCase()"></div><div class="form-group"><label>Nama Project</label><input type="text" id="newProjectName" class="form-control" placeholder="Nama lengkap"></div><div class="form-group"><label>Budget (0 = Unlimited)</label><input type="text" id="newProjectBudget" class="form-control" placeholder="Rp 0" onkeyup="formatMoney(this)"></div></div><div id="budgetDisplay"></div><div class="form-group"><label>Akun Debit</label><select id="debitAccount" class="form-control searchable-dropdown" required>${debitOptions}</select></div><div class="form-group"><label>Akun Kredit</label><select id="creditAccount" class="form-control searchable-dropdown" required>${kasOptions}</select></div><div style="margin:20px 0;"><h4>Pajak</h4><div style="display:flex;gap:20px;flex-wrap:wrap;"><label><input type="checkbox" id="ppnCheck" onchange="updatePaymentPajak()"> PPN ${taxConfig.ppn_rate}%</label><label><input type="checkbox" id="pphCheck" onchange="updatePaymentPajak()"> PPh 23 (2%)</label><label><input type="checkbox" id="grossUpCheck" onchange="updatePaymentPajak()"> Gross Up PPh</label></div></div><div class="verification-summary"><table><tr><td>DPP</td><td id="paymentDPP">Rp ${formatNumber(req.amount)}</td></tr><tr><td>PPN ${taxConfig.ppn_rate}%</td><td id="paymentPPN">Rp 0</td></tr><tr><td>PPh 23 2%</td><td id="paymentPPh">Rp 0</td></tr><tr style="border-top:1px solid rgba(255,255,255,0.3);"><td><strong>TOTAL DIBAYAR</strong></td><td><strong id="paymentTotal">Rp ${formatNumber(req.amount)}</strong></td></tr><tr id="grossUpInfoRow" style="display:none;"><td colspan="2" style="text-align:center;font-style:italic;">Gross Up: Vendor terima bersih Rp <span id="vendorAmount">${formatNumber(req.amount)}</span></td></tr></table></div><div class="voucher-preview"><strong>Preview Voucher:</strong> <span id="voucherPreview">[Pilih project]</span></div><div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:20px;"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Batal</button><button class="btn btn-success" onclick="submitVerification(${req.id})">Verifikasi & Buat Voucher</button></div><div id="verifyResult"></div></div></div>`;
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width:700px;">
+                    <div style="padding:20px;">
+                        <h3 style="margin-bottom:20px;"><i class="fas fa-check-circle" style="color:var(--success);"></i> Verifikasi Payment Request #${req.id}</h3>
+                        <div class="alert alert-info" style="margin-bottom:20px;">${companyName} | ${ppnNote}</div>
+                        <div style="background:var(--gray-50);padding:15px;border-radius:8px;margin-bottom:20px;">
+                            <p><strong>Deskripsi:</strong> ${req.description}</p>
+                            <p><strong>Jumlah Diajukan:</strong> Rp ${formatNumber(req.amount)}</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><i class="fas fa-project-diagram"></i> Project</label>
+                            <select id="verifyProject" class="form-control searchable-dropdown" onchange="handleProjectChange()">
+                                ${projectOptions}
+                                <option value="NEW">+ BUAT PROJECT BARU</option>
+                            </select>
+                        </div>
+                        
+                        <div id="newProjectSection" style="display:none; margin-top:15px;">
+                            <div style="background:#f8f9fa; padding:15px; border-radius:12px; margin-bottom:15px;">
+                                <h4 style="margin-bottom:15px;">📝 Buat Project Baru</h4>
+                                <div class="form-group">
+                                    <label>Kode Project</label>
+                                    <input type="text" id="newProjectCode" class="form-control" placeholder="Contoh: UNQ, INT" onkeyup="this.value=this.value.toUpperCase(); updateNewProjectPreview()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Nama Project</label>
+                                    <input type="text" id="newProjectName" class="form-control" placeholder="Nama lengkap" onkeyup="updateNewProjectPreview()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Budget (0 = Unlimited)</label>
+                                    <input type="text" id="newProjectBudget" class="form-control" placeholder="Rp 0" onkeyup="formatMoney(this); updateNewProjectPreview()">
+                                </div>
+                                <div id="newProjectBudgetPreview" style="margin-top:10px;"></div>
+                            </div>
+                        </div>
+                        
+                        <div id="existingProjectBudget" style="margin-top:15px;"></div>
+                        
+                        <div class="form-group">
+                            <label><i class="fas fa-arrow-right"></i> Akun Debit (Beban/Aset)</label>
+                            <select id="debitAccount" class="form-control searchable-dropdown" required>${debitOptions}</select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><i class="fas fa-arrow-left"></i> Akun Kredit (Kas/Bank)</label>
+                            <select id="creditAccount" class="form-control searchable-dropdown" required>${kasOptions}</select>
+                        </div>
+                        
+                        <div style="margin:20px 0;">
+                            <h4><i class="fas fa-percent"></i> Pajak</h4>
+                            <div style="display:flex; gap:20px; flex-wrap:wrap; margin-top:10px;">
+                                <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+                                    <input type="checkbox" id="ppnCheck" onchange="updatePaymentPajak()">
+                                    <i class="fas fa-file-invoice" style="color:var(--accent);"></i> PPN ${taxConfig.ppn_rate}%
+                                </label>
+                                <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+                                    <input type="checkbox" id="pphCheck" onchange="updatePaymentPajak()">
+                                    <i class="fas fa-file-invoice" style="color:var(--accent);"></i> PPh 23 (2%)
+                                </label>
+                                <label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+                                    <input type="checkbox" id="grossUpCheck" onchange="updatePaymentPajak()">
+                                    <i class="fas fa-calculator" style="color:var(--accent);"></i> Gross Up PPh
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="verification-summary">
+                            <table>
+                                <tr><td>DPP (Dasar Pengenaan Pajak)</td><td id="paymentDPP">Rp ${formatNumber(req.amount)}</td></tr>
+                                <tr><td>PPN ${taxConfig.ppn_rate}%</td><td id="paymentPPN">Rp 0</td></tr>
+                                <tr><td>PPh 23 (2%)</td><td id="paymentPPh">Rp 0</td></tr>
+                                <tr style="border-top:1px solid rgba(255,255,255,0.3);"><td><strong>TOTAL DIBAYAR</strong></td><td><strong id="paymentTotal">Rp ${formatNumber(req.amount)}</strong></td></tr>
+                                <tr id="grossUpInfoRow" style="display:none;"><td colspan="2" style="text-align:center; font-style:italic;">Gross Up: Vendor terima bersih Rp <span id="vendorAmount">${formatNumber(req.amount)}</span></td></tr>
+                            </table>
+                        </div>
+                        
+                        <div class="voucher-preview">
+                            <strong>Preview Voucher:</strong> <span id="voucherPreview">[Pilih project]</span>
+                        </div>
+                        
+                        <div style="display:flex; gap:1rem; justify-content:flex-end; margin-top:20px;">
+                            <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">
+                                <i class="fas fa-times"></i> Batal
+                            </button>
+                            <button class="btn btn-success" onclick="submitVerifikasiFinal(${req.id})">
+                                <i class="fas fa-check"></i> Verifikasi & Buat Voucher
+                            </button>
+                        </div>
+                        
+                        <div id="verifyResult" style="margin-top:20px;"></div>
+                    </div>
+                </div>
+            `;
+            
             document.body.appendChild(modal);
             $('.searchable-dropdown').select2({ width: '100%' });
+            
             window.currentVerifikasiReq = req;
             window.currentTaxConfig = taxConfig;
+            
             updatePaymentPajak();
             updateVoucherPreview();
-            $('#verifyProject').on('change', function() { const showNew = this.value === 'NEW'; document.getElementById('newProjectInput').style.display = showNew ? 'block' : 'none'; if (!showNew) updateBudgetDisplay(); updateVoucherPreview(); });
-            $('#newProjectCode, #newProjectName, #newProjectBudget').on('input', updateVoucherPreview);
-        } catch (error) { showToast('Gagal memuat form verifikasi: ' + error.message, 'error'); }
-        finally { hideLoading(); }
-    }
-    
-    async function updateBudgetDisplay() {
-        const projectCode = document.getElementById('verifyProject').value;
-        const budgetDiv = document.getElementById('budgetDisplay');
-        if (!projectCode || projectCode === '' || projectCode === 'NEW') { budgetDiv.style.display = 'none'; return; }
-        const req = window.currentVerifikasiReq;
-        try {
-            const { data: project, error } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', req.company_id).single();
-            if (error || !project) { budgetDiv.style.display = 'none'; return; }
-            const { data: payments } = await sb.from('payment_requests').select('amount, total_with_tax').eq('project_code', projectCode).eq('company_id', req.company_id).in('status', ['verified', 'paid']);
-            const terpakai = (payments || []).reduce((a, b) => a + (b.total_with_tax || b.amount || 0), 0);
-            const totalNanti = terpakai + req.amount;
-            const persen = project.is_unlimited ? 0 : (totalNanti / project.budget) * 100;
-            const persenFixed = Math.min(persen, 150);
-            let warna = '', statusText = '';
-            if (project.is_unlimited) { warna = 'unlimited'; statusText = '⚪ Unlimited (tanpa batas)'; }
-            else if (persenFixed <= 70) { warna = 'safe'; statusText = '🟢 Aman'; }
-            else if (persenFixed <= 90) { warna = 'warning'; statusText = '🟡 Mendekati batas'; }
-            else if (persenFixed <= 100) { warna = 'danger'; statusText = '🟠 Hampir habis'; }
-            else { warna = 'over'; statusText = '🔴 OVER BUDGET!'; }
-            budgetDiv.style.display = 'block';
-            budgetDiv.innerHTML = `<div class="budget-card"><div class="budget-title">🎯 ${project.name}</div><div class="budget-amount">${project.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(project.budget)}`}</div><div class="progress-budget"><div class="progress-fill ${warna}" style="width: ${persenFixed}%;">${!project.is_unlimited ? Math.round(persenFixed) + '%' : ''}</div></div><div class="budget-stats"><span>Terpakai: Rp ${formatNumber(terpakai)}</span><span>Request ini: Rp ${formatNumber(req.amount)}</span><span>${statusText}</span></div>${!project.is_unlimited && totalNanti > project.budget ? `<div class="alert alert-warning" style="margin-top:0.5rem;">⚠️ Melebihi budget Rp ${formatNumber(totalNanti - project.budget)}</div>` : ''}</div>`;
-        } catch (error) { budgetDiv.style.display = 'none'; }
-    }
-    
-    function updatePaymentPajak() {
-        const req = window.currentVerifikasiReq;
-        const taxConfig = window.currentTaxConfig;
-        if (!req) return;
-        const kenaPPN = document.getElementById('ppnCheck')?.checked || false;
-        const kenaPPh = document.getElementById('pphCheck')?.checked || false;
-        const grossUp = document.getElementById('grossUpCheck')?.checked || false;
-        let dpp = req.amount, ppn = 0, pph = 0, total = dpp;
-        if (kenaPPN && kenaPPh) {
-            if (grossUp) { dpp = Math.round(req.amount / 0.98); ppn = Math.round(dpp * (taxConfig.ppn_rate / 100)); pph = Math.round(dpp * 0.02); total = dpp + ppn; }
-            else { ppn = Math.round(dpp * (taxConfig.ppn_rate / 100)); pph = Math.round(dpp * 0.02); total = dpp + ppn - pph; }
-        } else if (kenaPPN && !kenaPPh) { ppn = Math.round(dpp * (taxConfig.ppn_rate / 100)); total = dpp + ppn; }
-        else if (!kenaPPN && kenaPPh) {
-            if (grossUp) { dpp = Math.round(req.amount / 0.98); pph = Math.round(dpp * 0.02); total = dpp; }
-            else { pph = Math.round(dpp * 0.02); total = dpp - pph; }
+            
+            window.handleProjectChange = function() {
+                const select = document.getElementById('verifyProject');
+                const newProjectDiv = document.getElementById('newProjectSection');
+                const existingBudgetDiv = document.getElementById('existingProjectBudget');
+                
+                if (select.value === 'NEW') {
+                    newProjectDiv.style.display = 'block';
+                    existingBudgetDiv.style.display = 'none';
+                } else if (select.value && select.value !== '') {
+                    newProjectDiv.style.display = 'none';
+                    existingBudgetDiv.style.display = 'block';
+                    updateExistingProjectBudget(select.value);
+                } else {
+                    newProjectDiv.style.display = 'none';
+                    existingBudgetDiv.style.display = 'none';
+                }
+                updateVoucherPreview();
+            };
+            
+            window.updateNewProjectPreview = function() {
+                const budgetInput = document.getElementById('newProjectBudget');
+                const budget = parseRupiah(budgetInput.value);
+                const previewDiv = document.getElementById('newProjectBudgetPreview');
+                const req = window.currentVerifikasiReq;
+                
+                if (budget === 0) {
+                    previewDiv.innerHTML = `<div class="alert alert-info" style="margin-top:10px;"><i class="fas fa-infinity"></i> Project Unlimited - tidak ada batas budget</div>`;
+                    return;
+                }
+                
+                if (budget > 0) {
+                    const persen = (req.amount / budget) * 100;
+                    const persenFixed = Math.min(persen, 150);
+                    let warna = '', statusText = '';
+                    if (persenFixed <= 70) { warna = 'safe'; statusText = '🟢 Aman'; }
+                    else if (persenFixed <= 90) { warna = 'warning'; statusText = '🟡 Mendekati batas'; }
+                    else if (persenFixed <= 100) { warna = 'danger'; statusText = '🟠 Hampir habis'; }
+                    else { warna = 'over'; statusText = '🔴 OVER BUDGET!'; }
+                    
+                    previewDiv.innerHTML = `
+                        <div class="budget-card">
+                            <div class="budget-title">🎯 Preview Budget</div>
+                            <div class="budget-amount">Rp ${formatNumber(budget)}</div>
+                            <div class="progress-budget">
+                                <div class="progress-fill ${warna}" style="width: ${persenFixed}%;">
+                                    ${Math.round(persenFixed)}%
+                                </div>
+                            </div>
+                            <div class="budget-stats">
+                                <span>Budget: Rp ${formatNumber(budget)}</span>
+                                <span>Request: Rp ${formatNumber(req.amount)}</span>
+                                <span>${statusText}</span>
+                            </div>
+                            ${persen > 100 ? `<div class="alert alert-warning" style="margin-top:0.5rem;">⚠️ Request melebihi budget Rp ${formatNumber(req.amount - budget)}</div>` : `<div class="alert alert-success" style="margin-top:0.5rem;">✅ Sisa budget: Rp ${formatNumber(budget - req.amount)}</div>`}
+                        </div>
+                    `;
+                } else {
+                    previewDiv.innerHTML = '';
+                }
+            };
+            
+            window.updateExistingProjectBudget = async function(projectCode) {
+                const req = window.currentVerifikasiReq;
+                const budgetDiv = document.getElementById('existingProjectBudget');
+                
+                try {
+                    const { data: project, error } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', req.company_id).single();
+                    if (error || !project) {
+                        budgetDiv.innerHTML = '<div class="alert alert-warning">Project tidak ditemukan</div>';
+                        return;
+                    }
+                    
+                    const { data: payments } = await sb.from('payment_requests').select('amount, total_with_tax').eq('project_code', projectCode).eq('company_id', req.company_id).in('status', ['verified', 'paid']);
+                    const terpakai = (payments || []).reduce((a, b) => a + (b.total_with_tax || b.amount || 0), 0);
+                    const totalNanti = terpakai + req.amount;
+                    const persen = project.is_unlimited ? 0 : (totalNanti / project.budget) * 100;
+                    const persenFixed = Math.min(persen, 150);
+                    
+                    let warna = '', statusText = '';
+                    if (project.is_unlimited) {
+                        warna = 'unlimited';
+                        statusText = '⚪ Unlimited (tanpa batas)';
+                    } else if (persenFixed <= 70) { warna = 'safe'; statusText = '🟢 Aman'; }
+                    else if (persenFixed <= 90) { warna = 'warning'; statusText = '🟡 Mendekati batas'; }
+                    else if (persenFixed <= 100) { warna = 'danger'; statusText = '🟠 Hampir habis'; }
+                    else { warna = 'over'; statusText = '🔴 OVER BUDGET!'; }
+                    
+                    budgetDiv.innerHTML = `
+                        <div class="budget-card">
+                            <div class="budget-title">🎯 ${project.name}</div>
+                            <div class="budget-amount">${project.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(project.budget)}`}</div>
+                            <div class="progress-budget">
+                                <div class="progress-fill ${warna}" style="width: ${persenFixed}%;">
+                                    ${!project.is_unlimited ? Math.round(persenFixed) + '%' : ''}
+                                </div>
+                            </div>
+                            <div class="budget-stats">
+                                <span>Terpakai: Rp ${formatNumber(terpakai)}</span>
+                                <span>Request ini: Rp ${formatNumber(req.amount)}</span>
+                                <span>${statusText}</span>
+                            </div>
+                            ${!project.is_unlimited && totalNanti > project.budget ? `<div class="alert alert-warning" style="margin-top:0.5rem;">⚠️ Akan melebihi budget Rp ${formatNumber(totalNanti - project.budget)}</div>` : ''}
+                        </div>
+                    `;
+                } catch (error) {
+                    budgetDiv.innerHTML = '<div class="alert alert-warning">Gagal memuat budget project</div>';
+                }
+            };
+            
+            window.updatePaymentPajak = function() {
+                const req = window.currentVerifikasiReq;
+                const taxConfig = window.currentTaxConfig;
+                if (!req) return;
+                
+                const kenaPPN = document.getElementById('ppnCheck')?.checked || false;
+                const kenaPPh = document.getElementById('pphCheck')?.checked || false;
+                const grossUp = document.getElementById('grossUpCheck')?.checked || false;
+                
+                let dpp = req.amount, ppn = 0, pph = 0, total = dpp;
+                
+                if (kenaPPN && kenaPPh) {
+                    if (grossUp) {
+                        dpp = Math.round(req.amount / 0.98);
+                        ppn = Math.round(dpp * (taxConfig.ppn_rate / 100));
+                        pph = Math.round(dpp * 0.02);
+                        total = dpp + ppn;
+                    } else {
+                        ppn = Math.round(dpp * (taxConfig.ppn_rate / 100));
+                        pph = Math.round(dpp * 0.02);
+                        total = dpp + ppn - pph;
+                    }
+                } else if (kenaPPN && !kenaPPh) {
+                    ppn = Math.round(dpp * (taxConfig.ppn_rate / 100));
+                    total = dpp + ppn;
+                } else if (!kenaPPN && kenaPPh) {
+                    if (grossUp) {
+                        dpp = Math.round(req.amount / 0.98);
+                        pph = Math.round(dpp * 0.02);
+                        total = dpp;
+                    } else {
+                        pph = Math.round(dpp * 0.02);
+                        total = dpp - pph;
+                    }
+                }
+                
+                document.getElementById('paymentDPP').innerHTML = `Rp ${formatNumber(dpp)}`;
+                document.getElementById('paymentPPN').innerHTML = `Rp ${formatNumber(ppn)}`;
+                document.getElementById('paymentPPh').innerHTML = `Rp ${formatNumber(pph)}`;
+                document.getElementById('paymentTotal').innerHTML = `Rp ${formatNumber(total)}`;
+                
+                const grossUpRow = document.getElementById('grossUpInfoRow');
+                if (grossUp && kenaPPh) {
+                    grossUpRow.style.display = 'table-row';
+                    document.getElementById('vendorAmount').innerHTML = formatNumber(req.amount);
+                } else {
+                    grossUpRow.style.display = 'none';
+                }
+            };
+            
+            window.updateVoucherPreview = async function() {
+                const req = window.currentVerifikasiReq;
+                if (!req) return;
+                
+                const projectSelect = document.getElementById('verifyProject');
+                let projectCode = '';
+                
+                if (projectSelect.value === 'NEW') {
+                    projectCode = document.getElementById('newProjectCode')?.value.toUpperCase() || '';
+                } else {
+                    projectCode = projectSelect.value;
+                }
+                
+                const company = companies.find(c => c.id == req.company_id);
+                const companyCode = company?.kode || 'ARK';
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                
+                let basePattern = `${companyCode}/${year}/${month}`;
+                if (projectCode && projectCode !== '') basePattern += `/${projectCode}`;
+                
+                const { data: existing } = await sb.from('payment_requests').select('voucher_no');
+                let lastNumber = 0;
+                (existing || []).forEach(v => {
+                    if (v.voucher_no && v.voucher_no.startsWith(basePattern)) {
+                        const num = parseInt(v.voucher_no.split('/').pop());
+                        if (num > lastNumber) lastNumber = num;
+                    }
+                });
+                const nextNumber = (lastNumber + 1).toString().padStart(3, '0');
+                
+                let previewText = `${basePattern}/${nextNumber}`;
+                if (projectSelect.value === 'NEW' && !document.getElementById('newProjectCode')?.value) {
+                    previewText = `${basePattern}/[KODE]/001 (isi kode project dulu)`;
+                }
+                document.getElementById('voucherPreview').innerHTML = `<strong>${previewText}</strong>`;
+            };
+            
+        } catch (error) {
+            console.error('Error loading verification form:', error);
+            showToast('Gagal memuat form verifikasi: ' + error.message, 'error');
+        } finally {
+            hideLoading();
         }
-        document.getElementById('paymentDPP').innerHTML = `Rp ${formatNumber(dpp)}`;
-        document.getElementById('paymentPPN').innerHTML = `Rp ${formatNumber(ppn)}`;
-        document.getElementById('paymentPPh').innerHTML = `Rp ${formatNumber(pph)}`;
-        document.getElementById('paymentTotal').innerHTML = `Rp ${formatNumber(total)}`;
-        const grossUpRow = document.getElementById('grossUpInfoRow');
-        if (grossUp && kenaPPh) { grossUpRow.style.display = 'table-row'; document.getElementById('vendorAmount').innerHTML = formatNumber(req.amount); }
-        else { grossUpRow.style.display = 'none'; }
     }
     
-    async function updateVoucherPreview() {
-        const req = window.currentVerifikasiReq;
-        if (!req) return;
-        const projectSelect = document.getElementById('verifyProject');
-        let projectCode = projectSelect.value === 'NEW' ? document.getElementById('newProjectCode')?.value.toUpperCase() || '' : projectSelect.value;
-        const company = companies.find(c => c.id == req.company_id);
-        const companyCode = company?.kode || 'ARK';
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        let basePattern = `${companyCode}/${year}/${month}`;
-        if (projectCode && projectCode !== '') basePattern += `/${projectCode}`;
-        const { data: existing } = await sb.from('payment_requests').select('voucher_no');
-        let lastNumber = 0;
-        (existing || []).forEach(v => { if (v.voucher_no && v.voucher_no.startsWith(basePattern)) { const num = parseInt(v.voucher_no.split('/').pop()); if (num > lastNumber) lastNumber = num; } });
-        const nextNumber = (lastNumber + 1).toString().padStart(3, '0');
-        let previewText = `${basePattern}/${nextNumber}`;
-        if (projectSelect.value === 'NEW' && !document.getElementById('newProjectCode')?.value) previewText = `${basePattern}/[KODE]/001 (isi kode project dulu)`;
-        document.getElementById('voucherPreview').innerHTML = `<strong>${previewText}</strong>`;
-    }
-    
-    async function submitVerification(id) {
+    async function submitVerifikasiFinal(id) {
         const debitAccount = document.getElementById('debitAccount').value;
         const creditAccount = document.getElementById('creditAccount').value;
         const kenaPPN = document.getElementById('ppnCheck')?.checked || false;
         const kenaPPh = document.getElementById('pphCheck')?.checked || false;
         const grossUp = document.getElementById('grossUpCheck')?.checked || false;
-        if (!debitAccount || !creditAccount) { showToast('Pilih akun debit dan kredit', 'error'); return; }
+        
+        if (!debitAccount || !creditAccount) {
+            showToast('Pilih akun debit dan kredit', 'error');
+            return;
+        }
+        
         const req = window.currentVerifikasiReq;
         const taxConfig = window.currentTaxConfig;
+        
         let dpp = req.amount, ppn = 0, pph = 0;
+        
         if (kenaPPN && kenaPPh) {
-            if (grossUp) { dpp = Math.round(req.amount / 0.98); ppn = Math.round(dpp * (taxConfig.ppn_rate / 100)); pph = Math.round(dpp * 0.02); }
-            else { ppn = Math.round(dpp * (taxConfig.ppn_rate / 100)); pph = Math.round(dpp * 0.02); }
-        } else if (kenaPPN && !kenaPPh) { ppn = Math.round(dpp * (taxConfig.ppn_rate / 100)); }
-        else if (!kenaPPN && kenaPPh) {
-            if (grossUp) { dpp = Math.round(req.amount / 0.98); pph = Math.round(dpp * 0.02); }
-            else { pph = Math.round(dpp * 0.02); }
+            if (grossUp) {
+                dpp = Math.round(req.amount / 0.98);
+                ppn = Math.round(dpp * (taxConfig.ppn_rate / 100));
+                pph = Math.round(dpp * 0.02);
+            } else {
+                ppn = Math.round(dpp * (taxConfig.ppn_rate / 100));
+                pph = Math.round(dpp * 0.02);
+            }
+        } else if (kenaPPN && !kenaPPh) {
+            ppn = Math.round(dpp * (taxConfig.ppn_rate / 100));
+        } else if (!kenaPPN && kenaPPh) {
+            if (grossUp) {
+                dpp = Math.round(req.amount / 0.98);
+                pph = Math.round(dpp * 0.02);
+            } else {
+                pph = Math.round(dpp * 0.02);
+            }
         }
+        
         const total = dpp + ppn - pph;
+        
         showLoading();
+        
         try {
             let projectCode = '';
             const projectSelect = document.getElementById('verifyProject');
+            
             if (projectSelect.value === 'NEW') {
                 projectCode = document.getElementById('newProjectCode')?.value.toUpperCase().trim();
                 const projectName = document.getElementById('newProjectName')?.value.trim();
                 const projectBudget = parseRupiah(document.getElementById('newProjectBudget')?.value);
-                if (!projectCode || !projectName) { showToast('Isi kode dan nama project', 'error'); return; }
+                
+                if (!projectCode || !projectName) {
+                    showToast('Isi kode dan nama project', 'error');
+                    return;
+                }
+                
                 const { data: existing } = await sb.from('projects').select('*').eq('company_id', req.company_id).eq('code', projectCode);
                 if (!existing || existing.length === 0) {
-                    await sb.from('projects').insert({ company_id: req.company_id, code: projectCode, name: projectName, budget: projectBudget || 0, is_unlimited: projectBudget === 0, created_by: currentUser?.email });
+                    await sb.from('projects').insert({
+                        company_id: req.company_id,
+                        code: projectCode,
+                        name: projectName,
+                        budget: projectBudget || 0,
+                        is_unlimited: projectBudget === 0,
+                        created_by: currentUser?.email
+                    });
                 }
-            } else { projectCode = projectSelect.value; }
+            } else {
+                projectCode = projectSelect.value;
+            }
+            
             const company = companies.find(c => c.id == req.company_id);
             const companyCode = company?.kode || 'ARK';
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
+            
             let basePattern = `${companyCode}/${year}/${month}`;
             if (projectCode && projectCode !== '') basePattern += `/${projectCode}`;
+            
             const { data: existing } = await sb.from('payment_requests').select('voucher_no');
             let lastNumber = 0;
-            (existing || []).forEach(v => { if (v.voucher_no && v.voucher_no.startsWith(basePattern)) { const num = parseInt(v.voucher_no.split('/').pop()); if (num > lastNumber) lastNumber = num; } });
+            (existing || []).forEach(v => {
+                if (v.voucher_no && v.voucher_no.startsWith(basePattern)) {
+                    const num = parseInt(v.voucher_no.split('/').pop());
+                    if (num > lastNumber) lastNumber = num;
+                }
+            });
             const voucherNo = `${basePattern}/${(lastNumber + 1).toString().padStart(3, '0')}`;
-            await sb.from('payment_requests').update({ status: 'verified', verified_at: new Date(), verified_by: currentUser?.email, debit_account: debitAccount, credit_account: creditAccount, voucher_no: voucherNo, ppn: ppn, pph: pph, total_with_tax: total, project_code: projectCode, ppn_rate: taxConfig.ppn_rate, is_pkp: taxConfig.is_pkp }).eq('id', id);
-            await sb.from('payment_logs').insert({ request_id: id, user_email: currentUser?.email, user_role: currentUserRole, old_status: 'submitted', new_status: 'verified', keterangan: `Verifikasi, Voucher: ${voucherNo}, Project: ${projectCode || '-'}, PPN: ${ppn}, PPh: ${pph}` });
+            
+            const { error: updateError } = await sb.from('payment_requests').update({
+                status: 'verified',
+                verified_at: new Date(),
+                verified_by: currentUser?.email,
+                debit_account: debitAccount,
+                credit_account: creditAccount,
+                voucher_no: voucherNo,
+                ppn: ppn,
+                pph: pph,
+                total_with_tax: total,
+                project_code: projectCode,
+                ppn_rate: taxConfig.ppn_rate,
+                is_pkp: taxConfig.is_pkp
+            }).eq('id', id);
+            
+            if (updateError) throw updateError;
+            
+            await sb.from('payment_logs').insert({
+                request_id: id,
+                user_email: currentUser?.email,
+                user_role: currentUserRole,
+                old_status: 'submitted',
+                new_status: 'verified',
+                keterangan: `Verifikasi, Voucher: ${voucherNo}, Project: ${projectCode || '-'}, PPN: ${ppn}, PPh: ${pph}`
+            });
+            
             showToast(`✅ Diverifikasi! Voucher: ${voucherNo}`, 'success');
-            setTimeout(() => { document.querySelector('.modal-overlay')?.remove(); refreshPaymentRequests(); }, 1500);
-        } catch (error) { showToast('Gagal verifikasi: ' + error.message, 'error'); }
-        finally { hideLoading(); }
+            
+            setTimeout(() => {
+                document.querySelector('.modal-overlay')?.remove();
+                refreshPaymentRequests();
+            }, 1500);
+            
+        } catch (error) {
+            console.error('Error submitting verification:', error);
+            showToast('Gagal verifikasi: ' + error.message, 'error');
+        } finally {
+            hideLoading();
+        }
     }
-    
-    // ==================== FUNGSI LAINNYA (JURNAL, INVOICE, DLL) - PLACEHOLDER ====================
-    async function loadInvoiceList() { document.getElementById('content').innerHTML = '<div class="card"><h2>Invoice Penjualan</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadVendorInvoiceList() { document.getElementById('content').innerHTML = '<div class="card"><h2>Invoice Pembelian</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadJurnalForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Input Jurnal</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadLedgerForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Buku Besar</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadLabaRugiForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Laba Rugi</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadNeracaForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Neraca</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadJurnalUmum() { document.getElementById('content').innerHTML = '<div class="card"><h2>Jurnal Umum</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadRecurringList() { document.getElementById('content').innerHTML = '<div class="card"><h2>Transaksi Berulang</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadAsetList() { document.getElementById('content').innerHTML = '<div class="card"><h2>Manajemen Aset</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadCustomerList() { let cust = await getCustomerList(currentCompanyId); let html = `<div class="card"><h2>Data Customer</h2><div class="table-container"><table class="table"><thead><tr><th>Kode</th><th>Nama</th><th>NPWP</th><th>Telepon</th><th>Email</th></tr></thead><tbody>${cust.map(c=>`<tr><td>${c.code||'-'}</td><td>${c.name}</td><td>${c.npwp||'-'}</td><td>${c.telp||'-'}</td><td>${c.email||'-'}</td></tr>`).join('')}</tbody></table></div></div>`; document.getElementById('content').innerHTML = html; }
-    async function loadProjectList() { let proj = await getProjectList(currentCompanyId); let html = `<div class="card"><h2>Data Project</h2><div class="table-container"><table class="table"><thead><tr><th>Kode</th><th>Nama</th><th>Company</th></tr></thead><tbody>${proj.map(p=>`<tr><td>${p.code||'-'}</td><td>${p.name}</td><td>${companies.find(c=>c.id==p.company_id)?.nama||'-'}</td></tr>`).join('')}</tbody></table></div></div>`; document.getElementById('content').innerHTML = html; }
-    async function loadVendorList() { let vend = await getVendorList(currentCompanyId); let html = `<div class="card"><h2>Data Vendor</h2><div class="table-container"><table class="table"><thead><tr><th>Nama</th><th>NPWP</th><th>Bank</th><th>No Rekening</th><th>Termin</th></tr></thead><tbody>${vend.map(v=>`<tr><td>${v.name}</td><td>${v.npwp||'-'}</td><td>${v.bank_name||'-'}</td><td>${v.bank_account||'-'}</td><td class="text-center">${v.payment_term||30} hari</td></tr>`).join('')}</tbody></table></div></div>`; document.getElementById('content').innerHTML = html; }
-    async function loadOpeningBalanceForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Saldo Awal</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadExportBackupForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Export & Backup</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function exportTableToExcel(tableName) { alert('Fitur export excel menyusul'); }
     
     async function checkSession() {
         const { data } = await sb.auth.getSession();
@@ -976,7 +1198,7 @@
             document.getElementById('loginPage').style.display = 'none'; document.getElementById('appPage').style.display = 'flex';
             document.getElementById('userName').innerText = profile?.name || currentUser.email; document.getElementById('userRole').innerText = currentUserRole;
             document.getElementById('userAvatar').innerText = (profile?.name || currentUser.email).charAt(0).toUpperCase();
-            renderSidebar(); loadDashboard();
+            renderSidebar(); loadPaymentRequests();
         }
     }
     checkSession();
