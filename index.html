@@ -1117,8 +1117,7 @@
     }
     
     // ==================== VERIFIKASI ====================
-    // ==================== VERIFIKASI ====================
-async function verifyPaymentRequest(id) {
+    async function verifyPaymentRequest(id) {
     showLoading();
     try {
         const { data: req, error } = await sb.from('payment_requests').select('*').eq('id', id).single();
@@ -1152,11 +1151,12 @@ async function verifyPaymentRequest(id) {
         
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
+        modal.id = 'verifikasiModal';
         modal.innerHTML = `
             <div class="modal-content" style="max-width:700px;">
                 <div style="padding:20px;">
-                    <h3><i class="fas fa-check-circle" style="color:var(--success);"></i> Verifikasi Payment Request #${req.id}</h3>
-                    <div class="alert alert-info">${companyName} | ${ppnNote}</div>
+                    <h3 style="margin-bottom:20px;"><i class="fas fa-check-circle" style="color:var(--success);"></i> Verifikasi Payment Request #${req.id}</h3>
+                    <div class="alert alert-info" style="margin-bottom:20px;">${companyName} | ${ppnNote}</div>
                     <div style="background:var(--gray-50);padding:15px;border-radius:8px;margin-bottom:20px;">
                         <p><strong>Deskripsi:</strong> ${req.description}</p>
                         <p><strong>Jumlah Diajukan:</strong> Rp ${formatNumber(req.amount)}</p>
@@ -1164,7 +1164,7 @@ async function verifyPaymentRequest(id) {
                     
                     <div class="form-group">
                         <label><i class="fas fa-project-diagram"></i> Project</label>
-                        <select id="verifyProject" class="form-control searchable-dropdown">
+                        <select id="verifyProject" class="form-control searchable-dropdown" style="width:100%;">
                             ${projectOptions}
                             <option value="NEW">+ BUAT PROJECT BARU</option>
                         </select>
@@ -1172,7 +1172,7 @@ async function verifyPaymentRequest(id) {
                     
                     <div id="newProjectSection" style="display:none; margin-top:15px;">
                         <div style="background:#f8f9fa; padding:15px; border-radius:12px; margin-bottom:15px;">
-                            <h4>📝 Buat Project Baru</h4>
+                            <h4 style="margin-bottom:15px;">📝 Buat Project Baru</h4>
                             <div class="form-group">
                                 <label>Kode Project</label>
                                 <input type="text" id="newProjectCode" class="form-control" placeholder="Contoh: INT, UNQ">
@@ -1192,18 +1192,18 @@ async function verifyPaymentRequest(id) {
                     <div id="existingProjectBudget" style="margin-top:15px;"></div>
                     
                     <div class="form-group">
-                        <label>Akun Debit (Beban/Aset)</label>
-                        <select id="debitAccount" class="form-control searchable-dropdown" required>${debitOptions}</select>
+                        <label><i class="fas fa-arrow-right"></i> Akun Debit (Beban/Aset)</label>
+                        <select id="debitAccount" class="form-control searchable-dropdown" style="width:100%;">${debitOptions}</select>
                     </div>
                     
                     <div class="form-group">
-                        <label>Akun Kredit (Kas/Bank)</label>
-                        <select id="creditAccount" class="form-control searchable-dropdown" required>${kasOptions}</select>
+                        <label><i class="fas fa-arrow-left"></i> Akun Kredit (Kas/Bank)</label>
+                        <select id="creditAccount" class="form-control searchable-dropdown" style="width:100%;">${kasOptions}</select>
                     </div>
                     
                     <div style="margin:20px 0;">
-                        <h4>Pajak</h4>
-                        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+                        <h4><i class="fas fa-percent"></i> Pajak</h4>
+                        <div style="display:flex; gap:20px; flex-wrap:wrap; margin-top:10px;">
                             <label><input type="checkbox" id="ppnCheck"> PPN ${taxConfig.ppn_rate}%</label>
                             <label><input type="checkbox" id="pphCheck"> PPh 23 (2%)</label>
                             <label><input type="checkbox" id="grossUpCheck"> Gross Up PPh</label>
@@ -1211,21 +1211,21 @@ async function verifyPaymentRequest(id) {
                     </div>
                     
                     <div class="verification-summary">
-                        <table style="width:100%">
-                            <tr><td>DPP</td><td id="paymentDPP" style="text-align:right">Rp ${formatNumber(req.amount)}</td></tr>
-                            <tr><td>PPN ${taxConfig.ppn_rate}%</td><td id="paymentPPN" style="text-align:right">Rp 0</td></tr>
-                            <tr><td>PPh 23 2%</td><td id="paymentPPh" style="text-align:right">Rp 0</td></tr>
-                            <tr style="border-top:1px solid rgba(255,255,255,0.3);"><td><strong>TOTAL DIBAYAR</strong></td><td id="paymentTotal" style="text-align:right"><strong>Rp ${formatNumber(req.amount)}</strong></td></tr>
+                        <table style="width:100%;">
+                            <tr><td>DPP</td><td id="paymentDPP" style="text-align:right;">Rp ${formatNumber(req.amount)}</td></tr>
+                            <tr><td>PPN ${taxConfig.ppn_rate}%</td><td id="paymentPPN" style="text-align:right;">Rp 0</td></tr>
+                            <tr><td>PPh 23 2%</td><td id="paymentPPh" style="text-align:right;">Rp 0</td></tr>
+                            <tr style="border-top:1px solid rgba(255,255,255,0.3);"><td><strong>TOTAL DIBAYAR</strong></td><td id="paymentTotal" style="text-align:right;"><strong>Rp ${formatNumber(req.amount)}</strong></td></tr>
                         </table>
                     </div>
                     
-                    <div class="voucher-preview">
+                    <div class="voucher-preview" style="margin-top:20px;">
                         <strong>Preview Voucher:</strong> <span id="voucherPreview">[Pilih project]</span>
                     </div>
                     
                     <div style="display:flex; gap:1rem; justify-content:flex-end; margin-top:20px;">
-                        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Batal</button>
-                        <button class="btn btn-success" id="verifyBtn">Verifikasi & Buat Voucher</button>
+                        <button class="btn btn-secondary" onclick="closeVerifikasiModal()">Batal</button>
+                        <button class="btn btn-success" id="btnVerifikasi">Verifikasi & Buat Voucher</button>
                     </div>
                     
                     <div id="verifyResult" style="margin-top:20px;"></div>
@@ -1234,12 +1234,15 @@ async function verifyPaymentRequest(id) {
         `;
         
         document.body.appendChild(modal);
+        
+        // Inisialisasi Select2
         $('.searchable-dropdown').select2({ width: '100%' });
         
+        // Simpan data ke global
         window.currentVerifikasiReq = req;
         window.currentTaxConfig = taxConfig;
         
-        // === EVENT HANDLER ===
+        // Ambil element
         const projectSelect = document.getElementById('verifyProject');
         const newProjectSection = document.getElementById('newProjectSection');
         const existingBudgetDiv = document.getElementById('existingProjectBudget');
@@ -1249,7 +1252,242 @@ async function verifyPaymentRequest(id) {
         const ppnCheck = document.getElementById('ppnCheck');
         const pphCheck = document.getElementById('pphCheck');
         const grossUpCheck = document.getElementById('grossUpCheck');
-        const verifyBtn = document.getElementById('verifyBtn');
+        const btnVerifikasi = document.getElementById('btnVerifikasi');
+        
+        // Fungsi hitung pajak
+        function hitungPajak() {
+            const kenaPPN = ppnCheck.checked;
+            const kenaPPh = pphCheck.checked;
+            const grossUp = grossUpCheck.checked;
+            const reqData = window.currentVerifikasiReq;
+            const tax = window.currentTaxConfig;
+            
+            let dpp = reqData.amount, ppn = 0, pph = 0, total = dpp;
+            
+            if (kenaPPN && kenaPPh) {
+                if (grossUp) {
+                    dpp = Math.round(reqData.amount / 0.98);
+                    ppn = Math.round(dpp * (tax.ppn_rate / 100));
+                    pph = Math.round(dpp * 0.02);
+                    total = dpp + ppn;
+                } else {
+                    ppn = Math.round(dpp * (tax.ppn_rate / 100));
+                    pph = Math.round(dpp * 0.02);
+                    total = dpp + ppn - pph;
+                }
+            } else if (kenaPPN && !kenaPPh) {
+                ppn = Math.round(dpp * (tax.ppn_rate / 100));
+                total = dpp + ppn;
+            } else if (!kenaPPN && kenaPPh) {
+                if (grossUp) {
+                    dpp = Math.round(reqData.amount / 0.98);
+                    pph = Math.round(dpp * 0.02);
+                    total = dpp;
+                } else {
+                    pph = Math.round(dpp * 0.02);
+                    total = dpp - pph;
+                }
+            }
+            
+            document.getElementById('paymentDPP').innerHTML = `Rp ${formatNumber(dpp)}`;
+            document.getElementById('paymentPPN').innerHTML = `Rp ${formatNumber(ppn)}`;
+            document.getElementById('paymentPPh').innerHTML = `Rp ${formatNumber(pph)}`;
+            document.getElementById('paymentTotal').innerHTML = `Rp ${formatNumber(total)}`;
+        }
+        
+        // Fungsi update voucher
+        async function updateVoucher() {
+            const reqData = window.currentVerifikasiReq;
+            if (!reqData) return;
+            
+            let projectCode = '';
+            if (projectSelect.value === 'NEW') {
+                projectCode = newProjectCode?.value.toUpperCase() || '';
+            } else {
+                projectCode = projectSelect.value;
+            }
+            
+            const company = companies.find(c => c.id == reqData.company_id);
+            const companyCode = company?.kode || 'ARK';
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            
+            let basePattern = `${companyCode}/${year}/${month}`;
+            if (projectCode && projectCode !== '') basePattern += `/${projectCode}`;
+            
+            const { data: existing } = await sb.from('payment_requests').select('voucher_no');
+            let lastNumber = 0;
+            (existing || []).forEach(v => {
+                if (v.voucher_no && v.voucher_no.startsWith(basePattern)) {
+                    const num = parseInt(v.voucher_no.split('/').pop());
+                    if (num > lastNumber) lastNumber = num;
+                }
+            });
+            const nextNumber = (lastNumber + 1).toString().padStart(3, '0');
+            
+            let previewText = `${basePattern}/${nextNumber}`;
+            if (projectSelect.value === 'NEW' && !newProjectCode?.value) {
+                previewText = `${basePattern}/[KODE]/001 (isi kode project)`;
+            }
+            document.getElementById('voucherPreview').innerHTML = `<strong>${previewText}</strong>`;
+        }
+        
+        // Fungsi preview budget untuk project baru
+        function previewBudgetBaru() {
+            const budget = parseRupiah(newProjectBudget?.value || '0');
+            const previewDiv = document.getElementById('newProjectBudgetPreview');
+            const reqData = window.currentVerifikasiReq;
+            
+            if (!previewDiv || !reqData) return;
+            
+            if (budget === 0) {
+                previewDiv.innerHTML = `<div class="alert alert-info" style="margin-top:10px;"><i class="fas fa-infinity"></i> Project Unlimited - tidak ada batas budget</div>`;
+                return;
+            }
+            
+            if (budget > 0) {
+                const persen = (reqData.amount / budget) * 100;
+                const persenFixed = Math.min(persen, 150);
+                let warna = '', statusText = '';
+                if (persenFixed <= 70) { warna = 'safe'; statusText = '🟢 Aman'; }
+                else if (persenFixed <= 90) { warna = 'warning'; statusText = '🟡 Mendekati batas'; }
+                else if (persenFixed <= 100) { warna = 'danger'; statusText = '🟠 Hampir habis'; }
+                else { warna = 'over'; statusText = '🔴 OVER BUDGET!'; }
+                
+                previewDiv.innerHTML = `
+                    <div class="budget-card" style="margin-top:10px;">
+                        <div class="budget-title">Preview Budget</div>
+                        <div class="budget-amount">Rp ${formatNumber(budget)}</div>
+                        <div class="progress-budget">
+                            <div class="progress-fill ${warna}" style="width: ${persenFixed}%;">${Math.round(persenFixed)}%</div>
+                        </div>
+                        <div class="budget-stats">
+                            <span>Budget: Rp ${formatNumber(budget)}</span>
+                            <span>Request: Rp ${formatNumber(reqData.amount)}</span>
+                            <span>${statusText}</span>
+                        </div>
+                        ${persen > 100 ? `<div class="alert alert-warning" style="margin-top:0.5rem;">⚠️ Request melebihi budget Rp ${formatNumber(reqData.amount - budget)}</div>` : `<div class="alert alert-success" style="margin-top:0.5rem;">✅ Sisa budget: Rp ${formatNumber(budget - reqData.amount)}</div>`}
+                    </div>
+                `;
+            }
+        }
+        
+        // Fungsi update budget project existing
+        async function updateBudgetExisting() {
+            const projectCode = projectSelect.value;
+            if (!projectCode || projectCode === '' || projectCode === 'NEW') {
+                existingBudgetDiv.style.display = 'none';
+                return;
+            }
+            
+            existingBudgetDiv.style.display = 'block';
+            existingBudgetDiv.innerHTML = '<div class="alert alert-info">Memuat budget...</div>';
+            
+            const reqData = window.currentVerifikasiReq;
+            
+            try {
+                const { data: project, error } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', reqData.company_id).single();
+                if (error || !project) {
+                    existingBudgetDiv.innerHTML = '<div class="alert alert-warning">Project tidak ditemukan</div>';
+                    return;
+                }
+                
+                const { data: payments } = await sb.from('payment_requests').select('amount, total_with_tax').eq('project_code', projectCode).eq('company_id', reqData.company_id).in('status', ['verified', 'paid']);
+                const terpakai = (payments || []).reduce((a, b) => a + (b.total_with_tax || b.amount || 0), 0);
+                const totalNanti = terpakai + reqData.amount;
+                const persen = project.is_unlimited ? 0 : (totalNanti / project.budget) * 100;
+                const persenFixed = Math.min(persen, 150);
+                
+                let warna = '', statusText = '';
+                if (project.is_unlimited) {
+                    warna = 'unlimited';
+                    statusText = '⚪ Unlimited (tanpa batas)';
+                } else if (persenFixed <= 70) { warna = 'safe'; statusText = '🟢 Aman'; }
+                else if (persenFixed <= 90) { warna = 'warning'; statusText = '🟡 Mendekati batas'; }
+                else if (persenFixed <= 100) { warna = 'danger'; statusText = '🟠 Hampir habis'; }
+                else { warna = 'over'; statusText = '🔴 OVER BUDGET!'; }
+                
+                existingBudgetDiv.innerHTML = `
+                    <div class="budget-card">
+                        <div class="budget-title">🎯 ${project.name}</div>
+                        <div class="budget-amount">${project.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(project.budget)}`}</div>
+                        <div class="progress-budget">
+                            <div class="progress-fill ${warna}" style="width: ${persenFixed}%;">${!project.is_unlimited ? Math.round(persenFixed) + '%' : ''}</div>
+                        </div>
+                        <div class="budget-stats">
+                            <span>Terpakai: Rp ${formatNumber(terpakai)}</span>
+                            <span>Request ini: Rp ${formatNumber(reqData.amount)}</span>
+                            <span>${statusText}</span>
+                        </div>
+                        ${!project.is_unlimited && totalNanti > project.budget ? `<div class="alert alert-warning" style="margin-top:0.5rem;">⚠️ Akan melebihi budget Rp ${formatNumber(totalNanti - project.budget)}</div>` : ''}
+                    </div>
+                `;
+            } catch (error) {
+                existingBudgetDiv.innerHTML = '<div class="alert alert-warning">Gagal memuat budget</div>';
+            }
+        }
+        
+        // Event listener project select
+        projectSelect.addEventListener('change', function() {
+            if (this.value === 'NEW') {
+                newProjectSection.style.display = 'block';
+                existingBudgetDiv.style.display = 'none';
+            } else if (this.value && this.value !== '') {
+                newProjectSection.style.display = 'none';
+                updateBudgetExisting();
+            } else {
+                newProjectSection.style.display = 'none';
+                existingBudgetDiv.style.display = 'none';
+            }
+            updateVoucher();
+        });
+        
+        // Event listener input project baru
+        if (newProjectCode) {
+            newProjectCode.addEventListener('input', function() {
+                updateVoucher();
+                previewBudgetBaru();
+            });
+        }
+        if (newProjectName) {
+            newProjectName.addEventListener('input', previewBudgetBaru);
+        }
+        if (newProjectBudget) {
+            newProjectBudget.addEventListener('input', function() {
+                previewBudgetBaru();
+                updateVoucher();
+            });
+        }
+        
+        // Event listener pajak
+        ppnCheck.addEventListener('change', hitungPajak);
+        pphCheck.addEventListener('change', hitungPajak);
+        grossUpCheck.addEventListener('change', hitungPajak);
+        
+        // Event listener tombol verifikasi
+        btnVerifikasi.onclick = async function() {
+            await submitVerifikasiFinal(id);
+        };
+        
+        // Inisialisasi awal
+        hitungPajak();
+        updateVoucher();
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Gagal memuat form verifikasi: ' + error.message, 'error');
+        hideLoading();
+    } finally {
+        hideLoading();
+    }
+}
+
+// Fungsi tutup modal
+function closeVerifikasiModal() {
+    const modal = document.getElementById('verifikasiModal');
+    if (modal) modal.remove();
+}
         
         // Fungsi update pajak
         function updatePajak() {
@@ -1479,7 +1717,7 @@ async function verifyPaymentRequest(id) {
     }
 }
     
-    async function submitVerifikasiFinal(id) {
+   async function submitVerifikasiFinal(id) {
     const debitAccount = document.getElementById('debitAccount').value;
     const creditAccount = document.getElementById('creditAccount').value;
     const kenaPPN = document.getElementById('ppnCheck')?.checked || false;
@@ -1535,7 +1773,7 @@ async function verifyPaymentRequest(id) {
                 return;
             }
             
-            console.log("📝 Menyimpan project baru:", { projectCode, projectName, projectBudget });
+            console.log("📝 Menyimpan project baru:", projectCode, projectName, projectBudget);
             
             // Cek apakah sudah ada
             const { data: existing } = await sb.from('projects')
@@ -1560,8 +1798,6 @@ async function verifyPaymentRequest(id) {
                 }
                 console.log("✅ Project berhasil disimpan!");
                 showToast('Project berhasil dibuat', 'success');
-            } else {
-                console.log("Project sudah ada, skip insert");
             }
         } else {
             projectCode = projectSelect.value;
@@ -1616,7 +1852,7 @@ async function verifyPaymentRequest(id) {
         showToast(`✅ Diverifikasi! Voucher: ${voucherNo}`, 'success');
         
         setTimeout(() => {
-            document.querySelector('.modal-overlay')?.remove();
+            closeVerifikasiModal();
             refreshPaymentRequests();
         }, 1500);
         
@@ -1626,7 +1862,7 @@ async function verifyPaymentRequest(id) {
     } finally {
         hideLoading();
     }
-}s
+}
     
     // ==================== INVOICE & MASTER DATA ====================
     async function loadInvoiceList() {
