@@ -1683,10 +1683,11 @@
                     <td class="text-right">Rp ${formatNumber(sisa)}</td>
                     <td><span class="status-badge status-${inv.status || 'draft'}">${inv.status || 'draft'}</span></td>
                     <td>
-                        <button class="action-btn" onclick="viewInvoiceDetail(${inv.id})"><i class="fas fa-eye"></i></button>
-                        ${inv.status === 'draft' ? `<button class="action-btn" onclick="editInvoice(${inv.id})" style="color:var(--warning);"><i class="fas fa-edit"></i></button>` : ''}
-                        ${inv.status === 'draft' ? `<button class="action-btn" onclick="deleteInvoice(${inv.id})" style="color:var(--danger);"><i class="fas fa-trash"></i></button>` : ''}
-                        ${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button class="action-btn" onclick="recordPayment(${inv.id})" style="color:var(--success);"><i class="fas fa-money-bill-wave"></i></button>` : ''}
+                       <button class="action-btn" onclick="viewInvoiceDetail(${inv.id})"><i class="fas fa-eye"></i></button>
+${inv.status === 'draft' ? `<button class="action-btn" onclick="postInvoice(${inv.id})" style="color:var(--info);"><i class="fas fa-check-circle"></i></button>` : ''}
+${inv.status === 'draft' ? `<button class="action-btn" onclick="editInvoice(${inv.id})" style="color:var(--warning);"><i class="fas fa-edit"></i></button>` : ''}
+${inv.status === 'draft' ? `<button class="action-btn" onclick="deleteInvoice(${inv.id})" style="color:var(--danger);"><i class="fas fa-trash"></i></button>` : ''}
+${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button class="action-btn" onclick="recordPayment(${inv.id})" style="color:var(--success);"><i class="fas fa-money-bill-wave"></i></button>` : ''}
                     </td>
                 </tr>`;
             }
@@ -1874,6 +1875,11 @@
             
             // Ambil total yang sudah dibayar dari invoice yang sudah paid/partial
             const { data: paidInvoices } = await sb.from('invoices').select('paid_amount').eq('project_code', projectCode).eq('company_id', currentCompanyId).in('status', ['partial', 'paid']);
+// Jika error, coba tanpa filter status
+if (!paidInvoices) {
+    const { data: allInvoices } = await sb.from('invoices').select('paid_amount,status').eq('project_code', projectCode).eq('company_id', currentCompanyId);
+    paidInvoices = (allInvoices || []).filter(i => i.status === 'partial' || i.status === 'paid');
+}
             const terpakai = (paidInvoices || []).reduce((a,b) => a + (b.paid_amount || 0), 0);
             const totalNanti = terpakai + total;
             const persen = project.is_unlimited ? 0 : (totalNanti / project.budget) * 100;
@@ -1957,6 +1963,7 @@
                 company_id: currentCompanyId, customer_id: customerId, project_code: projectCode || null,
                 revenue_account: revenueAccount, bank_code: bankCode, invoice_date: invoiceDate, due_date: dueDate,
                 notes: notes, items: items, subtotal: subtotal, ppn: ppn, pph23: pph, total: total,
+                description: notes || `Invoice ${invoiceNo}`,
                 invoice_no: invoiceNo, status: 'draft', paid_amount: 0
             }).select().single();
             if (error) throw error;
@@ -1980,7 +1987,55 @@
         } catch (error) { showToast('Gagal: ' + error.message, 'error'); }
         finally { hideLoading(); }
     }
+
+    async function postInvoice(invoiceId) {
+    if (!confirm('Posting invoice akan membuat jurnal piutang dan pendapatan. Lanjutkan?')) return;
     
+    showLoading();
+    try {
+        const { data: inv, error } = await sb.from('invoices').select('*').eq('id', invoiceId).single();
+        if (error) throw error;
+        
+        if (inv.status !== 'draft') {
+            showToast('Invoice sudah diposting atau dibayar', 'warning');
+            return;
+        }
+        
+        const suffix = companies.find(c => c.id == currentCompanyId)?.singkatan || 'A';
+        const lastJournal = await sb.from('journals').select('id').order('id', { ascending: false }).limit(1);
+        const journalId = (lastJournal.data?.[0]?.id || 0) + 1;
+        const dateStr = new Date().toISOString().split('T')[0];
+        
+        await sb.from('journals').insert({
+            id: journalId, company_id: currentCompanyId, journal_date: dateStr, period: dateStr.substring(0,7),
+            description: `Posting invoice ${inv.invoice_no}`, reference: inv.invoice_no,
+            created_by: currentUser?.email, status: 'posted'
+        });
+        
+        const journalLines = [
+            { journal_id: journalId, account_code: `1102-01-${suffix}`, debit: inv.total, credit: 0, description: `Piutang dari ${inv.invoice_no}` },
+            { journal_id: journalId, account_code: inv.revenue_account, debit: 0, credit: inv.subtotal, description: `Pendapatan dari ${inv.invoice_no}` }
+        ];
+        
+        if (inv.ppn > 0) {
+            journalLines.push({ journal_id: journalId, account_code: `1111-${suffix}`, debit: 0, credit: inv.ppn, description: `PPN Keluaran dari ${inv.invoice_no}` });
+        }
+        
+        await sb.from('journal_lines').insert(journalLines);
+        await sb.from('invoices').update({ status: 'posted' }).eq('id', invoiceId);
+        
+        showToast(`✅ Invoice ${inv.invoice_no} berhasil diposting! Jurnal ID: ${journalId}`, 'success');
+        setTimeout(() => loadInvoiceList(), 1500);
+        
+    } catch (error) {
+        console.error(error);
+        showToast('Gagal posting invoice: ' + error.message, 'error');
+    } finally {
+        hideLoading();
+    }
+}
+
+        
     async function viewInvoiceDetail(id) {
         const { data: inv } = await sb.from('invoices').select('*').eq('id', id).single();
         if (!inv) { showToast('Invoice tidak ditemukan', 'error'); return; }
@@ -1990,33 +2045,43 @@
         alert(`Invoice #${inv.invoice_no}\nCustomer: ${cust?.name || '-'}\nProject: ${inv.project_code || '-'}\nTotal: Rp ${formatNumber(inv.total)}\nDibayar: Rp ${formatNumber(inv.paid_amount || 0)}\nSisa: Rp ${formatNumber(sisa)}\nStatus: ${inv.status}`);
     }
     
-    async function recordPayment(invoiceId) {
-        const { data: inv } = await sb.from('invoices').select('*').eq('id', invoiceId).single();
-        if (!inv) { showToast('Invoice tidak ditemukan', 'error'); return; }
-        
-        const sisa = (inv.total || 0) - (inv.paid_amount || 0);
-        const today = new Date().toISOString().split('T')[0];
-        
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        modal.innerHTML = `
-            <div class="modal-content" style="max-width:500px;">
-                <div style="padding:20px;">
-                    <h3><i class="fas fa-money-bill-wave"></i> Record Payment</h3>
-                    <div class="alert alert-info">Invoice: ${inv.invoice_no}<br>Sisa tagihan: Rp ${formatNumber(sisa)}</div>
-                    <div class="form-group"><label>Tanggal Pembayaran</label><input type="date" id="payDate" class="form-control" value="${today}"></div>
-                    <div class="form-group"><label>Jumlah Dibayar</label><input type="text" id="payAmount" class="form-control" value="${formatNumber(sisa)}" onkeyup="formatMoney(this)"></div>
-                    <div class="form-group"><label>Referensi / No Bukti</label><input type="text" id="payRef" class="form-control" placeholder="No transfer / kuitansi"></div>
-                    <div style="display:flex; gap:1rem; justify-content:flex-end;">
-                        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Batal</button>
-                        <button class="btn btn-success" onclick="submitPayment(${invoiceId}, '${inv.project_code || ''}', ${inv.total})">Simpan</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
+   async function recordPayment(invoiceId) {
+    const { data: inv } = await sb.from('invoices').select('*').eq('id', invoiceId).single();
+    if (!inv) { showToast('Invoice tidak ditemukan', 'error'); return; }
+    
+    // Cek status - harus sudah posted atau partial
+    if (inv.status === 'draft') {
+        if (confirm('Invoice belum diposting. Posting sekarang?')) {
+            await postInvoice(invoiceId);
+            const { data: updatedInv } = await sb.from('invoices').select('*').eq('id', invoiceId).single();
+            if (updatedInv.status !== 'posted') return;
+        } else {
+            return;
+        }
     }
     
+    const sisa = (inv.total || 0) - (inv.paid_amount || 0);
+    const today = new Date().toISOString().split('T')[0];
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:500px;">
+            <div style="padding:20px;">
+                <h3><i class="fas fa-money-bill-wave"></i> Record Payment</h3>
+                <div class="alert alert-info">Invoice: ${inv.invoice_no}<br>Sisa tagihan: Rp ${formatNumber(sisa)}</div>
+                <div class="form-group"><label>Tanggal Pembayaran</label><input type="date" id="payDate" class="form-control" value="${today}"></div>
+                <div class="form-group"><label>Jumlah Dibayar</label><input type="text" id="payAmount" class="form-control" value="${formatNumber(sisa)}" onkeyup="formatMoney(this)"></div>
+                <div class="form-group"><label>Referensi / No Bukti</label><input type="text" id="payRef" class="form-control" placeholder="No transfer / kuitansi"></div>
+                <div style="display:flex; gap:1rem; justify-content:flex-end;">
+                    <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Batal</button>
+                    <button class="btn btn-success" onclick="submitPayment(${invoiceId}, '${inv.project_code || ''}', ${inv.total})">Simpan</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}    
     async function submitPayment(invoiceId, projectCode, totalInvoice) {
         const payDate = document.getElementById('payDate').value;
         const payAmount = parseRupiah(document.getElementById('payAmount').value);
@@ -2130,6 +2195,19 @@
         
         let accountOptions = '<option value="">Pilih Akun Beban</option>';
         accountsList.filter(a => a.account_type === 'Beban').forEach(a => accountOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`);
+
+        <div class="form-group">
+    <label><i class="fas fa-arrow-left"></i> Akun Kas/Bank (Sumber Dana)</label>
+    <select id="venBankAccount" class="form-control" required>
+        <option value="">Pilih Akun Kas/Bank</option>
+        ${bankOptions}
+    </select>
+    <small style="color:var(--gray-500);">Pilih rekening sumber dana untuk pembayaran</small>
+</div>
+        const bankList = await getBankList(currentCompanyId);
+let bankOptions = '<option value="">Pilih Akun Kas/Bank</option>';
+bankList.forEach(b => bankOptions += `<option value="${b.code}">${b.display}</option>`);
+        
         
         const today = new Date().toISOString().split('T')[0];
         
@@ -2377,7 +2455,8 @@
                     company_id: currentCompanyId, vendor_id: vendorId, vendor_name: vendorName,
                     project_code: projectCode || null, invoice_no: invoiceNo, invoice_date: invoiceDate, due_date: dueDate,
                     account_code: accountCode, total: finalTotal, dpp: total, ppn: ppn, pph23: pph,
-                    paid_amount: 0, payment_status: 'unpaid', file_url: upload.url, journal_id: journalId
+                    paid_amount: 0, payment_status: 'unpaid', file_url: upload.url, journal_id: journalId,
+                    description: `Invoice dari ${vendorName} - ${invoiceNo}`
                 });
                 if (error) throw error;
                 showToast('Invoice vendor berhasil disimpan', 'success');
@@ -2526,7 +2605,7 @@
             let transactions = [];
             invoices.forEach(inv => {
                 transactions.push({
-                    date: inv.last_payment_date || inv.invoice_date,
+                    date: inv.paid_at || inv.invoice_date,
                     type: 'AR (Pemasukan)',
                     reference: inv.invoice_no,
                     description: `Invoice customer: ${inv.description || '-'}`,
