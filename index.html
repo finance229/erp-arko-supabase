@@ -896,27 +896,38 @@
     }
     
     // ==================== FUNGSI GLOBAL UNTUK VERIFIKASI ====================
-    function handleProjectChange() {
-        const select = document.getElementById('verifyProject');
-        const newProjectDiv = document.getElementById('newProjectSection');
-        const existingBudgetDiv = document.getElementById('existingProjectBudget');
-        
-        if (!select) return;
-        
-        if (select.value === 'NEW') {
-            if (newProjectDiv) newProjectDiv.style.display = 'block';
-            if (existingBudgetDiv) existingBudgetDiv.style.display = 'none';
-        } else if (select.value && select.value !== '') {
-            if (newProjectDiv) newProjectDiv.style.display = 'none';
-            if (existingBudgetDiv) existingBudgetDiv.style.display = 'block';
-            updateExistingProjectBudget(select.value);
-        } else {
-            if (newProjectDiv) newProjectDiv.style.display = 'none';
-            if (existingBudgetDiv) existingBudgetDiv.style.display = 'none';
-        }
-        updateVoucherPreview();
+function handleProjectChange() {
+    console.log("handleProjectChange dipanggil, value:", document.getElementById('verifyProject')?.value);
+    
+    const select = document.getElementById('verifyProject');
+    const newProjectDiv = document.getElementById('newProjectSection');
+    const existingBudgetDiv = document.getElementById('existingProjectBudget');
+    
+    if (!select) {
+        console.log("Element verifyProject tidak ditemukan");
+        return;
     }
     
+    console.log("Select value:", select.value);
+    
+    if (select.value === 'NEW') {
+        if (newProjectDiv) {
+            newProjectDiv.style.display = 'block';
+            console.log("Menampilkan newProjectSection");
+        }
+        if (existingBudgetDiv) existingBudgetDiv.style.display = 'none';
+    } else if (select.value && select.value !== '') {
+        if (newProjectDiv) newProjectDiv.style.display = 'none';
+        if (existingBudgetDiv) {
+            existingBudgetDiv.style.display = 'block';
+            updateExistingProjectBudget(select.value);
+        }
+    } else {
+        if (newProjectDiv) newProjectDiv.style.display = 'none';
+        if (existingBudgetDiv) existingBudgetDiv.style.display = 'none';
+    }
+    updateVoucherPreview();
+}
     function updateNewProjectPreview() {
         const budgetInput = document.getElementById('newProjectBudget');
         if (!budgetInput) return;
@@ -1430,18 +1441,20 @@
         
         // Event listener project select
         projectSelect.addEventListener('change', function() {
-            if (this.value === 'NEW') {
-                newProjectSection.style.display = 'block';
-                existingBudgetDiv.style.display = 'none';
-            } else if (this.value && this.value !== '') {
-                newProjectSection.style.display = 'none';
-                updateBudgetExisting();
-            } else {
-                newProjectSection.style.display = 'none';
-                existingBudgetDiv.style.display = 'none';
-            }
-            updateVoucher();
-        });
+    console.log("Project select changed to:", this.value);
+    if (this.value === 'NEW') {
+        newProjectSection.style.display = 'block';
+        existingBudgetDiv.style.display = 'none';
+    } else if (this.value && this.value !== '') {
+        newProjectSection.style.display = 'none';
+        existingBudgetDiv.style.display = 'block';
+        updateBudgetExisting();  // panggil fungsi updateBudgetExisting
+    } else {
+        newProjectSection.style.display = 'none';
+        existingBudgetDiv.style.display = 'none';
+    }
+    updateVoucher();
+});
         
         // Event listener input project baru
         if (newProjectCode) {
