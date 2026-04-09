@@ -1128,7 +1128,8 @@ function handleProjectChange() {
     }
     
     // ==================== VERIFIKASI ====================
-    async function verifyPaymentRequest(id) {
+    // ==================== VERIFIKASI (FIXED) ====================
+async function verifyPaymentRequest(id) {
     showLoading();
     try {
         const { data: req, error } = await sb.from('payment_requests').select('*').eq('id', id).single();
@@ -1175,7 +1176,7 @@ function handleProjectChange() {
                     
                     <div class="form-group">
                         <label><i class="fas fa-project-diagram"></i> Project</label>
-                        <select id="verifyProject" class="form-control searchable-dropdown" style="width:100%;">
+                        <select id="verifyProject" class="form-control" style="width:100%;">
                             ${projectOptions}
                             <option value="NEW">+ BUAT PROJECT BARU</option>
                         </select>
@@ -1204,12 +1205,12 @@ function handleProjectChange() {
                     
                     <div class="form-group">
                         <label><i class="fas fa-arrow-right"></i> Akun Debit (Beban/Aset)</label>
-                        <select id="debitAccount" class="form-control searchable-dropdown" style="width:100%;">${debitOptions}</select>
+                        <select id="debitAccount" class="form-control" style="width:100%;">${debitOptions}</select>
                     </div>
                     
                     <div class="form-group">
                         <label><i class="fas fa-arrow-left"></i> Akun Kredit (Kas/Bank)</label>
-                        <select id="creditAccount" class="form-control searchable-dropdown" style="width:100%;">${kasOptions}</select>
+                        <select id="creditAccount" class="form-control" style="width:100%;">${kasOptions}</select>
                     </div>
                     
                     <div style="margin:20px 0;">
@@ -1246,14 +1247,11 @@ function handleProjectChange() {
         
         document.body.appendChild(modal);
         
-        // Inisialisasi Select2
-        $('.searchable-dropdown').select2({ width: '100%' });
-        
         // Simpan data ke global
         window.currentVerifikasiReq = req;
         window.currentTaxConfig = taxConfig;
         
-        // Ambil element
+        // Ambil semua element yang dibutuhkan
         const projectSelect = document.getElementById('verifyProject');
         const newProjectSection = document.getElementById('newProjectSection');
         const existingBudgetDiv = document.getElementById('existingProjectBudget');
@@ -1265,7 +1263,8 @@ function handleProjectChange() {
         const grossUpCheck = document.getElementById('grossUpCheck');
         const btnVerifikasi = document.getElementById('btnVerifikasi');
         
-        // Fungsi hitung pajak
+        // ========== FUNGSI-FUNGSI INTERNAL ==========
+        
         function hitungPajak() {
             const kenaPPN = ppnCheck.checked;
             const kenaPPh = pphCheck.checked;
@@ -1306,8 +1305,7 @@ function handleProjectChange() {
             document.getElementById('paymentTotal').innerHTML = `Rp ${formatNumber(total)}`;
         }
         
-        // Fungsi update voucher
-        async function updateVoucher() {
+        async function updateVoucherPreviewLocal() {
             const reqData = window.currentVerifikasiReq;
             if (!reqData) return;
             
@@ -1339,12 +1337,11 @@ function handleProjectChange() {
             
             let previewText = `${basePattern}/${nextNumber}`;
             if (projectSelect.value === 'NEW' && !newProjectCode?.value) {
-                previewText = `${basePattern}/[KODE]/001 (isi kode project)`;
+                previewText = `${basePattern}/[KODE]/001 (isi kode project dulu)`;
             }
             document.getElementById('voucherPreview').innerHTML = `<strong>${previewText}</strong>`;
         }
         
-        // Fungsi preview budget untuk project baru
         function previewBudgetBaru() {
             const budget = parseRupiah(newProjectBudget?.value || '0');
             const previewDiv = document.getElementById('newProjectBudgetPreview');
@@ -1368,7 +1365,7 @@ function handleProjectChange() {
                 
                 previewDiv.innerHTML = `
                     <div class="budget-card" style="margin-top:10px;">
-                        <div class="budget-title">Preview Budget</div>
+                        <div class="budget-title">🎯 Preview Budget</div>
                         <div class="budget-amount">Rp ${formatNumber(budget)}</div>
                         <div class="progress-budget">
                             <div class="progress-fill ${warna}" style="width: ${persenFixed}%;">${Math.round(persenFixed)}%</div>
@@ -1384,8 +1381,7 @@ function handleProjectChange() {
             }
         }
         
-        // Fungsi update budget project existing
-        async function updateBudgetExisting() {
+        async function updateBudgetExistingLocal() {
             const projectCode = projectSelect.value;
             if (!projectCode || projectCode === '' || projectCode === 'NEW') {
                 existingBudgetDiv.style.display = 'none';
@@ -1439,44 +1435,46 @@ function handleProjectChange() {
             }
         }
         
-        // Event listener project select
-        projectSelect.addEventListener('change', function() {
-    console.log("Project select changed to:", this.value);
-    if (this.value === 'NEW') {
-        newProjectSection.style.display = 'block';
-        existingBudgetDiv.style.display = 'none';
-    } else if (this.value && this.value !== '') {
-        newProjectSection.style.display = 'none';
-        existingBudgetDiv.style.display = 'block';
-        updateBudgetExisting();  // panggil fungsi updateBudgetExisting
-    } else {
-        newProjectSection.style.display = 'none';
-        existingBudgetDiv.style.display = 'none';
-    }
-    updateVoucher();
-});
+        // ========== EVENT LISTENER (TANPA Select2, PAKAI onchange biasa) ==========
+        // Karena kita tidak pakai Select2, onchange bawaan HTML akan jalan
         
-        // Event listener input project baru
+        projectSelect.onchange = function() {
+            console.log("Project changed to:", this.value);
+            if (this.value === 'NEW') {
+                newProjectSection.style.display = 'block';
+                existingBudgetDiv.style.display = 'none';
+            } else if (this.value && this.value !== '') {
+                newProjectSection.style.display = 'none';
+                existingBudgetDiv.style.display = 'block';
+                updateBudgetExistingLocal();
+            } else {
+                newProjectSection.style.display = 'none';
+                existingBudgetDiv.style.display = 'none';
+            }
+            updateVoucherPreviewLocal();
+        };
+        
+        // Event listener untuk input project baru
         if (newProjectCode) {
-            newProjectCode.addEventListener('input', function() {
-                updateVoucher();
+            newProjectCode.oninput = function() {
+                updateVoucherPreviewLocal();
                 previewBudgetBaru();
-            });
+            };
         }
         if (newProjectName) {
-            newProjectName.addEventListener('input', previewBudgetBaru);
+            newProjectName.oninput = previewBudgetBaru;
         }
         if (newProjectBudget) {
-            newProjectBudget.addEventListener('input', function() {
+            newProjectBudget.oninput = function() {
                 previewBudgetBaru();
-                updateVoucher();
-            });
+                updateVoucherPreviewLocal();
+            };
         }
         
         // Event listener pajak
-        ppnCheck.addEventListener('change', hitungPajak);
-        pphCheck.addEventListener('change', hitungPajak);
-        grossUpCheck.addEventListener('change', hitungPajak);
+        ppnCheck.onchange = hitungPajak;
+        pphCheck.onchange = hitungPajak;
+        grossUpCheck.onchange = hitungPajak;
         
         // Event listener tombol verifikasi
         btnVerifikasi.onclick = async function() {
@@ -1485,12 +1483,11 @@ function handleProjectChange() {
         
         // Inisialisasi awal
         hitungPajak();
-        updateVoucher();
+        updateVoucherPreviewLocal();
         
     } catch (error) {
         console.error('Error:', error);
         showToast('Gagal memuat form verifikasi: ' + error.message, 'error');
-        hideLoading();
     } finally {
         hideLoading();
     }
@@ -1501,9 +1498,8 @@ function closeVerifikasiModal() {
     const modal = document.getElementById('verifikasiModal');
     if (modal) modal.remove();
 }
-        
-    
-   async function submitVerifikasiFinal(id) {
+
+async function submitVerifikasiFinal(id) {
     const debitAccount = document.getElementById('debitAccount').value;
     const creditAccount = document.getElementById('creditAccount').value;
     const kenaPPN = document.getElementById('ppnCheck')?.checked || false;
@@ -1574,7 +1570,8 @@ function closeVerifikasiModal() {
                     code: projectCode,
                     name: projectName,
                     budget: projectBudget || 0,
-                    is_unlimited: projectBudget === 0
+                    is_unlimited: projectBudget === 0,
+                    created_by: currentUser?.email
                 });
                 
                 if (insertError) {
@@ -1620,7 +1617,9 @@ function closeVerifikasiModal() {
             ppn: ppn,
             pph: pph,
             total_with_tax: total,
-            project_code: projectCode
+            project_code: projectCode,
+            ppn_rate: taxConfig.ppn_rate,
+            is_pkp: taxConfig.is_pkp
         }).eq('id', id);
         
         if (updateError) throw updateError;
