@@ -1700,7 +1700,9 @@ async function loadInvoices() {
         let query = sb.from('invoices').select('*').eq('company_id', currentCompanyId).order('id', { ascending: false });
         if (month !== 'all' && year !== 'all') {
             const start = `${year}-${month.padStart(2,'0')}-01`;
-            const end = `${year}-${month.padStart(2,'0')}-31`;
+            // 🔴 PERBAIKAN: Hitung last day dengan benar
+            const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+            const end = `${year}-${month.padStart(2,'0')}-${lastDay}`;
             query = query.gte('invoice_date', start).lte('invoice_date', end);
         } else if (year !== 'all') {
             query = query.gte('invoice_date', `${year}-01-01`).lte('invoice_date', `${year}-12-31`);
@@ -1738,7 +1740,6 @@ async function loadInvoices() {
         tbody.innerHTML = html;
     } catch (error) { console.error(error); showToast('Gagal memuat data', 'error'); }
 }
-
     async function showCreateInvoiceForm() {
     const customersList = await getCustomerList(currentCompanyId);
     const projectsList = await getProjectList(currentCompanyId);
@@ -1952,7 +1953,7 @@ async function deleteInvoice(id) {
 }
 async function refreshInvoices() { loadInvoiceList(); }
         
-    async function loadVendorInvoiceList() {
+   async function loadVendorInvoiceList() {
     if (!companies.length) { setTimeout(() => loadVendorInvoiceList(), 500); return; }
     
     let html = `
@@ -1965,10 +1966,9 @@ async function refreshInvoices() { loadInvoiceList(); }
         </div>
     `;
     document.getElementById('content').innerHTML = html;
-    await refreshVendorInvoices();
+    await loadVendorInvoicesData(); 
 }
-
-async function refreshVendorInvoices() {
+        async function loadVendorInvoicesData() {
     showSkeletonLoader('vendorInvoiceTableBody', 5);
     try {
         let { data: invoices, error } = await sb.from('vendor_invoices').select('*').eq('company_id', currentCompanyId).order('id', { ascending: false });
@@ -1989,6 +1989,10 @@ async function refreshVendorInvoices() {
         }
         tbody.innerHTML = html;
     } catch (error) { console.error(error); showToast('Gagal memuat data', 'error'); }
+}
+
+async function refreshVendorInvoices() { 
+    await loadVendorInvoicesData(); 
 }
 
 async function showCreateVendorInvoiceForm() {
