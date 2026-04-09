@@ -1650,22 +1650,562 @@ async function submitVerifikasiFinal(id) {
     
     // ==================== INVOICE & MASTER DATA ====================
     async function loadInvoiceList() {
-        let { data: invoices } = await sb.from('invoices').select('*').order('id', { ascending: false });
-        let customersList = await getCustomerList(currentCompanyId);
-        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-file-invoice"></i> Invoice Penjualan</h2><button class="btn btn-secondary" onclick="loadDashboard()">Kembali</button></div>
-            <div class="table-container"><table class="table"><thead><tr><th>No Invoice</th><th>Customer</th><th>Tanggal</th><th>Total</th><th>Status</th></tr></thead><tbody>${(invoices || []).map(inv => {
-                let cust = customersList.find(c => c.id == inv.customer_id);
-                return `<tr><td>${inv.invoice_no}</td><td>${cust?.name || '-'}</td><td>${inv.invoice_date}</td><td class="text-right">Rp ${formatNumber(inv.total)}</td><td><span class="status-badge status-${inv.status}">${inv.status}</span></td></tr>`;
-            }).join('')}</tbody></table></div></div>`;
-        document.getElementById('content').innerHTML = html;
+    if (!companies.length) { setTimeout(() => loadInvoiceList(), 500); return; }
+    if (!currentCompanyId) currentCompanyId = companies[0]?.id || 1;
+    
+    const today = new Date();
+    const currentMonth = today.getMonth() + 1;
+    const currentYear = today.getFullYear();
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    
+    let monthOptions = '<option value="all">Semua Bulan</option>';
+    for (let i = 1; i <= 12; i++) monthOptions += `<option value="${i}" ${i == currentMonth ? 'selected' : ''}>${monthNames[i-1]}</option>`;
+    
+    let yearOptions = '<option value="all">Semua Tahun</option>';
+    for (let y = currentYear - 2; y <= currentYear + 1; y++) yearOptions += `<option value="${y}" ${y == currentYear ? 'selected' : ''}>${y}</option>`;
+    
+    let html = `
+        <div class="form-card">
+            <div class="form-header">
+                <h2><i class="fas fa-file-invoice"></i> Invoice Penjualan (AR)</h2>
+                <div>
+                    <button class="btn btn-primary" onclick="showCreateInvoiceForm()"><i class="fas fa-plus"></i> Buat Invoice</button>
+                    <button class="btn btn-secondary btn-sm" onclick="refreshInvoices()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
+            </div>
+            <div class="filter-card">
+                <div class="filter-grid">
+                    <div class="filter-item"><label class="filter-label">Bulan</label><select id="invoiceMonthFilter" class="filter-select" onchange="loadInvoices()">${monthOptions}</select></div>
+                    <div class="filter-item"><label class="filter-label">Tahun</label><select id="invoiceYearFilter" class="filter-select" onchange="loadInvoices()">${yearOptions}</select></div>
+                    <div class="filter-item"><label class="filter-label">Status</label><select id="invoiceStatusFilter" class="filter-select" onchange="loadInvoices()">
+                        <option value="all">Semua</option><option value="draft">Draft</option><option value="posted">Posted</option><option value="paid">Paid</option>
+                    </select></div>
+                </div>
+            </div>
+            <div class="table-container"><table class="table"><thead><tr><th>No Invoice</th><th>Customer</th><th>Tanggal</th><th>Project</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="invoiceTableBody"><tr><td colspan="7" class="text-center">Loading...</td></tr></tbody></table></div>
+        </div>
+    `;
+    document.getElementById('content').innerHTML = html;
+    await loadInvoices();
+}
+
+async function loadInvoices() {
+    const month = document.getElementById('invoiceMonthFilter')?.value || 'all';
+    const year = document.getElementById('invoiceYearFilter')?.value || 'all';
+    const status = document.getElementById('invoiceStatusFilter')?.value || 'all';
+    
+    showSkeletonLoader('invoiceTableBody', 5);
+    
+    try {
+        let query = sb.from('invoices').select('*').eq('company_id', currentCompanyId).order('id', { ascending: false });
+        if (month !== 'all' && year !== 'all') {
+            const start = `${year}-${month.padStart(2,'0')}-01`;
+            const end = `${year}-${month.padStart(2,'0')}-31`;
+            query = query.gte('invoice_date', start).lte('invoice_date', end);
+        } else if (year !== 'all') {
+            query = query.gte('invoice_date', `${year}-01-01`).lte('invoice_date', `${year}-12-31`);
+        }
+        
+        let { data: invoices, error } = await query;
+        if (error) throw error;
+        
+        if (status !== 'all') invoices = invoices.filter(i => i.status === status);
+        
+        const customersList = await getCustomerList(currentCompanyId);
+        const tbody = document.getElementById('invoiceTableBody');
+        if (!invoices || invoices.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">Tidak ada data invoice</td></tr>';
+            return;
+        }
+        
+        let html = '';
+        for (const inv of invoices) {
+            const cust = customersList.find(c => c.id == inv.customer_id);
+            html += `<tr>
+                <td><strong>${inv.invoice_no}</strong></td>
+                <td>${cust?.name || '-'}</td>
+                <td>${inv.invoice_date || '-'}</td>
+                <td>${inv.project_code || '-'}</td>
+                <td class="text-right">Rp ${formatNumber(inv.total)}</td>
+                <td><span class="status-badge status-${inv.status || 'draft'}">${inv.status || 'draft'}</span></td>
+                <td>
+                    <button class="action-btn" onclick="viewInvoiceDetail(${inv.id})"><i class="fas fa-eye"></i></button>
+                    ${inv.status === 'draft' ? `<button class="action-btn" onclick="editInvoice(${inv.id})" style="color:var(--warning);"><i class="fas fa-edit"></i></button>` : ''}
+                    ${inv.status === 'draft' ? `<button class="action-btn" onclick="deleteInvoice(${inv.id})" style="color:var(--danger);"><i class="fas fa-trash"></i></button>` : ''}
+                </td>
+            </tr>`;
+        }
+        tbody.innerHTML = html;
+    } catch (error) { console.error(error); showToast('Gagal memuat data', 'error'); }
+}
+
+    async function showCreateInvoiceForm() {
+    const customersList = await getCustomerList(currentCompanyId);
+    const projectsList = await getProjectList(currentCompanyId);
+    const revenueAccs = await getRevenueAccounts(currentCompanyId);
+    const bankList = await getBankList(currentCompanyId);
+    
+    let customerOptions = '<option value="">Pilih Customer</option>';
+    customersList.forEach(c => customerOptions += `<option value="${c.id}">${c.name}</option>`);
+    
+    let projectOptions = '<option value="">[Tanpa Project]</option>';
+    projectsList.forEach(p => projectOptions += `<option value="${p.code}">${p.code} - ${p.name}</option>`);
+    projectOptions += `<option value="NEW">+ BUAT PROJECT BARU</option>`;
+    
+    let revenueOptions = '<option value="">Pilih Akun Pendapatan</option>';
+    revenueAccs.forEach(a => revenueOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`);
+    
+    let bankOptions = '<option value="">Pilih Bank</option>';
+    bankList.forEach(b => bankOptions += `<option value="${b.code}">${b.display}</option>`);
+    
+    const today = new Date().toISOString().split('T')[0];
+    const nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
+    const dueDate = nextMonth.toISOString().split('T')[0];
+    
+    let html = `
+        <div class="form-card">
+            <div class="form-header"><h2><i class="fas fa-plus"></i> Buat Invoice Baru</h2><button class="btn btn-secondary" onclick="loadInvoiceList()">Kembali</button></div>
+            <div class="form-group"><label>Customer</label><select id="invCustomer" class="form-control">${customerOptions}</select></div>
+            <div class="form-group"><label>Project</label><select id="invProject" class="form-control" onchange="toggleInvoiceProjectSection()">${projectOptions}</select></div>
+            <div id="invNewProjectSection" style="display:none; padding:15px; background:#f8f9fa; border-radius:8px; margin-bottom:15px;">
+                <h4>📝 Buat Project Baru</h4>
+                <div class="form-group"><label>Kode Project</label><input type="text" id="invNewProjectCode" class="form-control" placeholder="Contoh: UNQ"></div>
+                <div class="form-group"><label>Nama Project</label><input type="text" id="invNewProjectName" class="form-control" placeholder="Nama lengkap"></div>
+                <div class="form-group"><label>Budget (0 = Unlimited)</label><input type="text" id="invNewProjectBudget" class="form-control" placeholder="Rp 0" onkeyup="formatMoney(this)"></div>
+            </div>
+            <div id="invExistingProjectBudget" style="margin-top:10px; margin-bottom:15px;"></div>
+            <div class="form-group"><label>Akun Pendapatan</label><select id="invRevenueAccount" class="form-control">${revenueOptions}</select></div>
+            <div class="form-group"><label>Bank Tujuan</label><select id="invBank" class="form-control">${bankOptions}</select></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <div class="form-group"><label>Tanggal Invoice</label><input type="date" id="invDate" class="form-control" value="${today}"></div>
+                <div class="form-group"><label>Jatuh Tempo</label><input type="date" id="invDueDate" class="form-control" value="${dueDate}"></div>
+            </div>
+            <div style="background:#f8f9fa; padding:20px; border-radius:10px; margin:20px 0;">
+                <h4>Item Barang/Jasa</h4>
+                <div id="invItemsContainer"></div>
+                <button class="btn btn-secondary" onclick="addInvoiceItem()">+ Tambah Item</button>
+            </div>
+            <div class="form-group"><label><input type="checkbox" id="invPPN" onchange="calculateInvoiceTotal()"> Kena PPN 11%</label></div>
+            <div style="background:var(--primary); padding:20px; border-radius:10px; color:white;">
+                <table style="width:100%;"><tr><td>Subtotal</td><td style="text-align:right;" id="invSubtotal">Rp 0</td></tr>
+                <tr><td>PPN 11%</td><td style="text-align:right;" id="invPPNAmount">Rp 0</td></tr>
+                <tr style="font-weight:bold;"><td>TOTAL</td><td style="text-align:right;" id="invTotal">Rp 0</td></tr>
+                </table>
+            </div>
+            <div class="form-group"><label>Catatan</label><textarea id="invNotes" class="form-control" rows="2"></textarea></div>
+            <div style="display:flex; gap:1rem; justify-content:flex-end;"><button class="btn btn-secondary" onclick="loadInvoiceList()">Batal</button><button class="btn btn-primary" onclick="saveInvoice()">Simpan Invoice</button></div>
+            <div id="invResult"></div>
+        </div>
+    `;
+    document.getElementById('content').innerHTML = html;
+    
+    window.invoiceItemCounter = 1;
+    document.getElementById('invItemsContainer').innerHTML = renderInvoiceItem(0);
+    calculateInvoiceTotal();
+}
+function renderInvoiceItem(id) {
+    return `<div class="inv-item" id="inv-item-${id}" style="display:grid; grid-template-columns:3fr 1fr 1fr 1fr auto; gap:0.5rem; margin-bottom:0.5rem;">
+        <input type="text" class="item-name form-control" placeholder="Nama Item" value="Item ${id+1}">
+        <input type="number" class="item-qty form-control" placeholder="Qty" value="1" onchange="calculateInvoiceTotal()">
+        <input type="text" class="item-price form-control" placeholder="Harga" value="0" onkeyup="formatMoney(this); calculateInvoiceTotal()">
+        <input type="text" class="item-total form-control" placeholder="Total" readonly style="background:#f0f0f0;">
+        ${id > 0 ? `<button class="btn btn-danger btn-sm" onclick="removeInvoiceItem(${id})"><i class="fas fa-trash"></i></button>` : '<div style="width:32px;"></div>'}
+    </div>`;
+}
+
+function addInvoiceItem() { 
+    const container = document.getElementById('invItemsContainer');
+    const newItem = document.createElement('div');
+    newItem.innerHTML = renderInvoiceItem(window.invoiceItemCounter++);
+    container.appendChild(newItem.firstChild);
+    calculateInvoiceTotal();
+}
+
+function removeInvoiceItem(id) { 
+    document.getElementById(`inv-item-${id}`)?.remove(); 
+    calculateInvoiceTotal(); 
+}
+
+function calculateInvoiceTotal() {
+    let subtotal = 0;
+    document.querySelectorAll('.inv-item').forEach(item => {
+        const qty = parseFloat(item.querySelector('.item-qty')?.value) || 0;
+        const price = parseRupiah(item.querySelector('.item-price')?.value);
+        const itemTotal = qty * price;
+        subtotal += itemTotal;
+        const totalInput = item.querySelector('.item-total');
+        if (totalInput) totalInput.value = formatNumber(itemTotal);
+    });
+    const kenaPPN = document.getElementById('invPPN')?.checked || false;
+    const ppn = kenaPPN ? subtotal * 0.11 : 0;
+    document.getElementById('invSubtotal').innerHTML = `Rp ${formatNumber(subtotal)}`;
+    document.getElementById('invPPNAmount').innerHTML = `Rp ${formatNumber(ppn)}`;
+    document.getElementById('invTotal').innerHTML = `Rp ${formatNumber(subtotal + ppn)}`;
+}
+
+function toggleInvoiceProjectSection() {
+    const select = document.getElementById('invProject');
+    const newSection = document.getElementById('invNewProjectSection');
+    const budgetDiv = document.getElementById('invExistingProjectBudget');
+    if (select.value === 'NEW') {
+        newSection.style.display = 'block';
+        budgetDiv.style.display = 'none';
+    } else if (select.value && select.value !== '') {
+        newSection.style.display = 'none';
+        budgetDiv.style.display = 'block';
+        updateInvoiceExistingProjectBudget(select.value);
+    } else {
+        newSection.style.display = 'none';
+        budgetDiv.style.display = 'none';
+    }
+}
+
+async function updateInvoiceExistingProjectBudget(projectCode) {
+    const budgetDiv = document.getElementById('invExistingProjectBudget');
+    const subtotal = parseRupiah(document.getElementById('invSubtotal').innerHTML.replace('Rp ', '').replace(/\./g, ''));
+    try {
+        const { data: project } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', currentCompanyId).single();
+        if (!project) { budgetDiv.innerHTML = '<div class="alert alert-warning">Project tidak ditemukan</div>'; return; }
+        const { data: payments } = await sb.from('payment_requests').select('amount, total_with_tax').eq('project_code', projectCode).eq('company_id', currentCompanyId).in('status', ['verified', 'paid']);
+        const terpakai = (payments || []).reduce((a,b) => a + (b.total_with_tax || b.amount || 0), 0);
+        const totalNanti = terpakai + subtotal;
+        const persen = project.is_unlimited ? 0 : (totalNanti / project.budget) * 100;
+        let warna = project.is_unlimited ? 'unlimited' : (persen <= 70 ? 'safe' : persen <= 90 ? 'warning' : persen <= 100 ? 'danger' : 'over');
+        budgetDiv.innerHTML = `<div class="budget-card"><div class="budget-title">🎯 ${project.name}</div><div class="budget-amount">${project.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(project.budget)}`}</div><div class="progress-budget"><div class="progress-fill ${warna}" style="width: ${Math.min(persen, 150)}%;">${!project.is_unlimited ? Math.round(persen) + '%' : ''}</div></div><div class="budget-stats"><span>Terpakai: Rp ${formatNumber(terpakai)}</span><span>Invoice ini: Rp ${formatNumber(subtotal)}</span></div></div>`;
+    } catch(e) { budgetDiv.innerHTML = '<div class="alert alert-warning">Gagal memuat budget</div>'; }
+}
+
+async function saveInvoice() {
+    const customerId = document.getElementById('invCustomer').value;
+    const projectSelect = document.getElementById('invProject');
+    const revenueAccount = document.getElementById('invRevenueAccount').value;
+    const bankCode = document.getElementById('invBank').value;
+    const invoiceDate = document.getElementById('invDate').value;
+    const dueDate = document.getElementById('invDueDate').value;
+    const notes = document.getElementById('invNotes').value;
+    const kenaPPN = document.getElementById('invPPN').checked;
+    
+    if (!customerId) { showToast('Pilih customer', 'error'); return; }
+    if (!revenueAccount) { showToast('Pilih akun pendapatan', 'error'); return; }
+    if (!bankCode) { showToast('Pilih bank', 'error'); return; }
+    
+    const items = [];
+    let hasError = false;
+    document.querySelectorAll('.inv-item').forEach((item, idx) => {
+        const name = item.querySelector('.item-name')?.value;
+        const qty = parseFloat(item.querySelector('.item-qty')?.value) || 0;
+        const price = parseRupiah(item.querySelector('.item-price')?.value);
+        if (!name) { alert(`Item ${idx+1}: Nama harus diisi`); hasError = true; return; }
+        if (qty <= 0) { alert(`Item ${idx+1}: Qty harus > 0`); hasError = true; return; }
+        items.push({ description: name, quantity: qty, unit_price: price, amount: qty * price });
+    });
+    if (hasError || items.length === 0) return;
+    
+    const subtotal = parseRupiah(document.getElementById('invSubtotal').innerHTML.replace('Rp ', '').replace(/\./g, ''));
+    const ppn = kenaPPN ? subtotal * 0.11 : 0;
+    const total = subtotal + ppn;
+    
+    const processSave = async (projectCode) => {
+        const { data: invoice, error } = await sb.from('invoices').insert({
+            company_id: currentCompanyId, customer_id: parseInt(customerId), project_code: projectCode || null,
+            revenue_account: revenueAccount, bank_code: bankCode, invoice_date: invoiceDate, due_date: dueDate,
+            notes: notes, items: items, subtotal: subtotal, ppn: ppn, total: total, status: 'draft'
+        }).select().single();
+        if (error) throw error;
+        showToast(`Invoice berhasil dibuat! No: ${invoice.invoice_no}`, 'success');
+        setTimeout(() => loadInvoiceList(), 1500);
+    };
+    
+    showLoading();
+    try {
+        if (projectSelect.value === 'NEW') {
+            const newCode = document.getElementById('invNewProjectCode')?.value.toUpperCase().trim();
+            const newName = document.getElementById('invNewProjectName')?.value.trim();
+            const newBudget = parseRupiah(document.getElementById('invNewProjectBudget')?.value);
+            if (!newCode || !newName) { showToast('Isi kode dan nama project', 'error'); hideLoading(); return; }
+            const { error } = await sb.from('projects').insert({ company_id: currentCompanyId, code: newCode, name: newName, budget: newBudget || 0, is_unlimited: newBudget === 0 });
+            if (error) throw error;
+            await processSave(newCode);
+        } else {
+            await processSave(projectSelect.value);
+        }
+    } catch (error) { showToast('Gagal: ' + error.message, 'error'); }
+    finally { hideLoading(); }
+}
+
+async function viewInvoiceDetail(id) {
+    const { data: inv } = await sb.from('invoices').select('*').eq('id', id).single();
+    if (!inv) { showToast('Invoice tidak ditemukan', 'error'); return; }
+    const customersList = await getCustomerList(currentCompanyId);
+    const cust = customersList.find(c => c.id == inv.customer_id);
+    alert(`Invoice #${inv.invoice_no}\nCustomer: ${cust?.name || '-'}\nProject: ${inv.project_code || '-'}\nTotal: Rp ${formatNumber(inv.total)}\nStatus: ${inv.status}`);
+}
+
+async function editInvoice(id) { showToast('Fitur edit dalam pengembangan', 'warning'); }
+async function deleteInvoice(id) {
+    if (!confirm('Hapus invoice ini?')) return;
+    showLoading();
+    const { error } = await sb.from('invoices').delete().eq('id', id);
+    if (error) showToast('Gagal: ' + error.message, 'error');
+    else { showToast('Invoice dihapus', 'success'); loadInvoiceList(); }
+    hideLoading();
+}
+async function refreshInvoices() { loadInvoiceList(); }
+        
+    async function loadVendorInvoiceList() {
+    if (!companies.length) { setTimeout(() => loadVendorInvoiceList(), 500); return; }
+    
+    let html = `
+        <div class="form-card">
+            <div class="form-header"><h2><i class="fas fa-users"></i> Invoice Pembelian (AP)</h2>
+                <div><button class="btn btn-primary" onclick="showCreateVendorInvoiceForm()"><i class="fas fa-plus"></i> Buat Invoice</button>
+                <button class="btn btn-secondary btn-sm" onclick="refreshVendorInvoices()"><i class="fas fa-sync-alt"></i> Refresh</button></div>
+            </div>
+            <div class="table-container"><table class="table"><thead><tr><th>Vendor</th><th>No Invoice</th><th>Tanggal</th><th>Project</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="vendorInvoiceTableBody"><tr><td colspan="7" class="text-center">Loading...</td></tr></tbody></table></div>
+        </div>
+    `;
+    document.getElementById('content').innerHTML = html;
+    await refreshVendorInvoices();
+}
+
+async function refreshVendorInvoices() {
+    showSkeletonLoader('vendorInvoiceTableBody', 5);
+    try {
+        let { data: invoices, error } = await sb.from('vendor_invoices').select('*').eq('company_id', currentCompanyId).order('id', { ascending: false });
+        if (error) throw error;
+        const tbody = document.getElementById('vendorInvoiceTableBody');
+        if (!invoices || invoices.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center">Tidak ada data</td></tr>'; return; }
+        let html = '';
+        for (const inv of invoices) {
+            html += `<tr>
+                <td>${inv.vendor_name || '-'}</td>
+                <td><strong>${inv.invoice_no}</strong></td>
+                <td>${inv.invoice_date || '-'}</td>
+                <td>${inv.project_code || '-'}</td>
+                <td class="text-right">Rp ${formatNumber(inv.total)}</td>
+                <td><span class="status-badge status-${inv.payment_status === 'paid' ? 'paid' : 'draft'}">${inv.payment_status || 'unpaid'}</span></td>
+                <td><button class="action-btn" onclick="viewVendorInvoiceDetail(${inv.id})"><i class="fas fa-eye"></i></button></td>
+            </tr>`;
+        }
+        tbody.innerHTML = html;
+    } catch (error) { console.error(error); showToast('Gagal memuat data', 'error'); }
+}
+
+async function showCreateVendorInvoiceForm() {
+    const vendorsList = await getVendorList(currentCompanyId);
+    const projectsList = await getProjectList(currentCompanyId);
+    const accountsList = await getAccountList(currentCompanyId);
+    
+    let vendorOptions = '<option value="">Pilih Vendor</option>';
+    vendorsList.forEach(v => vendorOptions += `<option value="${v.id}" data-term="${v.payment_term || 30}">${v.name}</option>`);
+    
+    let projectOptions = '<option value="">[Tanpa Project]</option>';
+    projectsList.forEach(p => projectOptions += `<option value="${p.code}">${p.code} - ${p.name}</option>`);
+    projectOptions += `<option value="NEW">+ BUAT PROJECT BARU</option>`;
+    
+    let accountOptions = '<option value="">Pilih Akun</option>';
+    accountsList.filter(a => a.account_type === 'Beban').forEach(a => accountOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`);
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    let html = `
+        <div class="form-card">
+            <div class="form-header"><h2><i class="fas fa-plus"></i> Buat Invoice Vendor</h2><button class="btn btn-secondary" onclick="loadVendorInvoiceList()">Kembali</button></div>
+            <div class="form-group"><label>Vendor</label><select id="venVendor" class="form-control">${vendorOptions}</select></div>
+            <div class="form-group"><label>Project</label><select id="venProject" class="form-control" onchange="toggleVendorProjectSection()">${projectOptions}</select></div>
+            <div id="venNewProjectSection" style="display:none; padding:15px; background:#f8f9fa; border-radius:8px; margin-bottom:15px;">
+                <h4>📝 Buat Project Baru</h4>
+                <div class="form-group"><label>Kode Project</label><input type="text" id="venNewProjectCode" class="form-control" placeholder="Contoh: UNQ"></div>
+                <div class="form-group"><label>Nama Project</label><input type="text" id="venNewProjectName" class="form-control" placeholder="Nama lengkap"></div>
+                <div class="form-group"><label>Budget (0 = Unlimited)</label><input type="text" id="venNewProjectBudget" class="form-control" placeholder="Rp 0" onkeyup="formatMoney(this)"></div>
+            </div>
+            <div id="venExistingProjectBudget" style="margin-top:10px; margin-bottom:15px;"></div>
+            <div class="form-group"><label>No Invoice</label><input type="text" id="venInvoiceNo" class="form-control" placeholder="INV-001"></div>
+            <div class="form-group"><label>Tanggal Invoice</label><input type="date" id="venDate" class="form-control" value="${today}"></div>
+            <div class="form-group"><label>Jatuh Tempo</label><input type="date" id="venDueDate" class="form-control" value="${today}"></div>
+            <div class="form-group"><label>Akun Beban</label><select id="venAccount" class="form-control">${accountOptions}</select></div>
+            <div class="form-group"><label>Total</label><input type="text" id="venTotal" class="form-control" placeholder="0" onkeyup="formatMoney(this)"></div>
+            <div class="form-group"><label><input type="checkbox" id="venPPN"> Kena PPN 11%</label></div>
+            <div class="form-group"><label><input type="checkbox" id="venPPh"> Kena PPh 23 2%</label></div>
+            <div class="form-group"><label>Upload Bukti</label><input type="file" id="venFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png"></div>
+            <div style="display:flex; gap:1rem; justify-content:flex-end;"><button class="btn btn-secondary" onclick="loadVendorInvoiceList()">Batal</button><button class="btn btn-primary" onclick="saveVendorInvoice()">Simpan</button></div>
+            <div id="venResult"></div>
+        </div>
+    `;
+    document.getElementById('content').innerHTML = html;
+    
+    // ========== EVENT LISTENER UNTUK JATUH TEMPO OTOMATIS ==========
+    const venVendor = document.getElementById('venVendor');
+    if (venVendor) {
+        venVendor.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const term = selectedOption.getAttribute('data-term') || 30;
+            const invoiceDate = document.getElementById('venDate').value;
+            if (invoiceDate) {
+                const dueDate = new Date(invoiceDate);
+                dueDate.setDate(dueDate.getDate() + parseInt(term));
+                document.getElementById('venDueDate').value = dueDate.toISOString().split('T')[0];
+            }
+        });
     }
     
-    async function loadVendorInvoiceList() {
-        let { data: invoices } = await sb.from('vendor_invoices').select('*').order('id', { ascending: false });
-        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-users"></i> Invoice Pembelian</h2><button class="btn btn-secondary" onclick="loadDashboard()">Kembali</button></div>
-            <div class="table-container"><table class="table"><thead><tr><th>Vendor</th><th>No Invoice</th><th>Tanggal</th><th>Total</th><th>Status</th></tr></thead><tbody>${(invoices || []).map(inv => `<tr><td>${inv.vendor_name}</td><td>${inv.invoice_no}</td><td>${inv.invoice_date}</td><td class="text-right">Rp ${formatNumber(inv.total)}</td><td><span class="status-badge status-${inv.payment_status}">${inv.payment_status}</span></td></tr>`).join('')}</tbody></table></div></div>`;
-        document.getElementById('content').innerHTML = html;
+    // ========== EVENT LISTENER UNTUK TOTAL & BUDGET ==========
+    const venTotal = document.getElementById('venTotal');
+    if (venTotal) {
+        venTotal.addEventListener('input', function() {
+            calculateVendorTotal();
+            const projectSelect = document.getElementById('venProject');
+            if (projectSelect.value && projectSelect.value !== '' && projectSelect.value !== 'NEW') {
+                updateVendorExistingProjectBudget(projectSelect.value);
+            }
+        });
     }
+    
+    // ========== EVENT LISTENER UNTUK PPN & PPh ==========
+    const venPPN = document.getElementById('venPPN');
+    const venPPh = document.getElementById('venPPh');
+    if (venPPN) {
+        venPPN.addEventListener('change', function() {
+            calculateVendorTotal();
+            const projectSelect = document.getElementById('venProject');
+            if (projectSelect.value && projectSelect.value !== 'NEW') {
+                updateVendorExistingProjectBudget(projectSelect.value);
+            }
+        });
+    }
+    if (venPPh) {
+        venPPh.addEventListener('change', function() {
+            calculateVendorTotal();
+            const projectSelect = document.getElementById('venProject');
+            if (projectSelect.value && projectSelect.value !== 'NEW') {
+                updateVendorExistingProjectBudget(projectSelect.value);
+            }
+        });
+    }
+    
+    // Inisialisasi
+    calculateVendorTotal();
+}
+function toggleVendorProjectSection() {
+    const select = document.getElementById('venProject');
+    const newSection = document.getElementById('venNewProjectSection');
+    const budgetDiv = document.getElementById('venExistingProjectBudget');
+    if (select.value === 'NEW') { newSection.style.display = 'block'; budgetDiv.style.display = 'none'; }
+    else if (select.value && select.value !== '') { newSection.style.display = 'none'; budgetDiv.style.display = 'block'; updateVendorExistingProjectBudget(select.value); }
+    else { newSection.style.display = 'none'; budgetDiv.style.display = 'none'; }
+}
+
+async function updateVendorExistingProjectBudget(projectCode) {
+    const budgetDiv = document.getElementById('venExistingProjectBudget');
+    const total = parseRupiah(document.getElementById('venTotal').value);
+    try {
+        const { data: project } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', currentCompanyId).single();
+        if (!project) { budgetDiv.innerHTML = '<div class="alert alert-warning">Project tidak ditemukan</div>'; return; }
+        const { data: payments } = await sb.from('payment_requests').select('amount, total_with_tax').eq('project_code', projectCode).eq('company_id', currentCompanyId).in('status', ['verified', 'paid']);
+        const terpakai = (payments || []).reduce((a,b) => a + (b.total_with_tax || b.amount || 0), 0);
+        const totalNanti = terpakai + total;
+        const persen = project.is_unlimited ? 0 : (totalNanti / project.budget) * 100;
+        let warna = project.is_unlimited ? 'unlimited' : (persen <= 70 ? 'safe' : persen <= 90 ? 'warning' : persen <= 100 ? 'danger' : 'over');
+        budgetDiv.innerHTML = `<div class="budget-card"><div class="budget-title">🎯 ${project.name}</div><div class="budget-amount">${project.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(project.budget)}`}</div><div class="progress-budget"><div class="progress-fill ${warna}" style="width: ${Math.min(persen, 150)}%;">${!project.is_unlimited ? Math.round(persen) + '%' : ''}</div></div></div>`;
+    } catch(e) { budgetDiv.innerHTML = '<div class="alert alert-warning">Gagal memuat budget</div>'; }
+}
+
+function calculateVendorTotal() {
+    const total = parseRupiah(document.getElementById('venTotal').value);
+    const kenaPPN = document.getElementById('venPPN').checked;
+    const kenaPPh = document.getElementById('venPPh').checked;
+    const ppn = kenaPPN ? total * 0.11 : 0;
+    const pph = kenaPPh ? total * 0.02 : 0;
+    const finalTotal = total + ppn - pph;
+    
+    // Cek apakah elemen breakdown sudah ada, jika belum buat
+    let breakdownDiv = document.getElementById('venTotalBreakdown');
+    if (!breakdownDiv) {
+        const totalField = document.getElementById('venTotal').parentElement;
+        breakdownDiv = document.createElement('div');
+        breakdownDiv.id = 'venTotalBreakdown';
+        breakdownDiv.style.marginTop = '5px';
+        breakdownDiv.style.fontSize = '0.75rem';
+        totalField.appendChild(breakdownDiv);
+    }
+    
+    // Tampilkan breakdown
+    if (kenaPPN || kenaPPh) {
+        breakdownDiv.innerHTML = `
+            <small>DPP: Rp ${formatNumber(total)}</small><br>
+            ${kenaPPN ? `<small>PPN 11%: Rp ${formatNumber(ppn)}</small><br>` : ''}
+            ${kenaPPh ? `<small>PPh 23 2%: Rp ${formatNumber(pph)}</small><br>` : ''}
+            <strong>Total Dibayar: Rp ${formatNumber(finalTotal)}</strong>
+        `;
+    } else {
+        breakdownDiv.innerHTML = `<strong>Total: Rp ${formatNumber(total)}</strong>`;
+    }
+}
+    
+async function saveVendorInvoice() {
+    const vendorId = document.getElementById('venVendor').value;
+    const projectSelect = document.getElementById('venProject');
+    const invoiceNo = document.getElementById('venInvoiceNo').value;
+    const invoiceDate = document.getElementById('venDate').value;
+    const dueDate = document.getElementById('venDueDate').value;
+    const accountCode = document.getElementById('venAccount').value;
+    const total = parseRupiah(document.getElementById('venTotal').value);
+    const kenaPPN = document.getElementById('venPPN').checked;
+    const kenaPPh = document.getElementById('venPPh').checked;
+    const fileInput = document.getElementById('venFile');
+    
+    if (!vendorId) { showToast('Pilih vendor', 'error'); return; }
+    if (!invoiceNo) { showToast('Isi no invoice', 'error'); return; }
+    if (!accountCode) { showToast('Pilih akun beban', 'error'); return; }
+    if (!fileInput.files.length) { showToast('Upload bukti invoice', 'error'); return; }
+    
+    const file = fileInput.files[0];
+    if (file.size > 5 * 1024 * 1024) { showToast('File maksimal 5MB', 'error'); return; }
+    
+    const vendorsList = await getVendorList(currentCompanyId);
+    const vendor = vendorsList.find(v => v.id == parseInt(vendorId));
+    
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        showLoading();
+        try {
+            const res = await fetch(GAS_UPLOAD_URL, { method: 'POST', body: JSON.stringify({ action: 'upload', file: e.target.result, name: file.name, mimeType: file.type, folderId: DRIVE_FOLDER_ID }) });
+            const upload = await res.json();
+            if (!upload.success) throw new Error(upload.message);
+            
+            let projectCode = projectSelect.value;
+            if (projectCode === 'NEW') {
+                const newCode = document.getElementById('venNewProjectCode')?.value.toUpperCase().trim();
+                const newName = document.getElementById('venNewProjectName')?.value.trim();
+                const newBudget = parseRupiah(document.getElementById('venNewProjectBudget')?.value);
+                if (!newCode || !newName) { showToast('Isi kode dan nama project', 'error'); hideLoading(); return; }
+                await sb.from('projects').insert({ company_id: currentCompanyId, code: newCode, name: newName, budget: newBudget || 0, is_unlimited: newBudget === 0 });
+                projectCode = newCode;
+            }
+            
+            const ppn = kenaPPN ? total * 0.11 : 0;
+            const pph = kenaPPh ? total * 0.02 : 0;
+            const finalTotal = total + ppn - pph;
+            
+            const { error } = await sb.from('vendor_invoices').insert({
+                company_id: currentCompanyId, vendor_id: parseInt(vendorId), vendor_name: vendor.name,
+                project_code: projectCode || null, invoice_no: invoiceNo, invoice_date: invoiceDate, due_date: dueDate,
+                account_code: accountCode, total: finalTotal, dpp: total, ppn: ppn, pph23: pph,
+                payment_status: 'unpaid', file_url: upload.url
+            });
+            if (error) throw error;
+            showToast('Invoice vendor berhasil disimpan', 'success');
+            setTimeout(() => loadVendorInvoiceList(), 1500);
+        } catch(error) { showToast('Gagal: ' + error.message, 'error'); }
+        finally { hideLoading(); }
+    };
+    reader.readAsDataURL(file);
+}
+async function viewVendorInvoiceDetail(id) {
+    const { data: inv } = await sb.from('vendor_invoices').select('*').eq('id', id).single();
+    alert(`Vendor Invoice #${inv.invoice_no}\nVendor: ${inv.vendor_name}\nProject: ${inv.project_code || '-'}\nTotal: Rp ${formatNumber(inv.total)}\nStatus: ${inv.payment_status}`);
+}
+async function refreshVendorInvoices() { loadVendorInvoiceList(); }
     
     async function loadCustomerList() {
         let cust = await getCustomerList(currentCompanyId);
