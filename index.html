@@ -655,36 +655,78 @@
     }
     
     async function savePaymentRequest(action) {
-        const companyId = parseInt(document.getElementById('paymentCompany').value);
-        const date = document.getElementById('paymentDate').value;
-        const desc = document.getElementById('paymentDesc').value;
-        const amount = parseRupiah(document.getElementById('paymentAmount').value);
-        const bank = document.getElementById('paymentBank').value;
-        const fileInput = document.getElementById('paymentFile');
-        if (!desc || !amount || !bank) { showToast('Semua field harus diisi', 'error'); return; }
-        if (!fileInput.files || fileInput.files.length === 0) { showToast('Upload bukti pendukung', 'error'); return; }
-        const file = fileInput.files[0];
-        if (file.size > 5 * 1024 * 1024) { showToast('Ukuran file maksimal 5MB', 'error'); return; }
-        showLoading();
+    const companyId = parseInt(document.getElementById('paymentCompany').value);
+    const date = document.getElementById('paymentDate').value;
+    const desc = document.getElementById('paymentDesc').value;
+    const amount = parseRupiah(document.getElementById('paymentAmount').value);
+    const bank = document.getElementById('paymentBank').value;
+    const fileInput = document.getElementById('paymentFile');
+    
+    if (!desc || !amount || !bank) { showToast('Semua field harus diisi', 'error'); return; }
+    if (!fileInput.files || fileInput.files.length === 0) { showToast('Upload bukti pendukung', 'error'); return; }
+    const file = fileInput.files[0];
+    if (file.size > 5 * 1024 * 1024) { showToast('Ukuran file maksimal 5MB', 'error'); return; }
+    
+    showLoading();
+    
+    // Upload ke Google Drive via GAS
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const base64 = e.target.result;
+        
         try {
-            const fileName = `payment_${Date.now()}_${file.name}`;
-            const { error: uploadError } = await sb.storage.from('payment-files').upload(fileName, file);
-            if (uploadError) throw uploadError;
-            const { data: urlData } = sb.storage.from('payment-files').getPublicUrl(fileName);
+            const res = await fetch(GAS_UPLOAD_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'upload',
+                    file: base64,
+                    name: file.name,
+                    mimeType: file.type,
+                    folderId: DRIVE_FOLDER_ID
+                })
+            });
+            const result = await res.json();
+            
+            if (!result.success) throw new Error(result.message);
+            
+            // Simpan ke Supabase dengan URL dari GAS
             const { data, error } = await sb.from('payment_requests').insert({
-                company_id: companyId, request_date: date, description: desc, amount: amount,
-                bank_account: bank, bukti_url: urlData.publicUrl, requester_email: currentUser?.email,
-                status: action === 'submit' ? 'submitted' : 'draft', submitted_at: action === 'submit' ? new Date() : null
+                company_id: companyId,
+                request_date: date,
+                description: desc,
+                amount: amount,
+                bank_account: bank,
+                bukti_url: result.url,
+                requester_email: currentUser?.email,
+                status: action === 'submit' ? 'submitted' : 'draft',
+                submitted_at: action === 'submit' ? new Date() : null
             }).select().single();
+            
             if (error) throw error;
+            
             if (action === 'submit') {
-                await sb.from('payment_logs').insert({ request_id: data.id, user_email: currentUser?.email, user_role: currentUserRole, old_status: 'draft', new_status: 'submitted', keterangan: 'Request diajukan ke finance' });
+                await sb.from('payment_logs').insert({
+                    request_id: data.id,
+                    user_email: currentUser?.email,
+                    user_role: currentUserRole,
+                    old_status: 'draft',
+                    new_status: 'submitted',
+                    keterangan: 'Request diajukan ke finance'
+                });
             }
+            
             showToast(`Request berhasil ${action === 'submit' ? 'diajukan' : 'disimpan'}`, 'success');
             setTimeout(() => loadPaymentRequests(), 1500);
-        } catch (error) { showToast('Gagal menyimpan: ' + error.message, 'error'); }
-        finally { hideLoading(); }
-    }
+            
+        } catch (error) {
+            console.error(error);
+            showToast('Gagal menyimpan: ' + error.message, 'error');
+        } finally {
+            hideLoading();
+        }
+    };
+    reader.readAsDataURL(file);
+}
     
     async function editPaymentRequest(id) {
         showLoading();
@@ -708,30 +750,61 @@
     }
     
     async function updatePaymentRequest(id) {
-        const date = document.getElementById('editPaymentDate').value;
-        const desc = document.getElementById('editPaymentDesc').value;
-        const amount = parseRupiah(document.getElementById('editPaymentAmount').value);
-        const bank = document.getElementById('editPaymentBank').value;
-        const fileInput = document.getElementById('editPaymentFile');
-        if (!desc || !amount || !bank || !date) { showToast('Semua field harus diisi', 'error'); return; }
-        showLoading();
-        try {
-            let buktiUrl = null;
-            if (fileInput.files && fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                const fileName = `payment_${Date.now()}_${file.name}`;
-                await sb.storage.from('payment-files').upload(fileName, file);
-                const { data: urlData } = sb.storage.from('payment-files').getPublicUrl(fileName);
-                buktiUrl = urlData.publicUrl;
-            }
-            const updateData = { request_date: date, description: desc, amount: amount, bank_account: bank };
-            if (buktiUrl) updateData.bukti_url = buktiUrl;
-            await sb.from('payment_requests').update(updateData).eq('id', id);
-            showToast('Payment request berhasil diupdate', 'success');
-            setTimeout(() => loadPaymentRequests(), 1500);
-        } catch (error) { showToast('Gagal mengupdate: ' + error.message, 'error'); }
-        finally { hideLoading(); }
+    const date = document.getElementById('editPaymentDate').value;
+    const desc = document.getElementById('editPaymentDesc').value;
+    const amount = parseRupiah(document.getElementById('editPaymentAmount').value);
+    const bank = document.getElementById('editPaymentBank').value;
+    const fileInput = document.getElementById('editPaymentFile');
+    
+    if (!desc || !amount || !bank || !date) { showToast('Semua field harus diisi', 'error'); return; }
+    
+    showLoading();
+    
+    try {
+        let buktiUrl = null;
+        
+        if (fileInput.files && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            
+            // Upload ke Google Drive via GAS
+            const reader = new FileReader();
+            const uploadResult = await new Promise((resolve, reject) => {
+                reader.onload = async function(e) {
+                    try {
+                        const res = await fetch(GAS_UPLOAD_URL, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                action: 'upload',
+                                file: e.target.result,
+                                name: file.name,
+                                mimeType: file.type,
+                                folderId: DRIVE_FOLDER_ID
+                            })
+                        });
+                        const result = await res.json();
+                        resolve(result);
+                    } catch (err) { reject(err); }
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            if (uploadResult.success) buktiUrl = uploadResult.url;
+        }
+        
+        const updateData = { request_date: date, description: desc, amount: amount, bank_account: bank };
+        if (buktiUrl) updateData.bukti_url = buktiUrl;
+        
+        await sb.from('payment_requests').update(updateData).eq('id', id);
+        showToast('Payment request berhasil diupdate', 'success');
+        setTimeout(() => loadPaymentRequests(), 1500);
+        
+    } catch (error) {
+        console.error(error);
+        showToast('Gagal mengupdate: ' + error.message, 'error');
+    } finally {
+        hideLoading();
     }
+}
     
     async function deletePaymentRequest(id) {
         if (!confirm('Hapus payment request ini? Tindakan tidak bisa dibatalkan!')) return;
