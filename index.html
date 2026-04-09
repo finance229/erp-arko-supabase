@@ -1571,7 +1571,6 @@ async function submitVerifikasiFinal(id) {
                     name: projectName,
                     budget: projectBudget || 0,
                     is_unlimited: projectBudget === 0,
-                    created_by: currentUser?.email
                 });
                 
                 if (insertError) {
