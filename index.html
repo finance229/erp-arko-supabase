@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP ARKO GROUP - Payment Request Premium</title>
+    <title>ERP ARKO GROUP - Premium Payment Request</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -240,7 +240,7 @@
         </div>
         <div class="main">
             <div class="top-bar">
-                <h1 class="page-title" id="pageTitle">Payment Request</h1>
+                <h1 class="page-title" id="pageTitle">Dashboard</h1>
                 <div class="user-menu">
                     <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">Loading...</div></div>
                     <div class="user-avatar" id="userAvatar">U</div>
@@ -261,6 +261,7 @@
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let currentUser = null, currentUserRole = null, currentCompanyId = 1;
     let companies = [], accounts = [], projects = [], customers = [], vendors = [];
+    let statusChart = null, companyChart = null, trendChart = null, arapChart = null;
     let revenueAccounts = [];
     
     // ==================== PAYMENT REQUEST GLOBAL VARIABLES ====================
@@ -319,7 +320,7 @@
         document.getElementById('loginPage').style.display = 'none'; document.getElementById('appPage').style.display = 'flex';
         document.getElementById('userName').innerText = profile?.name || email; document.getElementById('userRole').innerText = currentUserRole;
         document.getElementById('userAvatar').innerText = (profile?.name || email).charAt(0).toUpperCase();
-        renderSidebar(); loadPaymentRequests(); hideLoading();
+        renderSidebar(); loadDashboard(); hideLoading();
     }
     
     async function logout() { await sb.auth.signOut(); document.getElementById('loginPage').style.display = 'flex'; document.getElementById('appPage').style.display = 'none'; }
@@ -327,31 +328,167 @@
     function renderSidebar() {
         let menus = [
             { icon: 'fa-chart-pie', label: 'Dashboard', action: 'dashboard', roles: ['direktur', 'finance', 'staff'] },
-            { icon: 'fa-money-bill-wave', label: 'Payment Request', action: 'payment', roles: ['direktur', 'finance', 'staff'] }
+            { icon: 'fa-book', label: 'Jurnal & Akuntansi', type: 'dropdown', submenus: [
+                { icon: 'fa-pen', label: 'Input Jurnal', action: 'jurnal', roles: ['direktur', 'finance'] },
+                { icon: 'fa-book', label: 'Buku Besar', action: 'ledger', roles: ['direktur', 'finance'] },
+                { icon: 'fa-chart-line', label: 'Laba Rugi', action: 'labarugi', roles: ['direktur', 'finance'] },
+                { icon: 'fa-scale-balanced', label: 'Neraca', action: 'neraca', roles: ['direktur', 'finance'] },
+                { icon: 'fa-book-open', label: 'Jurnal Umum', action: 'jurnal_umum', roles: ['direktur', 'finance'] }
+            ] },
+            { icon: 'fa-file-invoice-dollar', label: 'Invoice & Payment', type: 'dropdown', submenus: [
+                { icon: 'fa-user', label: 'Invoice Penjualan (AR)', action: 'invoice_penjualan', roles: ['direktur', 'finance'] },
+                { icon: 'fa-users', label: 'Invoice Pembelian (AP)', action: 'invoice_pembelian', roles: ['direktur', 'finance'] },
+                { icon: 'fa-money-bill-wave', label: 'Payment Request', action: 'payment', roles: ['direktur', 'finance', 'staff'] }
+            ] },
+            { icon: 'fa-chart-pie', label: 'Manajemen Aset', type: 'dropdown', submenus: [
+                { icon: 'fa-clock', label: 'Transaksi Berulang', action: 'recurring', roles: ['direktur', 'finance'] },
+                { icon: 'fa-chart-pie', label: 'Manajemen Aset', action: 'aset', roles: ['direktur', 'finance'] },
+                { icon: 'fa-scale-balanced', label: 'Saldo Awal', action: 'opening_balance', roles: ['direktur', 'finance'] }
+            ] },
+            { icon: 'fa-database', label: 'Master Data', type: 'dropdown', submenus: [
+                { icon: 'fa-users', label: 'Data Customer', action: 'customers', roles: ['direktur', 'finance'] },
+                { icon: 'fa-project-diagram', label: 'Data Project', action: 'projects', roles: ['direktur', 'finance'] },
+                { icon: 'fa-truck', label: 'Data Vendor', action: 'vendors', roles: ['direktur', 'finance'] }
+            ] },
+            { icon: 'fa-download', label: 'Export & Backup', action: 'export', roles: ['direktur', 'finance'] }
         ];
         let html = '';
         menus.forEach(menu => {
-            if (menu.roles.includes(currentUserRole)) {
+            if (menu.type === 'dropdown') {
+                let hasAccess = menu.submenus.some(sub => sub.roles.includes(currentUserRole));
+                if (!hasAccess) return;
+                html += `<div class="menu-item has-dropdown" onclick="toggleDropdown('${menu.label}')"><i class="fas ${menu.icon}"></i><span style="flex:1;">${menu.label}</span><i class="fas fa-chevron-down" id="arrow-${menu.label}"></i></div><div id="dropdown-${menu.label}" class="dropdown-menu" style="display:none;">`;
+                menu.submenus.forEach(sub => { if (sub.roles.includes(currentUserRole)) html += `<div class="menu-item submenu" onclick="showMenu('${sub.action}')"><i class="fas ${sub.icon}"></i> ${sub.label}</div>`; });
+                html += `</div>`;
+            } else if (menu.roles.includes(currentUserRole)) {
                 html += `<div class="menu-item" onclick="showMenu('${menu.action}')"><i class="fas ${menu.icon}"></i> ${menu.label}</div>`;
             }
         });
         document.getElementById('sidebarMenu').innerHTML = html;
     }
     
+    function toggleDropdown(label) { let d = document.getElementById(`dropdown-${label}`); let a = document.getElementById(`arrow-${label}`); if (d.style.display === 'none') { d.style.display = 'block'; if(a) a.style.transform = 'rotate(180deg)'; } else { d.style.display = 'none'; if(a) a.style.transform = 'rotate(0deg)'; } }
+    
     function showMenu(menu) {
         document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
         if (event && event.currentTarget) event.currentTarget.classList.add('active');
-        if (menu === 'payment') loadPaymentRequests();
-        else if (menu === 'dashboard') loadDashboard();
+        const titles = { dashboard: 'Dashboard', jurnal: 'Input Jurnal', invoice_penjualan: 'Invoice Penjualan', invoice_pembelian: 'Invoice Pembelian', payment: 'Payment Request', ledger: 'Buku Besar', labarugi: 'Laba Rugi', neraca: 'Neraca', jurnal_umum: 'Jurnal Umum', recurring: 'Transaksi Berulang', aset: 'Manajemen Aset', customers: 'Data Customer', projects: 'Data Project', vendors: 'Data Vendor', opening_balance: 'Saldo Awal', export: 'Export & Backup' };
+        document.getElementById('pageTitle').innerText = titles[menu] || 'ERP';
+        if (menu === 'dashboard') loadDashboard();
+        else if (menu === 'jurnal') loadJurnalForm();
+        else if (menu === 'invoice_penjualan') loadInvoiceList();
+        else if (menu === 'invoice_pembelian') loadVendorInvoiceList();
+        else if (menu === 'payment') loadPaymentRequests();
+        else if (menu === 'ledger') loadLedgerForm();
+        else if (menu === 'labarugi') loadLabaRugiForm();
+        else if (menu === 'neraca') loadNeracaForm();
+        else if (menu === 'jurnal_umum') loadJurnalUmum();
+        else if (menu === 'recurring') loadRecurringList();
+        else if (menu === 'aset') loadAsetList();
+        else if (menu === 'customers') loadCustomerList();
+        else if (menu === 'projects') loadProjectList();
+        else if (menu === 'vendors') loadVendorList();
+        else if (menu === 'opening_balance') loadOpeningBalanceForm();
+        else if (menu === 'export') loadExportBackupForm();
     }
     
-    // ==================== DASHBOARD SEDERHANA ====================
+    // ==================== DASHBOARD ====================
     async function loadDashboard() {
-        let html = `<div class="card"><h2><i class="fas fa-chart-pie"></i> Dashboard</h2><p>Selamat datang di ERP ARKO GROUP</p></div>`;
+        if (statusChart) statusChart.destroy(); if (companyChart) companyChart.destroy();
+        const today = new Date(); const currentMonth = today.getMonth() + 1; const currentYear = today.getFullYear();
+        const greeting = today.getHours() < 12 ? 'Selamat Pagi' : today.getHours() < 18 ? 'Selamat Siang' : 'Selamat Malam';
+        const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        let companyOptions = '<option value="all">Semua Perusahaan</option>';
+        companies.forEach(c => { companyOptions += `<option value="${c.id}">${c.nama}</option>`; });
+        let html = `<div class="welcome-section"><div><h1><i class="fas fa-hand-wave"></i> ${greeting}, ${currentUser?.name || 'User'}!</h1><p>Ringkasan keuangan konsolidasi</p></div><div class="welcome-date">${today.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' })}</div></div>
+            <div class="filter-card"><div class="filter-grid"><div class="filter-item"><label class="filter-label">Perusahaan</label><select id="dashboardCompany" class="filter-select">${companyOptions}</select></div>
+            <div class="filter-item"><label class="filter-label">Bulan</label><select id="dashboardMonth" class="filter-select"><option value="all">Semua Bulan</option>${monthNames.map((m,i)=>`<option value="${i+1}" ${i+1==currentMonth?'selected':''}>${m}</option>`).join('')}</select></div>
+            <div class="filter-item"><label class="filter-label">Tahun</label><select id="dashboardYear" class="filter-select"><option value="all">Semua Tahun</option><option value="${currentYear-1}">${currentYear-1}</option><option value="${currentYear}" selected>${currentYear}</option><option value="${currentYear+1}">${currentYear+1}</option></select></div>
+            <div class="filter-item"><button class="btn btn-primary" onclick="refreshDashboard()">Perbarui</button></div></div></div>
+            <div class="stats-grid"><div class="stat-card"><div class="stat-value" id="totalKas">Rp 0</div><div class="stat-label">Total Kas</div></div>
+            <div class="stat-card"><div class="stat-value" id="totalPiutang">Rp 0</div><div class="stat-label">Piutang Usaha</div></div>
+            <div class="stat-card"><div class="stat-value" id="totalUtang">Rp 0</div><div class="stat-label">Utang Usaha</div></div>
+            <div class="stat-card"><div class="stat-value" id="labaBersih">Rp 0</div><div class="stat-label">Laba Bersih</div></div>
+            <div class="stat-card"><div class="stat-value" id="totalAset">Rp 0</div><div class="stat-label">Total Aset</div></div>
+            <div class="stat-card"><div class="stat-value" id="totalPending">Rp 0</div><div class="stat-label">Pending Approval</div></div>
+            <div class="stat-card"><div class="stat-value" id="totalDue">Rp 0</div><div class="stat-label">Jatuh Tempo</div></div>
+            <div class="stat-card"><div class="stat-value" id="totalDepresiasi">Rp 0</div><div class="stat-label">Penyusutan</div></div></div>
+            <div class="charts-grid"><div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-chart-pie"></i> Status Payment Request</h3><span id="periodLabel">${monthNames[currentMonth-1]} ${currentYear}</span></div><div class="chart-container"><canvas id="statusChart"></canvas></div></div>
+            <div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-chart-bar"></i> Per Perusahaan</h3></div><div class="chart-container"><canvas id="companyChart"></canvas></div></div></div>
+            <div class="charts-grid"><div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-chart-line"></i> Trend Payment (6 Bulan)</h3></div><div class="chart-container"><canvas id="trendChart"></canvas></div></div>
+            <div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-scale-balanced"></i> AR vs AP</h3></div><div class="chart-container"><canvas id="arapChart"></canvas></div></div></div>
+            <div class="card"><h2><i class="fas fa-bell"></i> Aktivitas Terbaru</h2><div id="activityList"></div></div>
+            <div class="card"><h2><i class="fas fa-exclamation-circle"></i> Perlu Tindakan Segera</h2><div id="priorityTableBody"></div></div>
+            <div class="card"><h2><i class="fas fa-clock"></i> Payment Request Terbaru</h2><div style="overflow-x:auto;"><table><thead><tr><th>ID</th><th>Tgl</th><th>Perusahaan</th><th>Deskripsi</th><th>Jumlah</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="recentTableBody"></tbody></table></div></div>`;
         document.getElementById('content').innerHTML = html;
+        await refreshDashboard();
     }
     
-    // ==================== PAYMENT REQUEST ====================
+    async function refreshDashboard() {
+        let companyId = document.getElementById('dashboardCompany')?.value || 'all';
+        let month = document.getElementById('dashboardMonth')?.value || 'all';
+        let year = document.getElementById('dashboardYear')?.value || 'all';
+        
+        let query = sb.from('payment_requests').select('*');
+        if (companyId !== 'all') query = query.eq('company_id', parseInt(companyId));
+        if (month !== 'all' && year !== 'all') { let start = `${year}-${month.padStart(2,'0')}-01`; let end = `${year}-${month.padStart(2,'0')}-31`; query = query.gte('request_date', start).lte('request_date', end); }
+        let { data: payments } = await query.order('created_at', { ascending: false });
+        
+        let { data: invoices } = await sb.from('invoices').select('*');
+        let totalPiutang = (invoices || []).reduce((a,b) => a + ((b.total||0) - (b.paid_amount||0)), 0);
+        let totalApproved = (payments || []).filter(p => p.status === 'paid').reduce((a,b) => a + (b.amount||0), 0) || 0;
+        let totalPending = (payments || []).filter(p => p.status === 'submitted' || p.status === 'verified').reduce((a,b) => a + (b.amount||0), 0) || 0;
+        
+        document.getElementById('totalKas').innerHTML = `Rp ${formatNumber(totalApproved)}`;
+        document.getElementById('totalPiutang').innerHTML = `Rp ${formatNumber(totalPiutang)}`;
+        document.getElementById('totalPending').innerHTML = `Rp ${formatNumber(totalPending)}`;
+        
+        let statusData = { draft: 0, submitted: 0, verified: 0, paid: 0, rejected: 0 };
+        let companyData = { 1:0, 2:0, 3:0, 4:0 };
+        let monthlyData = {};
+        (payments || []).forEach(p => { 
+            statusData[p.status] = (statusData[p.status] || 0) + 1; 
+            companyData[p.company_id] = (companyData[p.company_id] || 0) + p.amount;
+            let date = new Date(p.request_date);
+            let monthKey = date.getMonth() + 1;
+            monthlyData[monthKey] = (monthlyData[monthKey] || 0) + p.amount;
+        });
+        
+        if (statusChart) statusChart.destroy();
+        statusChart = new Chart(document.getElementById('statusChart'), { type: 'pie', data: { labels: ['Draft','Submitted','Verified','Paid','Rejected'], datasets: [{ data: [statusData.draft,statusData.submitted,statusData.verified,statusData.paid,statusData.rejected], backgroundColor: ['#9ca3af','#3b82f6','#f59e0b','#10b981','#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+        
+        if (companyChart) companyChart.destroy();
+        companyChart = new Chart(document.getElementById('companyChart'), { type: 'bar', data: { labels: ['Arko','MMC','USA','MST'], datasets: [{ data: [companyData[1]/1e6, companyData[2]/1e6, companyData[3]/1e6, companyData[4]/1e6], backgroundColor: '#3b82f6' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => 'Rp ' + v + ' Jt' } } } } });
+        
+        let trendValues = []; for (let i = 9; i <= 12; i++) trendValues.push((monthlyData[i] || 0)/1e6); for (let i = 1; i <= 2; i++) trendValues.push((monthlyData[i] || 0)/1e6);
+        if (trendChart) trendChart.destroy();
+        trendChart = new Chart(document.getElementById('trendChart'), { type: 'line', data: { labels: ['Sep','Okt','Nov','Des','Jan','Feb'], datasets: [{ data: trendValues, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => 'Rp ' + v + ' Jt' } } } } });
+        
+        if (arapChart) arapChart.destroy();
+        arapChart = new Chart(document.getElementById('arapChart'), { type: 'bar', data: { labels: ['Piutang (AR)', 'Utang (AP)'], datasets: [{ data: [totalPiutang/1e6, 0], backgroundColor: ['#3b82f6', '#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false } });
+        
+        let tbody = ''; (payments || []).slice(0,5).forEach(p => { let company = companies.find(c => c.id == p.company_id)?.nama || '-'; tbody += `<tr><td>#${p.id}</td>.html${p.request_date || '-'}</td>.html${company}</td>.html${p.description || '-'}</td><td class="text-right">Rp ${formatNumber(p.amount)}</td>.html<span class="status-badge status-${p.status}">${p.status}</span></td>.html<button class="action-btn" onclick="viewPaymentRequest(${p.id})"><i class="fas fa-eye"></i></button></td></tr>`; });
+        document.getElementById('recentTableBody').innerHTML = tbody || '<tr><td colspan="7">Belum ada数据</td></tr>';
+        
+        let priorities = (payments || []).filter(p => p.status === 'submitted' || p.status === 'verified');
+        let priorityHtml = '<div class="table-container"><table class="table"><thead><tr><th>Tipe</th><th>Referensi</th><th>Keterangan</th><th>Jumlah</th><th>Status</th><th>Aksi</th></tr></thead><tbody>';
+        priorities.forEach(p => {
+            let actionBtn = p.status === 'submitted' && currentUserRole === 'finance' ? `<button class="btn btn-success btn-sm" onclick="verifyPaymentRequest(${p.id})">Verifikasi</button>` : (p.status === 'verified' && currentUserRole === 'direktur' ? `<button class="btn btn-success btn-sm" onclick="approvePaymentRequest(${p.id})">Approve</button>` : '');
+            priorityHtml += `<tr><td>Payment</td><td>#${p.id}</td><td>${p.description}</td><td class="text-right">Rp ${formatNumber(p.amount)}</td><td><span class="status-badge status-${p.status}">${p.status}</span></td><td>${actionBtn}</td></tr>`;
+        });
+        priorityHtml += '</tbody><tr></div>';
+        document.getElementById('priorityTableBody').innerHTML = priorities.length ? priorityHtml : '<p style="padding:1rem; text-align:center;">Tidak ada yang perlu ditindaklanjuti</p>';
+        
+        let activityHtml = '<div class="activity-list">';
+        (payments || []).slice(0,10).forEach(p => {
+            let statusIcon = p.status === 'submitted' ? '📤' : p.status === 'verified' ? '✓' : p.status === 'paid' ? '💰' : '📝';
+            activityHtml += `<div class="activity-item" style="display:flex; align-items:center; gap:0.8rem; padding:0.5rem 0; border-bottom:1px solid var(--gray-200);"><div style="width:32px; text-align:center;">${statusIcon}</div><div><strong>Payment Request #${p.id}</strong> ${p.status === 'submitted' ? 'diajukan ke finance' : p.status === 'verified' ? 'diverifikasi finance' : p.status === 'paid' ? 'disetujui direktur' : 'dibuat'}<br><small>${p.request_date} - Rp ${formatNumber(p.amount)}</small></div></div>`;
+        });
+        activityHtml += '</div>';
+        document.getElementById('activityList').innerHTML = activityHtml || '<p>Belum ada aktivitas</p>';
+    }
+    
+    // ==================== PAYMENT REQUESTS PREMIUM ====================
     async function loadPaymentRequests() {
         if (!companies.length) { setTimeout(() => loadPaymentRequests(), 500); return; }
         if (!currentCompanyId) currentCompanyId = companies[0]?.id || 1;
@@ -814,6 +951,23 @@
         finally { hideLoading(); }
     }
     
+    // ==================== FUNGSI LAINNYA (JURNAL, INVOICE, DLL) - PLACEHOLDER ====================
+    async function loadInvoiceList() { document.getElementById('content').innerHTML = '<div class="card"><h2>Invoice Penjualan</h2><p>Fitur dalam pengembangan</p></div>'; }
+    async function loadVendorInvoiceList() { document.getElementById('content').innerHTML = '<div class="card"><h2>Invoice Pembelian</h2><p>Fitur dalam pengembangan</p></div>'; }
+    async function loadJurnalForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Input Jurnal</h2><p>Fitur dalam pengembangan</p></div>'; }
+    async function loadLedgerForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Buku Besar</h2><p>Fitur dalam pengembangan</p></div>'; }
+    async function loadLabaRugiForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Laba Rugi</h2><p>Fitur dalam pengembangan</p></div>'; }
+    async function loadNeracaForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Neraca</h2><p>Fitur dalam pengembangan</p></div>'; }
+    async function loadJurnalUmum() { document.getElementById('content').innerHTML = '<div class="card"><h2>Jurnal Umum</h2><p>Fitur dalam pengembangan</p></div>'; }
+    async function loadRecurringList() { document.getElementById('content').innerHTML = '<div class="card"><h2>Transaksi Berulang</h2><p>Fitur dalam pengembangan</p></div>'; }
+    async function loadAsetList() { document.getElementById('content').innerHTML = '<div class="card"><h2>Manajemen Aset</h2><p>Fitur dalam pengembangan</p></div>'; }
+    async function loadCustomerList() { let cust = await getCustomerList(currentCompanyId); let html = `<div class="card"><h2>Data Customer</h2><div class="table-container"><table class="table"><thead><tr><th>Kode</th><th>Nama</th><th>NPWP</th><th>Telepon</th><th>Email</th></tr></thead><tbody>${cust.map(c=>`<tr><td>${c.code||'-'}</td><td>${c.name}</td><td>${c.npwp||'-'}</td><td>${c.telp||'-'}</td><td>${c.email||'-'}</td></tr>`).join('')}</tbody></table></div></div>`; document.getElementById('content').innerHTML = html; }
+    async function loadProjectList() { let proj = await getProjectList(currentCompanyId); let html = `<div class="card"><h2>Data Project</h2><div class="table-container"><table class="table"><thead><tr><th>Kode</th><th>Nama</th><th>Company</th></tr></thead><tbody>${proj.map(p=>`<tr><td>${p.code||'-'}</td><td>${p.name}</td><td>${companies.find(c=>c.id==p.company_id)?.nama||'-'}</td></tr>`).join('')}</tbody></table></div></div>`; document.getElementById('content').innerHTML = html; }
+    async function loadVendorList() { let vend = await getVendorList(currentCompanyId); let html = `<div class="card"><h2>Data Vendor</h2><div class="table-container"><table class="table"><thead><tr><th>Nama</th><th>NPWP</th><th>Bank</th><th>No Rekening</th><th>Termin</th></tr></thead><tbody>${vend.map(v=>`<tr><td>${v.name}</td><td>${v.npwp||'-'}</td><td>${v.bank_name||'-'}</td><td>${v.bank_account||'-'}</td><td class="text-center">${v.payment_term||30} hari</td></tr>`).join('')}</tbody></table></div></div>`; document.getElementById('content').innerHTML = html; }
+    async function loadOpeningBalanceForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Saldo Awal</h2><p>Fitur dalam pengembangan</p></div>'; }
+    async function loadExportBackupForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Export & Backup</h2><p>Fitur dalam pengembangan</p></div>'; }
+    async function exportTableToExcel(tableName) { alert('Fitur export excel menyusul'); }
+    
     async function checkSession() {
         const { data } = await sb.auth.getSession();
         if (data.session) {
@@ -823,7 +977,7 @@
             document.getElementById('loginPage').style.display = 'none'; document.getElementById('appPage').style.display = 'flex';
             document.getElementById('userName').innerText = profile?.name || currentUser.email; document.getElementById('userRole').innerText = currentUserRole;
             document.getElementById('userAvatar').innerText = (profile?.name || currentUser.email).charAt(0).toUpperCase();
-            renderSidebar(); loadPaymentRequests();
+            renderSidebar(); loadDashboard();
         }
     }
     checkSession();
