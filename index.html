@@ -2781,6 +2781,29 @@ if (!paidInvoices) {
         }
     }
     checkSession();
+
+        async function changeCompany(companyId) {
+    currentCompanyId = parseInt(companyId);
+    showToast(`Beralih ke perusahaan: ${companies.find(c => c.id == currentCompanyId)?.nama}`, 'info');
+    
+    // Refresh data yang sedang aktif
+    const currentMenu = document.getElementById('pageTitle').innerText;
+    if (currentMenu === 'Invoice Penjualan (AR)') {
+        loadInvoiceList();
+    } else if (currentMenu === 'Invoice Pembelian (AP)') {
+        loadVendorInvoiceList();
+    } else if (currentMenu === 'Payment Request') {
+        loadPaymentRequests();
+    } else if (currentMenu === 'Dashboard') {
+        loadDashboard();
+    } else if (currentMenu === 'Data Project') {
+        loadProjectList();
+    } else if (currentMenu === 'Data Customer') {
+        loadCustomerList();
+    } else if (currentMenu === 'Data Vendor') {
+        loadVendorList();
+    }
+}
     </script>
 </body>
 </html>
