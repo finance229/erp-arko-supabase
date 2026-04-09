@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP ARKO GROUP</title>
+    <title>ERP ARKO GROUP - Payment Request Premium</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -85,13 +85,15 @@
         .status-verified { background: #fef3c7; color: #92400e; }
         .status-paid { background: #d1fae5; color: #065f46; }
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
-        .modal-content { background: white; border-radius: 12px; padding: 1rem; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal-content { background: white; border-radius: 12px; padding: 1rem; max-width: 700px; width: 90%; max-height: 85vh; overflow-y: auto; }
         .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; z-index: 9999; display: none; }
         .loading-spinner { width: 40px; height: 40px; border: 3px solid var(--gray-200); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .alert { padding: 0.5rem; border-radius: 8px; margin-bottom: 0.5rem; font-size: 0.7rem; }
         .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .alert-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .alert-info { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
         .login-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--primary), var(--primary-light)); }
         .login-card { background: white; border-radius: 20px; padding: 1.5rem; width: 100%; max-width: 380px; text-align: center; box-shadow: var(--shadow-lg); }
         .login-logo i { font-size: 2.5rem; color: var(--accent); margin-bottom: 0.3rem; }
@@ -105,66 +107,117 @@
         .mt-3 { margin-top: 0.8rem; }
         .fw-bold { font-weight: bold; }
         @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; } .stats-grid { grid-template-columns: 1fr 1fr; } .charts-grid { grid-template-columns: 1fr; } }
-        /* Progress Bar */
-.progress-budget {
-    background: #e5e7eb;
-    border-radius: 30px;
-    height: 28px;
-    width: 100%;
-    overflow: hidden;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
-}
-.progress-fill {
-    height: 100%;
-    border-radius: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding-right: 12px;
-    color: white;
-    font-size: 11px;
-    font-weight: 700;
-    transition: width 0.5s ease;
-}
-.progress-fill.safe { background: linear-gradient(90deg, #10b981, #34d399); }
-.progress-fill.warning { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-.progress-fill.danger { background: linear-gradient(90deg, #ea580c, #f97316); }
-.progress-fill.over { background: linear-gradient(90deg, #dc2626, #ef4444); }
-.progress-fill.unlimited { background: linear-gradient(90deg, #9ca3af, #d1d5db); }
-
-.budget-card {
-    background: linear-gradient(135deg, #1e293b, #0f172a);
-    border-radius: 16px;
-    padding: 1rem;
-    color: white;
-    margin-bottom: 1rem;
-}
-.budget-title { font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.3rem; }
-.budget-amount { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; }
-.budget-stats { display: flex; justify-content: space-between; font-size: 0.65rem; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.1); }
-
-/* Pagination */
-.pagination { display: flex; justify-content: center; gap: 0.3rem; margin-top: 1rem; flex-wrap: wrap; }
-.pagination .btn { min-width: 32px; justify-content: center; padding: 0.2rem 0.5rem; }
-
-/* Toast Notification */
-.toast-notify {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 9999;
-    padding: 0.7rem 1rem;
-    border-radius: 10px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    max-width: 350px;
-    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
-    animation: slideIn 0.3s ease;
-}
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
+        
+        /* ==================== PAYMENT REQUEST PREMIUM CSS ==================== */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .pagination-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .pagination-btn {
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            border: 1px solid var(--gray-300);
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .pagination-btn:hover:not(:disabled) {
+            background: var(--gray-100);
+            border-color: var(--accent);
+        }
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .page-size-select {
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            border: 1px solid var(--gray-300);
+            background: white;
+            cursor: pointer;
+        }
+        .page-info {
+            padding: 0.4rem 1rem;
+            background: var(--gray-100);
+            border-radius: 8px;
+            font-size: 0.8rem;
+        }
+        .skeleton-loader {
+            background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-300) 50%, var(--gray-200) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 4px;
+            height: 20px;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .toast-notify {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            padding: 0.75rem 1.25rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            max-width: 350px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+            animation: slideIn 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .toast-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .toast-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .budget-card {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-radius: 16px;
+            padding: 1rem;
+            color: white;
+            margin-bottom: 1rem;
+        }
+        .budget-title { font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.3rem; }
+        .budget-amount { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .budget-stats { display: flex; justify-content: space-between; font-size: 0.65rem; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.1); }
+        .progress-budget { background: rgba(255,255,255,0.2); border-radius: 30px; height: 24px; width: 100%; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 30px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; color: white; font-size: 10px; font-weight: 700; transition: width 0.5s ease; }
+        .progress-fill.safe { background: linear-gradient(90deg, #10b981, #34d399); }
+        .progress-fill.warning { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .progress-fill.danger { background: linear-gradient(90deg, #ea580c, #f97316); }
+        .progress-fill.over { background: linear-gradient(90deg, #dc2626, #ef4444); }
+        .progress-fill.unlimited { background: linear-gradient(90deg, #9ca3af, #d1d5db); }
+        .payment-detail-table { width: 100%; border-collapse: collapse; }
+        .payment-detail-table td { padding: 8px; border-bottom: 1px solid var(--gray-200); }
+        .payment-detail-table td:first-child { background: var(--gray-50); width: 140px; font-weight: 500; }
+        .history-log { background: var(--gray-50); border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 3px solid var(--accent); }
+        .history-log-header { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .history-log-status { font-weight: 600; color: var(--accent); }
+        .history-log-time { font-size: 0.7rem; color: var(--gray-500); }
+        .history-log-keterangan { font-size: 0.8rem; margin-bottom: 5px; }
+        .history-log-user { font-size: 0.7rem; color: var(--gray-500); }
+        .verification-summary { background: var(--primary); color: white; padding: 1rem; border-radius: 12px; margin: 1rem 0; }
+        .verification-summary table { width: 100%; color: white; }
+        .verification-summary td { padding: 6px 0; }
+        .verification-summary td:first-child { width: 40%; }
+        .verification-summary td:last-child { text-align: right; font-weight: bold; }
+        .voucher-preview { background: var(--gray-50); padding: 1rem; border-radius: 12px; text-align: center; font-size: 1.2rem; font-weight: bold; color: var(--accent); font-family: monospace; }
     </style>
 </head>
 <body>
@@ -187,7 +240,7 @@
         </div>
         <div class="main">
             <div class="top-bar">
-                <h1 class="page-title" id="pageTitle">Dashboard</h1>
+                <h1 class="page-title" id="pageTitle">Payment Request</h1>
                 <div class="user-menu">
                     <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">Loading...</div></div>
                     <div class="user-avatar" id="userAvatar">U</div>
@@ -208,15 +261,18 @@
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let currentUser = null, currentUserRole = null, currentCompanyId = 1;
     let companies = [], accounts = [], projects = [], customers = [], vendors = [];
-    let statusChart = null, companyChart = null;
     let revenueAccounts = [];
-    let currentPaymentPage = 1;
-    let paymentsPerPage = 10;
-    let allPaymentsData = [];
     
-    function showLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; setTimeout(() => { document.getElementById('loadingOverlay').style.display = 'none'; }, 10000); }
+    // ==================== PAYMENT REQUEST GLOBAL VARIABLES ====================
+    let currentPaymentPage = 1;
+    let currentPaymentPageSize = 50;
+    let totalPaymentPages = 1;
+    let totalPaymentItems = 0;
+    let nilaiAsliPaymentRequest = 0;
+    
+    function showLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; }
     function hideLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
-    function formatNumber(num) { if (!num) return '0'; return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
+    function formatNumber(num) { if (!num && num !== 0) return '0'; return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."); }
     function parseRupiah(str) { if (!str) return 0; let cleaned = str.toString().replace(/[^0-9,-]/g, '').replace(',', '.'); return parseFloat(cleaned) || 0; }
     function formatMoney(input) { let v = input.value.replace(/\./g, '').replace(/[^0-9]/g, ''); input.value = v ? new Intl.NumberFormat('id-ID').format(parseInt(v)) : ''; }
     function formatDate(dateStr) { if (!dateStr) return '-'; let d = new Date(dateStr); return d.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' }); }
@@ -228,6 +284,26 @@
     async function getBankList(companyId) { let { data } = await sb.from('chart_of_accounts').select('*').eq('company_id', companyId).ilike('account_name', '%Bank%'); return data.map(b => ({ code: b.account_code, name: b.account_name, display: b.account_name })); }
     async function getVendorList(companyId) { let { data } = await sb.from('vendors').select('*').eq('company_id', companyId); return data || []; }
     async function getTaxConfig(companyId) { let configs = { 1: { ppn_rate: 11, is_pkp: true }, 2: { ppn_rate: 1.1, is_pkp: false }, 3: { ppn_rate: 1.1, is_pkp: false }, 4: { ppn_rate: 11, is_pkp: true } }; return configs[companyId] || { ppn_rate: 11, is_pkp: true }; }
+    
+    // ==================== TOAST NOTIFICATION ====================
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast-notify toast-${type}`;
+        toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+    
+    // ==================== SKELETON LOADER ====================
+    function showSkeletonLoader(tableId, rowCount = 5) {
+        const tbody = document.getElementById(tableId);
+        if (!tbody) return;
+        let skeletonHtml = '';
+        for (let i = 0; i < rowCount; i++) {
+            skeletonHtml += `<tr>${'<td><div class="skeleton-loader" style="height:20px;"></div></td>'.repeat(8)}</tr>`;
+        }
+        tbody.innerHTML = skeletonHtml;
+    }
     
     // ==================== AUTHENTICATION ====================
     async function login() {
@@ -243,7 +319,7 @@
         document.getElementById('loginPage').style.display = 'none'; document.getElementById('appPage').style.display = 'flex';
         document.getElementById('userName').innerText = profile?.name || email; document.getElementById('userRole').innerText = currentUserRole;
         document.getElementById('userAvatar').innerText = (profile?.name || email).charAt(0).toUpperCase();
-        renderSidebar(); loadDashboard(); hideLoading();
+        renderSidebar(); loadPaymentRequests(); hideLoading();
     }
     
     async function logout() { await sb.auth.signOut(); document.getElementById('loginPage').style.display = 'flex'; document.getElementById('appPage').style.display = 'none'; }
@@ -251,1180 +327,503 @@
     function renderSidebar() {
         let menus = [
             { icon: 'fa-chart-pie', label: 'Dashboard', action: 'dashboard', roles: ['direktur', 'finance', 'staff'] },
-            { icon: 'fa-book', label: 'Jurnal & Akuntansi', type: 'dropdown', submenus: [
-                { icon: 'fa-pen', label: 'Input Jurnal', action: 'jurnal', roles: ['direktur', 'finance'] },
-                { icon: 'fa-book', label: 'Buku Besar', action: 'ledger', roles: ['direktur', 'finance'] },
-                { icon: 'fa-chart-line', label: 'Laba Rugi', action: 'labarugi', roles: ['direktur', 'finance'] },
-                { icon: 'fa-scale-balanced', label: 'Neraca', action: 'neraca', roles: ['direktur', 'finance'] },
-                { icon: 'fa-book-open', label: 'Jurnal Umum', action: 'jurnal_umum', roles: ['direktur', 'finance'] }
-            ] },
-            { icon: 'fa-file-invoice-dollar', label: 'Invoice & Payment', type: 'dropdown', submenus: [
-                { icon: 'fa-user', label: 'Invoice Penjualan (AR)', action: 'invoice_penjualan', roles: ['direktur', 'finance'] },
-                { icon: 'fa-users', label: 'Invoice Pembelian (AP)', action: 'invoice_pembelian', roles: ['direktur', 'finance'] },
-                { icon: 'fa-money-bill-wave', label: 'Payment Request', action: 'payment', roles: ['direktur', 'finance', 'staff'] }
-            ] },
-            { icon: 'fa-chart-pie', label: 'Manajemen Aset', type: 'dropdown', submenus: [
-                { icon: 'fa-clock', label: 'Transaksi Berulang', action: 'recurring', roles: ['direktur', 'finance'] },
-                { icon: 'fa-chart-pie', label: 'Manajemen Aset', action: 'aset', roles: ['direktur', 'finance'] },
-                { icon: 'fa-scale-balanced', label: 'Saldo Awal', action: 'opening_balance', roles: ['direktur', 'finance'] }
-            ] },
-            { icon: 'fa-database', label: 'Master Data', type: 'dropdown', submenus: [
-                { icon: 'fa-users', label: 'Data Customer', action: 'customers', roles: ['direktur', 'finance'] },
-                { icon: 'fa-project-diagram', label: 'Data Project', action: 'projects', roles: ['direktur', 'finance'] },
-                { icon: 'fa-truck', label: 'Data Vendor', action: 'vendors', roles: ['direktur', 'finance'] }
-            ] },
-            { icon: 'fa-download', label: 'Export & Backup', action: 'export', roles: ['direktur', 'finance'] }
+            { icon: 'fa-money-bill-wave', label: 'Payment Request', action: 'payment', roles: ['direktur', 'finance', 'staff'] }
         ];
         let html = '';
         menus.forEach(menu => {
-            if (menu.type === 'dropdown') {
-                let hasAccess = menu.submenus.some(sub => sub.roles.includes(currentUserRole));
-                if (!hasAccess) return;
-                html += `<div class="menu-item has-dropdown" onclick="toggleDropdown('${menu.label}')"><i class="fas ${menu.icon}"></i><span style="flex:1;">${menu.label}</span><i class="fas fa-chevron-down" id="arrow-${menu.label}"></i></div><div id="dropdown-${menu.label}" class="dropdown-menu" style="display:none;">`;
-                menu.submenus.forEach(sub => { if (sub.roles.includes(currentUserRole)) html += `<div class="menu-item submenu" onclick="showMenu('${sub.action}')"><i class="fas ${sub.icon}"></i> ${sub.label}</div>`; });
-                html += `</div>`;
-            } else if (menu.roles.includes(currentUserRole)) {
+            if (menu.roles.includes(currentUserRole)) {
                 html += `<div class="menu-item" onclick="showMenu('${menu.action}')"><i class="fas ${menu.icon}"></i> ${menu.label}</div>`;
             }
         });
         document.getElementById('sidebarMenu').innerHTML = html;
     }
     
-    function toggleDropdown(label) { let d = document.getElementById(`dropdown-${label}`); let a = document.getElementById(`arrow-${label}`); if (d.style.display === 'none') { d.style.display = 'block'; if(a) a.style.transform = 'rotate(180deg)'; } else { d.style.display = 'none'; if(a) a.style.transform = 'rotate(0deg)'; } }
-    
     function showMenu(menu) {
         document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
         if (event && event.currentTarget) event.currentTarget.classList.add('active');
-        const titles = { dashboard: 'Dashboard', jurnal: 'Input Jurnal', invoice_penjualan: 'Invoice Penjualan', invoice_pembelian: 'Invoice Pembelian', payment: 'Payment Request', ledger: 'Buku Besar', labarugi: 'Laba Rugi', neraca: 'Neraca', jurnal_umum: 'Jurnal Umum', recurring: 'Transaksi Berulang', aset: 'Manajemen Aset', customers: 'Data Customer', projects: 'Data Project', vendors: 'Data Vendor', opening_balance: 'Saldo Awal', export: 'Export & Backup' };
-        document.getElementById('pageTitle').innerText = titles[menu] || 'ERP';
-        if (menu === 'dashboard') loadDashboard();
-        else if (menu === 'jurnal') loadJurnalForm();
-        else if (menu === 'invoice_penjualan') loadInvoiceList();
-        else if (menu === 'invoice_pembelian') loadVendorInvoiceList();
-        else if (menu === 'payment') loadPaymentRequests();
-        else if (menu === 'ledger') loadLedgerForm();
-        else if (menu === 'labarugi') loadLabaRugiForm();
-        else if (menu === 'neraca') loadNeracaForm();
-        else if (menu === 'jurnal_umum') loadJurnalUmum();
-        else if (menu === 'recurring') loadRecurringList();
-        else if (menu === 'aset') loadAsetList();
-        else if (menu === 'customers') loadCustomerList();
-        else if (menu === 'projects') loadProjectList();
-        else if (menu === 'vendors') loadVendorList();
-        else if (menu === 'opening_balance') loadOpeningBalanceForm();
-        else if (menu === 'export') loadExportBackupForm();
+        if (menu === 'payment') loadPaymentRequests();
+        else if (menu === 'dashboard') loadDashboard();
     }
     
-    // ==================== DASHBOARD ====================
+    // ==================== DASHBOARD SEDERHANA ====================
     async function loadDashboard() {
-        if (statusChart) statusChart.destroy(); if (companyChart) companyChart.destroy();
-        const today = new Date(); const currentMonth = today.getMonth() + 1; const currentYear = today.getFullYear();
-        const greeting = today.getHours() < 12 ? 'Selamat Pagi' : today.getHours() < 18 ? 'Selamat Siang' : 'Selamat Malam';
-        const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-        let companyOptions = '<option value="all">Semua Perusahaan</option>';
-        companies.forEach(c => { companyOptions += `<option value="${c.id}">${c.nama}</option>`; });
-        let html = `<div class="welcome-section"><div><h1><i class="fas fa-hand-wave"></i> ${greeting}, ${currentUser?.name || 'User'}!</h1><p>Ringkasan keuangan konsolidasi</p></div><div class="welcome-date">${today.toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' })}</div></div>
-            <div class="filter-card"><div class="filter-grid"><div class="filter-item"><label class="filter-label">Perusahaan</label><select id="dashboardCompany" class="filter-select">${companyOptions}</select></div>
-            <div class="filter-item"><label class="filter-label">Bulan</label><select id="dashboardMonth" class="filter-select"><option value="all">Semua Bulan</option>${monthNames.map((m,i)=>`<option value="${i+1}" ${i+1==currentMonth?'selected':''}>${m}</option>`).join('')}</select></div>
-            <div class="filter-item"><label class="filter-label">Tahun</label><select id="dashboardYear" class="filter-select"><option value="all">Semua Tahun</option><option value="${currentYear-1}">${currentYear-1}</option><option value="${currentYear}" selected>${currentYear}</option><option value="${currentYear+1}">${currentYear+1}</option></select></div>
-            <div class="filter-item"><button class="btn btn-primary" onclick="refreshDashboard()">Perbarui</button></div></div></div>
-            <div class="stats-grid"><div class="stat-card"><div class="stat-value" id="totalKas">Rp 0</div><div class="stat-label">Total Kas</div></div>
-            <div class="stat-card"><div class="stat-value" id="totalPiutang">Rp 0</div><div class="stat-label">Piutang Usaha</div></div>
-            <div class="stat-card"><div class="stat-value" id="totalUtang">Rp 0</div><div class="stat-label">Utang Usaha</div></div>
-            <div class="stat-card"><div class="stat-value" id="labaBersih">Rp 0</div><div class="stat-label">Laba Bersih</div></div>
-            <div class="stat-card"><div class="stat-value" id="totalAset">Rp 0</div><div class="stat-label">Total Aset</div></div>
-            <div class="stat-card"><div class="stat-value" id="totalPending">Rp 0</div><div class="stat-label">Pending Approval</div></div>
-            <div class="stat-card"><div class="stat-value" id="totalDue">Rp 0</div><div class="stat-label">Jatuh Tempo</div></div>
-            <div class="stat-card"><div class="stat-value" id="totalDepresiasi">Rp 0</div><div class="stat-label">Penyusutan</div></div></div>
-            <div class="charts-grid"><div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-chart-pie"></i> Status Payment Request</h3><span id="periodLabel">${monthNames[currentMonth-1]} ${currentYear}</span></div><div class="chart-container"><canvas id="statusChart"></canvas></div></div>
-            <div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-chart-bar"></i> Per Perusahaan</h3></div><div class="chart-container"><canvas id="companyChart"></canvas></div></div></div>
-            <div class="charts-grid"><div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-chart-line"></i> Trend Payment (6 Bulan)</h3></div><div class="chart-container"><canvas id="trendChart"></canvas></div></div>
-            <div class="chart-card"><div class="chart-header"><h3 class="chart-title"><i class="fas fa-scale-balanced"></i> AR vs AP</h3></div><div class="chart-container"><canvas id="arapChart"></canvas></div></div></div>
-            <div class="card"><h2><i class="fas fa-bell"></i> Aktivitas Terbaru</h2><div id="activityList"></div></div>
-            <div class="card"><h2><i class="fas fa-exclamation-circle"></i> Perlu Tindakan Segera</h2><div id="priorityTableBody"></div></div>
-            <div class="card"><h2><i class="fas fa-clock"></i> Payment Request Terbaru</h2><div style="overflow-x:auto;"><table><thead><tr><th>ID</th><th>Tgl</th><th>Perusahaan</th><th>Deskripsi</th><th>Jumlah</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="recentTableBody"></tbody></table></div></div>`;
+        let html = `<div class="card"><h2><i class="fas fa-chart-pie"></i> Dashboard</h2><p>Selamat datang di ERP ARKO GROUP</p></div>`;
         document.getElementById('content').innerHTML = html;
-        await refreshDashboard();
     }
     
-    async function refreshDashboard() {
-        let companyId = document.getElementById('dashboardCompany')?.value || 'all';
-        let month = document.getElementById('dashboardMonth')?.value || 'all';
-        let year = document.getElementById('dashboardYear')?.value || 'all';
+    // ==================== PAYMENT REQUEST ====================
+    async function loadPaymentRequests() {
+        if (!companies.length) { setTimeout(() => loadPaymentRequests(), 500); return; }
+        if (!currentCompanyId) currentCompanyId = companies[0]?.id || 1;
         
-        let query = sb.from('payment_requests').select('*');
-        if (companyId !== 'all') query = query.eq('company_id', parseInt(companyId));
-        if (month !== 'all' && year !== 'all') { let start = `${year}-${month.padStart(2,'0')}-01`; let end = `${year}-${month.padStart(2,'0')}-31`; query = query.gte('request_date', start).lte('request_date', end); }
-        let { data: payments } = await query.order('created_at', { ascending: false });
-        
-        let { data: invoices } = await sb.from('invoices').select('*');
-        let totalPiutang = (invoices || []).reduce((a,b) => a + ((b.total||0) - (b.paid_amount||0)), 0);
-        let totalApproved = (payments || []).filter(p => p.status === 'paid').reduce((a,b) => a + (b.amount||0), 0) || 0;
-        let totalPending = (payments || []).filter(p => p.status === 'submitted' || p.status === 'verified').reduce((a,b) => a + (b.amount||0), 0) || 0;
-        
-        document.getElementById('totalKas').innerHTML = `Rp ${formatNumber(totalApproved)}`;
-        document.getElementById('totalPiutang').innerHTML = `Rp ${formatNumber(totalPiutang)}`;
-        document.getElementById('totalPending').innerHTML = `Rp ${formatNumber(totalPending)}`;
-        
-        let statusData = { draft: 0, submitted: 0, verified: 0, paid: 0, rejected: 0 };
-        let companyData = { 1:0, 2:0, 3:0, 4:0 };
-        let monthlyData = {};
-        (payments || []).forEach(p => { 
-            statusData[p.status] = (statusData[p.status] || 0) + 1; 
-            companyData[p.company_id] = (companyData[p.company_id] || 0) + p.amount;
-            let date = new Date(p.request_date);
-            let monthKey = date.getMonth() + 1;
-            monthlyData[monthKey] = (monthlyData[monthKey] || 0) + p.amount;
-        });
-        
-        if (statusChart) statusChart.destroy();
-        statusChart = new Chart(document.getElementById('statusChart'), { type: 'pie', data: { labels: ['Draft','Submitted','Verified','Paid','Rejected'], datasets: [{ data: [statusData.draft,statusData.submitted,statusData.verified,statusData.paid,statusData.rejected], backgroundColor: ['#9ca3af','#3b82f6','#f59e0b','#10b981','#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
-        
-        if (companyChart) companyChart.destroy();
-        companyChart = new Chart(document.getElementById('companyChart'), { type: 'bar', data: { labels: ['Arko','MMC','USA','MST'], datasets: [{ data: [companyData[1]/1e6, companyData[2]/1e6, companyData[3]/1e6, companyData[4]/1e6], backgroundColor: '#3b82f6' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => 'Rp ' + v + ' Jt' } } } } });
-        
-        let trendValues = []; for (let i = 9; i <= 12; i++) trendValues.push((monthlyData[i] || 0)/1e6); for (let i = 1; i <= 2; i++) trendValues.push((monthlyData[i] || 0)/1e6);
-        if (trendChart) trendChart.destroy();
-        trendChart = new Chart(document.getElementById('trendChart'), { type: 'line', data: { labels: ['Sep','Okt','Nov','Des','Jan','Feb'], datasets: [{ data: trendValues, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => 'Rp ' + v + ' Jt' } } } } });
-        
-        if (arapChart) arapChart.destroy();
-        arapChart = new Chart(document.getElementById('arapChart'), { type: 'bar', data: { labels: ['Piutang (AR)', 'Utang (AP)'], datasets: [{ data: [totalPiutang/1e6, 0], backgroundColor: ['#3b82f6', '#ef4444'] }] }, options: { responsive: true, maintainAspectRatio: false } });
-        
-        let tbody = ''; (payments || []).slice(0,5).forEach(p => { let company = companies.find(c => c.id == p.company_id)?.nama || '-'; tbody += `<tr><td>#${p.id}</td>.html${p.request_date || '-'}</td>.html${company}</td>.html${p.description || '-'}</td><td class="text-right">Rp ${formatNumber(p.amount)}</td>.html<span class="status-badge status-${p.status}">${p.status}</span></td>.html<button class="action-btn" onclick="viewPaymentRequest(${p.id})"><i class="fas fa-eye"></i></button></td></tr>`; });
-        document.getElementById('recentTableBody').innerHTML = tbody || '<tr><td colspan="7">Belum ada数据</td></tr>';
-        
-        let priorities = (payments || []).filter(p => p.status === 'submitted' || p.status === 'verified');
-        let priorityHtml = '<div class="table-container"><table class="table"><thead><tr><th>Tipe</th><th>Referensi</th><th>Keterangan</th><th>Jumlah</th><th>Status</th><th>Aksi</th></tr></thead><tbody>';
-        priorities.forEach(p => {
-            let actionBtn = p.status === 'submitted' && currentUserRole === 'finance' ? `<button class="btn btn-success btn-sm" onclick="verifyPaymentRequest(${p.id})">Verifikasi</button>` : (p.status === 'verified' && currentUserRole === 'direktur' ? `<button class="btn btn-success btn-sm" onclick="approvePaymentRequest(${p.id})">Approve</button>` : '');
-            priorityHtml += `<tr><td>Payment</td><td>#${p.id}</td><td>${p.description}</td><td class="text-right">Rp ${formatNumber(p.amount)}</td><td><span class="status-badge status-${p.status}">${p.status}</span></td><td>${actionBtn}</td></tr>`;
-        });
-        priorityHtml += '</tbody></table></div>';
-        document.getElementById('priorityTableBody').innerHTML = priorities.length ? priorityHtml : '<p style="padding:1rem; text-align:center;">Tidak ada yang perlu ditindaklanjuti</p>';
-        
-        let activityHtml = '<div class="activity-list">';
-        (payments || []).slice(0,10).forEach(p => {
-            let statusIcon = p.status === 'submitted' ? '📤' : p.status === 'verified' ? '✓' : p.status === 'paid' ? '💰' : '📝';
-            activityHtml += `<div class="activity-item" style="display:flex; align-items:center; gap:0.8rem; padding:0.5rem 0; border-bottom:1px solid var(--gray-200);"><div style="width:32px; text-align:center;">${statusIcon}</div><div><strong>Payment Request #${p.id}</strong> ${p.status === 'submitted' ? 'diajukan ke finance' : p.status === 'verified' ? 'diverifikasi finance' : p.status === 'paid' ? 'disetujui direktur' : 'dibuat'}<br><small>${p.request_date} - Rp ${formatNumber(p.amount)}</small></div></div>`;
-        });
-        activityHtml += '</div>';
-        document.getElementById('activityList').innerHTML = activityHtml || '<p>Belum ada aktivitas</p>';
-    }
-    
-    // ==================== PAYMENT REQUESTS ====================
-       async function loadPaymentRequests() {
-    showLoading();
-    let query = sb.from('payment_requests').select('*');
-    
-    // Aturan akses berdasarkan role
-    if (currentUserRole === 'staff') {
-        // Staff hanya lihat draft milik sendiri + semua status lainnya
-        query = query.eq('requester_email', currentUser?.email);
-    } else if (currentUserRole === 'finance') {
-        // Finance lihat SEMUA (draft, submitted, verified, paid, rejected)
-        // Tidak perlu filter status
-        // query = query (semua data)
-    } else if (currentUserRole === 'direktur') {
-        // Direktur lihat SEMUA
-        // query = query (semua data)
-    }
-    
-    let { data: payments } = await query.order('id', { ascending: false });
-    allPaymentsData = payments || [];
-        
-        // Ambil daftar perusahaan unik untuk filter
-        let uniqueCompanies = [...new Set(allPaymentsData.map(p => p.company_id))];
-        let companyFilterOptions = '<option value="all">Semua Perusahaan</option>';
-        uniqueCompanies.forEach(cid => {
-            let company = companies.find(c => c.id == cid);
-            if (company) companyFilterOptions += `<option value="${cid}">${company.nama}</option>`;
-        });
-        
-        let currentYear = new Date().getFullYear();
-        let yearOptions = '<option value="all">Semua Tahun</option>';
-        for (let y = currentYear - 1; y <= currentYear + 1; y++) {
-            yearOptions += `<option value="${y}" ${y == currentYear ? 'selected' : ''}>${y}</option>`;
-        }
+        const today = new Date();
+        const currentMonth = today.getMonth() + 1;
+        const currentYear = today.getFullYear();
+        const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
         
         let monthOptions = '<option value="all">Semua Bulan</option>';
-        let bulanNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
-        for (let i = 0; i < 12; i++) {
-            monthOptions += `<option value="${i+1}">${bulanNames[i]}</option>`;
-        }
+        for (let i = 1; i <= 12; i++) monthOptions += `<option value="${i}" ${i == currentMonth ? 'selected' : ''}>${monthNames[i-1]}</option>`;
         
-        let statusOptions = '<option value="all">Semua Status</option>';
-        if (currentUserRole === 'staff') {
-            statusOptions += `<option value="draft">Draft</option><option value="submitted">Submitted</option><option value="verified">Verified</option><option value="paid">Paid</option>`;
-        } else if (currentUserRole === 'finance') {
-            statusOptions += `<option value="submitted">Submitted</option><option value="verified">Verified</option><option value="paid">Paid</option><option value="rejected">Rejected</option>`;
-        } else if (currentUserRole === 'direktur') {
-            statusOptions += `<option value="verified">Verified</option><option value="paid">Paid</option><option value="rejected">Rejected</option>`;
-        }
+        let yearOptions = '<option value="all">Semua Tahun</option>';
+        for (let y = currentYear - 2; y <= currentYear + 1; y++) yearOptions += `<option value="${y}" ${y == currentYear ? 'selected' : ''}>${y}</option>`;
         
-        let html = `<div class="form-card">
-            <div class="form-header">
-                <h2><i class="fas fa-money-bill-wave"></i> Payment Request</h2>
-                <div>
-                    <button class="btn btn-primary" onclick="showNewPaymentForm()"><i class="fas fa-plus"></i> Buat Request</button>
-                    <button class="btn btn-secondary" onclick="exportTableToExcel('payment_requests')"><i class="fas fa-file-excel"></i> Export Excel</button>
-                </div>
-            </div>
-            <div class="filter-card">
-                <div class="filter-grid">
-                    <div class="filter-item">
-                        <label class="filter-label">Perusahaan</label>
-                        <select id="filterCompany" class="filter-select" onchange="filterPaymentRequests()">${companyFilterOptions}</select>
-                    </div>
-                    <div class="filter-item">
-                        <label class="filter-label">Bulan</label>
-                        <select id="filterMonth" class="filter-select" onchange="filterPaymentRequests()">${monthOptions}</select>
-                    </div>
-                    <div class="filter-item">
-                        <label class="filter-label">Tahun</label>
-                        <select id="filterYear" class="filter-select" onchange="filterPaymentRequests()">${yearOptions}</select>
-                    </div>
-                    <div class="filter-item">
-                        <label class="filter-label">Status</label>
-                        <select id="paymentStatusFilter" class="filter-select" onchange="filterPaymentRequests()">${statusOptions}</select>
+        let html = `
+            <div class="form-card">
+                <div class="form-header">
+                    <h2><i class="fas fa-money-bill-wave"></i> Payment Request</h2>
+                    <div>
+                        <button class="btn btn-primary" onclick="showNewPaymentForm()"><i class="fas fa-plus"></i> Buat Request</button>
+                        <button class="btn btn-secondary btn-sm" onclick="refreshPaymentRequests()"><i class="fas fa-sync-alt"></i> Refresh</button>
                     </div>
                 </div>
-            </div>
-            <div class="table-container">
-                <table class="table">
-                    <thead>
-                        <tr><th>ID</th><th>Tgl</th><th>Perusahaan</th><th>Deskripsi</th><th>Jumlah</th><th>Total Transfer</th><th>Status</th><th>Aksi</th></tr>
-                    </thead>
-                    <tbody id="paymentTableBody"></tbody>
-                </table>
-            </div>
-            <div id="paginationControls" class="pagination"></div>
-        </div>`;
-        
-        document.getElementById('content').innerHTML = html;
-        filterPaymentRequests();
-        hideLoading();
-    }
-    
-        function filterPaymentRequests() {
-        let companyFilter = document.getElementById('filterCompany')?.value || 'all';
-        let monthFilter = document.getElementById('filterMonth')?.value || 'all';
-        let yearFilter = document.getElementById('filterYear')?.value || 'all';
-        let statusFilter = document.getElementById('paymentStatusFilter')?.value || 'all';
-        
-        let filtered = allPaymentsData.filter(p => {
-            if (companyFilter !== 'all' && p.company_id != companyFilter) return false;
-            if (statusFilter !== 'all' && p.status !== statusFilter) return false;
-            if (monthFilter !== 'all') {
-                let d = new Date(p.request_date);
-                if (d.getMonth() + 1 != monthFilter) return false;
-            }
-            if (yearFilter !== 'all') {
-                let d = new Date(p.request_date);
-                if (d.getFullYear() != yearFilter) return false;
-            }
-            return true;
-        });
-        
-        renderPaymentTableWithPagination(filtered);
-    }
-    
-    function renderPaymentTableWithPagination(filteredData) {
-        let totalPages = Math.ceil(filteredData.length / paymentsPerPage);
-        if (currentPaymentPage > totalPages) currentPaymentPage = 1;
-        if (currentPaymentPage < 1) currentPaymentPage = 1;
-        
-        let start = (currentPaymentPage - 1) * paymentsPerPage;
-        let end = start + paymentsPerPage;
-        let pageData = filteredData.slice(start, end);
-        
-        let tbody = '';
-        pageData.forEach(p => {
-            let company = companies.find(c => c.id == p.company_id)?.nama || '-';
-            let actions = `<button class="action-btn" onclick="viewPaymentRequest(${p.id})" title="Detail"><i class="fas fa-eye"></i></button>`;
-            
-            // Staff: hanya bisa submit/edit/hapus draft milik sendiri
-           // Finance: verifikasi atau tolak request yang submitted
-if (p.status === 'submitted' && (currentUserRole === 'finance' || currentUserRole === 'direktur')) {
-    actions += ` <button class="action-btn" onclick="verifyPaymentRequest(${p.id})" title="Verifikasi" style="color:var(--success);"><i class="fas fa-check-circle"></i></button>`;
-    actions += ` <button class="action-btn" onclick="rejectPaymentRequest(${p.id})" title="Tolak" style="color:var(--danger);"><i class="fas fa-times-circle"></i></button>`;
-}
-
-// Direktur: approve request yang sudah diverifikasi
-if (p.status === 'verified' && currentUserRole === 'direktur') {
-    actions += ` <button class="action-btn" onclick="approvePaymentRequest(${p.id})" title="Approve" style="color:var(--success);"><i class="fas fa-thumbs-up"></i></button>`;
-}
-
-// Staff: submit draft sendiri
-if (p.status === 'draft' && p.requester_email === currentUser?.email) {
-    if (currentUserRole === 'staff') {
-        actions += ` <button class="action-btn" onclick="submitPaymentRequest(${p.id})" title="Ajukan" style="color:var(--success);"><i class="fas fa-paper-plane"></i></button>`;
-    }
-    actions += ` <button class="action-btn" onclick="editPaymentRequest(${p.id})" title="Edit" style="color:var(--warning);"><i class="fas fa-edit"></i></button>`;
-    actions += ` <button class="action-btn" onclick="deletePaymentRequest(${p.id})" title="Hapus" style="color:var(--danger);"><i class="fas fa-trash"></i></button>`;
-}
-            
-            tbody += `<tr>
-                <td>#${p.id}</td>
-                <td>${p.request_date || '-'}</td>
-                <td>${company}</td>
-                <td>${p.description || '-'}</td>
-                <td class="text-right">Rp ${formatNumber(p.amount)}</td>
-                <td class="text-right">Rp ${formatNumber(p.total_with_tax || p.amount)}</td>
-                <td><span class="status-badge status-${p.status}">${p.status}</span></td>
-                <td>${actions}</td>
-            </tr>`;
-        });
-        
-        document.getElementById('paymentTableBody').innerHTML = tbody || '<tr><td colspan="8">Belum ada data</td></tr>';
-        
-        // Pagination controls
-        let paginationHtml = '';
-        if (totalPages > 1) {
-            paginationHtml += `<button class="btn btn-sm" onclick="changePaymentPage(${currentPaymentPage - 1})" ${currentPaymentPage === 1 ? 'disabled' : ''}>« Prev</button>`;
-            for (let i = 1; i <= totalPages; i++) {
-                paginationHtml += `<button class="btn btn-sm ${i === currentPaymentPage ? 'btn-primary' : ''}" onclick="changePaymentPage(${i})">${i}</button>`;
-            }
-            paginationHtml += `<button class="btn btn-sm" onclick="changePaymentPage(${currentPaymentPage + 1})" ${currentPaymentPage === totalPages ? 'disabled' : ''}>Next »</button>`;
-        }
-        document.getElementById('paginationControls').innerHTML = paginationHtml;
-    }
-    
-    function changePaymentPage(page) {
-        currentPaymentPage = page;
-        filterPaymentRequests();
-    }
-        
-    
-    function showNewPaymentForm() {
-        let modal = document.createElement('div'); modal.className = 'modal-overlay';
-        modal.innerHTML = `<div class="modal-content"><h3><i class="fas fa-plus"></i> Buat Payment Request</h3>
-            <div class="form-group"><label>Deskripsi</label><input type="text" id="newDesc" class="form-control" placeholder="Contoh: Pembayaran sewa"></div>
-            <div class="form-group"><label>Jumlah (Rp)</label><input type="number" id="newAmount" class="form-control" placeholder="1000000"></div>
-            <div class="form-group"><label>Bank / No Rekening</label><input type="text" id="newBank" class="form-control" placeholder="BCA 1234567890"></div>
-            <div class="form-group"><label>Upload Bukti</label><input type="file" id="newFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png"></div>
-            <div style="display:flex; gap:0.5rem; margin-top:0.5rem;"><button class="btn btn-primary" onclick="saveNewPayment()">Simpan</button><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Batal</button></div>
-            <div id="newPaymentMsg" style="margin-top:0.5rem;"></div></div>`;
-        document.body.appendChild(modal);
-    }
-    
-    async function saveNewPayment() {
-        let desc = document.getElementById('newDesc').value, amount = document.getElementById('newAmount').value, bank = document.getElementById('newBank').value, file = document.getElementById('newFile').files[0];
-        if (!desc || !amount) { document.getElementById('newPaymentMsg').innerHTML = '<div class="alert alert-error">Isi semua field!</div>'; return; }
-        let buktiUrl = '';
-        if (file) {
-            let reader = new FileReader();
-            reader.onload = async (e) => {
-                let base64 = e.target.result;
-                let res = await fetch(GAS_UPLOAD_URL, { method: 'POST', body: JSON.stringify({ action: 'upload', file: base64, name: file.name, mimeType: file.type, folderId: DRIVE_FOLDER_ID }) });
-                let result = await res.json();
-                if (result.success) buktiUrl = result.url;
-                await saveToSupabase(desc, amount, bank, buktiUrl);
-            };
-            reader.readAsDataURL(file);
-        } else { await saveToSupabase(desc, amount, bank, ''); }
-    }
-    
-    async function saveToSupabase(desc, amount, bank, buktiUrl) {
-        let { error } = await sb.from('payment_requests').insert({ company_id: currentCompanyId, request_date: new Date().toISOString().split('T')[0], description: desc, amount: parseInt(amount), bank_account: bank, bukti_url: buktiUrl, requester_email: currentUser?.email, status: 'draft' });
-        if (error) { document.getElementById('newPaymentMsg').innerHTML = `<div class="alert alert-error">${error.message}</div>`; }
-        else { document.getElementById('newPaymentMsg').innerHTML = '<div class="alert alert-success">✅ Berhasil!</div>'; setTimeout(() => { document.querySelector('.modal-overlay')?.remove(); loadPaymentRequests(); loadDashboard(); }, 1500); }
-    }
-    
-    async function submitPaymentRequest(id) { await sb.from('payment_requests').update({ status: 'submitted', submitted_at: new Date() }).eq('id', id); loadPaymentRequests(); loadDashboard(); }
-    
-    async function viewPaymentRequest(id) {
-        let { data: req } = await sb.from('payment_requests').select('*').eq('id', id).single();
-        let modal = document.createElement('div'); modal.className = 'modal-overlay';
-        modal.innerHTML = `<div class="modal-content"><h3><i class="fas fa-file-invoice"></i> Detail Payment Request #${req.id}</h3>
-            <div><strong>Tanggal:</strong> ${req.request_date}</div><div><strong>Deskripsi:</strong> ${req.description}</div><div><strong>Jumlah:</strong> Rp ${formatNumber(req.amount)}</div><div><strong>Status:</strong> <span class="status-badge status-${req.status}">${req.status}</span></div><div><strong>Voucher:</strong> ${req.voucher_no || '-'}</div>
-            <div><strong>Bukti:</strong> ${req.bukti_url ? `<a href="${req.bukti_url}" target="_blank">Lihat</a>` : '-'}</div>
-            <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:0.5rem;"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Tutup</button></div></div>`;
-        document.body.appendChild(modal);
-    }
-    
-    function editPaymentRequest(id) { alert('Fitur edit payment request menyusul'); }
-    
-        async function verifyPaymentRequest(id) {
-        let { data: req } = await sb.from('payment_requests').select('*').eq('id', id).single();
-        let taxConfig = await getTaxConfig(req.company_id);
-        accounts = await getAccountList(req.company_id);
-        let projectsList = await getProjectList(req.company_id);
-        
-        let debitOptions = '<option value="">Pilih Akun Debit</option>';
-        let creditOptions = '<option value="">Pilih Akun Kredit</option>';
-        
-        accounts.forEach(a => { 
-            if (a.account_type === 'Beban' || a.account_type === 'Aset') 
-                debitOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`; 
-            if (a.account_type === 'Aset' && (a.account_name.includes('Bank') || a.account_name.includes('Kas'))) 
-                creditOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`; 
-        });
-        
-        let projectOptions = '<option value="">[Tanpa Project]</option>';
-        projectsList.forEach(p => { 
-            let budgetText = p.budget ? `(Budget: Rp ${formatNumber(p.budget)})` : '(Unlimited)';
-            projectOptions += `<option value="${p.code}">${p.code} - ${p.name} ${budgetText}</option>`; 
-        });
-        
-        let companyName = companies.find(c => c.id == req.company_id)?.nama || 'Perusahaan';
-        let ppnNote = taxConfig.is_pkp ? `PPN ${taxConfig.ppn_rate}% (bisa dikreditkan)` : `PPN ${taxConfig.ppn_rate}% (tidak bisa dikreditkan, final)`;
-        
-        let modal = document.createElement('div'); modal.className = 'modal-overlay';
-        modal.innerHTML = `
-            <div class="modal-content" style="max-width:550px;">
-                <h3><i class="fas fa-check-circle"></i> Verifikasi Payment Request #${id}</h3>
-                <div class="alert alert-info" style="margin:0.5rem 0; padding:0.3rem 0.5rem;">${companyName} | ${ppnNote}</div>
-                
-                <div class="form-group">
-                    <label>Project</label>
-                    <select id="verifyProject" class="form-control searchable-dropdown" onchange="toggleProjectInput()">
-                        ${projectOptions}
-                        <option value="NEW">+ BUAT PROJECT BARU</option>
-                    </select>
+                <div class="filter-card">
+                    <div class="filter-grid">
+                        <div class="filter-item"><label class="filter-label">Bulan</label><select id="paymentMonthFilter" class="filter-select" onchange="refreshPaymentRequests()">${monthOptions}</select></div>
+                        <div class="filter-item"><label class="filter-label">Tahun</label><select id="paymentYearFilter" class="filter-select" onchange="refreshPaymentRequests()">${yearOptions}</select></div>
+                        <div class="filter-item"><label class="filter-label">Status</label><select id="paymentStatusFilter" class="filter-select" onchange="refreshPaymentRequests()">
+                            <option value="all">Semua Status</option>
+                            <option value="draft">Draft</option><option value="submitted">Submitted</option>
+                            <option value="verified">Verified</option><option value="paid">Paid</option><option value="rejected">Rejected</option>
+                        </select></div>
+                    </div>
                 </div>
-                
-                <div id="newProjectInput" style="display:none;">
-                    <div class="form-group"><label>Kode Project</label><input type="text" id="newProjectCode" class="form-control" placeholder="Contoh: UNQ, INT" onkeyup="this.value=this.value.toUpperCase()"></div>
-                    <div class="form-group"><label>Nama Project</label><input type="text" id="newProjectName" class="form-control" placeholder="Nama lengkap"></div>
-                    <div class="form-group"><label>Budget (0 = Unlimited)</label><input type="text" id="newProjectBudget" class="form-control" placeholder="Rp 0" onkeyup="formatMoney(this)"></div>
+                <div class="table-container"><table class="table"><thead><tr><th>ID</th><th>Tgl</th><th>Perusahaan</th><th>Deskripsi</th><th class="text-right">Jumlah</th><th class="text-right">Total Transfer</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="paymentTableBody"><tr><td colspan="8" class="text-center">Loading...</td></tr></tbody></table></div>
+                <div class="pagination-container">
+                    <div><select id="paymentPageSizeSelect" class="page-size-select" onchange="changePaymentPageSize()"><option value="20">20</option><option value="50" selected>50</option><option value="100">100</option></select> per halaman</div>
+                    <div><span id="paymentShowingInfo" class="page-info">Menampilkan 0-0 dari 0 request</span></div>
+                    <div class="pagination-controls">
+                        <button class="pagination-btn" onclick="paymentPreviousPage()" id="paymentPrevPageBtn" disabled>« Sebelumnya</button>
+                        <span id="paymentPageInfo" class="page-info">Halaman 1</span>
+                        <button class="pagination-btn" onclick="paymentNextPage()" id="paymentNextPageBtn">Berikutnya »</button>
+                    </div>
                 </div>
-                
-                <div id="budgetDisplay"></div>
-                
-                <div class="form-group"><label>Akun Debit</label><select id="debitAccount" class="form-control searchable-dropdown">${debitOptions}</select></div>
-                <div class="form-group"><label>Akun Kredit</label><select id="creditAccount" class="form-control searchable-dropdown">${creditOptions}</select></div>
-                
-                <div class="form-group">
-                    <label><input type="checkbox" id="kenaPPN" onchange="hitungTotalVerifikasi()"> Kena PPN ${taxConfig.ppn_rate}%</label>
-                    <label style="margin-left:1rem;"><input type="checkbox" id="kenaPPh" onchange="hitungTotalVerifikasi()"> Kena PPh 23 (2%)</label>
-                </div>
-                
-                <div style="background:#f0f2f5; border-radius:8px; padding:0.8rem;">
-                    <div style="display:flex; justify-content:space-between;"><span>DPP:</span><span id="dppAmount">Rp ${formatNumber(req.amount)}</span></div>
-                    <div style="display:flex; justify-content:space-between;"><span>PPN:</span><span id="ppnAmount">Rp 0</span></div>
-                    <div style="display:flex; justify-content:space-between;"><span>PPh:</span><span id="pphAmount">Rp 0</span></div>
-                    <div style="display:flex; justify-content:space-between; font-weight:bold; margin-top:0.3rem; padding-top:0.3rem; border-top:1px solid #ddd;"><span>TOTAL:</span><span id="totalBayar">Rp ${formatNumber(req.amount)}</span></div>
-                </div>
-                
-                <div class="alert alert-success" style="margin:0.5rem 0; padding:0.3rem;"><strong>Preview Voucher:</strong> <span id="voucherPreview">Loading...</span></div>
-                
-                <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
-                    <button class="btn btn-success" onclick="submitVerifikasiDenganProject(${id})">Verifikasi</button>
-                    <button class="btn btn-danger" onclick="rejectPaymentRequest(${id})">Tolak</button>
-                    <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Batal</button>
-                </div>
-                <div id="verifyResult"></div>
             </div>
         `;
-        
-        document.body.appendChild(modal);
-        $('.searchable-dropdown').select2({ width: '100%' });
-        
-        window.currentVerifikasiReq = req;
-        window.currentTaxConfig = taxConfig;
-        
-        hitungTotalVerifikasi();
-        updateVoucherPreview();
-        
-        $('#verifyProject').on('change', function() {
-            toggleProjectInput();
-            updateBudgetDisplay();
-            updateVoucherPreview();
-        });
-        $('#newProjectCode, #newProjectName, #newProjectBudget').on('input', function() {
-            updateVoucherPreview();
-        });
+        document.getElementById('content').innerHTML = html;
+        currentPaymentPage = 1;
+        await refreshPaymentRequests();
     }
     
-    function toggleProjectInput() {
-        let select = document.getElementById('verifyProject');
-        let newProjectDiv = document.getElementById('newProjectInput');
-        newProjectDiv.style.display = select.value === 'NEW' ? 'block' : 'none';
-        if (select.value !== 'NEW') updateBudgetDisplay();
+    function changePaymentPageSize() { currentPaymentPageSize = parseInt(document.getElementById('paymentPageSizeSelect').value); currentPaymentPage = 1; refreshPaymentRequests(); }
+    
+    async function refreshPaymentRequests() {
+        const month = document.getElementById('paymentMonthFilter')?.value || 'all';
+        const year = document.getElementById('paymentYearFilter')?.value || 'all';
+        const statusFilter = document.getElementById('paymentStatusFilter')?.value || 'all';
+        showSkeletonLoader('paymentTableBody', 5);
+        
+        try {
+            let query = sb.from('payment_requests').select('*');
+            if (currentUserRole === 'staff') query = query.eq('requester_email', currentUser?.email);
+            if (month !== 'all' && year !== 'all') {
+                const startDate = `${year}-${month.padStart(2,'0')}-01`;
+                const lastDay = new Date(year, month, 0).getDate();
+                query = query.gte('request_date', startDate).lte('request_date', `${year}-${month.padStart(2,'0')}-${lastDay}`);
+            } else if (year !== 'all') {
+                query = query.gte('request_date', `${year}-01-01`).lte('request_date', `${year}-12-31`);
+            }
+            let { data: payments, error } = await query.order('id', { ascending: false });
+            if (error) throw error;
+            let filtered = payments || [];
+            if (statusFilter !== 'all') filtered = filtered.filter(p => p.status === statusFilter);
+            totalPaymentItems = filtered.length;
+            totalPaymentPages = Math.ceil(totalPaymentItems / currentPaymentPageSize);
+            if (currentPaymentPage > totalPaymentPages) currentPaymentPage = 1;
+            const start = (currentPaymentPage - 1) * currentPaymentPageSize;
+            const pageData = filtered.slice(start, start + currentPaymentPageSize);
+            await renderPaymentTable(pageData, currentPaymentPage, totalPaymentPages, totalPaymentItems);
+        } catch (error) { console.error(error); showToast('Gagal memuat data', 'error'); }
+    }
+    
+    async function renderPaymentTable(requests, currentPage, totalPages, totalItems) {
+        const tbody = document.getElementById('paymentTableBody');
+        if (!tbody) return;
+        if (!requests || requests.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="text-center">Tidak ada data</td></tr>'; updatePaymentPaginationControls(currentPage, totalPages, totalItems); return; }
+        
+        let html = '';
+        for (const r of requests) {
+            const company = companies.find(c => c.id == r.company_id)?.nama || '-';
+            let statusClass = '', statusIcon = '';
+            if (r.status === 'draft') { statusClass = 'status-draft'; statusIcon = '<i class="fas fa-pencil-alt"></i>'; }
+            else if (r.status === 'submitted') { statusClass = 'status-submitted'; statusIcon = '<i class="fas fa-paper-plane"></i>'; }
+            else if (r.status === 'verified') { statusClass = 'status-verified'; statusIcon = '<i class="fas fa-check"></i>'; }
+            else if (r.status === 'paid') { statusClass = 'status-paid'; statusIcon = '<i class="fas fa-check-circle"></i>'; }
+            else if (r.status === 'rejected') { statusClass = 'status-rejected'; statusIcon = '<i class="fas fa-times"></i>'; }
+            
+            let actions = `<button class="action-btn" onclick="viewPaymentRequest(${r.id})"><i class="fas fa-eye"></i></button>`;
+            if (r.status === 'draft' && currentUserRole === 'staff' && r.requester_email === currentUser?.email) {
+                actions += `<button class="action-btn" onclick="editPaymentRequest(${r.id})" style="color:var(--warning);"><i class="fas fa-edit"></i></button>`;
+                actions += `<button class="action-btn" onclick="deletePaymentRequest(${r.id})" style="color:var(--danger);"><i class="fas fa-trash"></i></button>`;
+                actions += `<button class="action-btn" onclick="submitPaymentRequest(${r.id})" style="color:var(--success);"><i class="fas fa-paper-plane"></i></button>`;
+            }
+            if (r.status === 'submitted' && currentUserRole === 'finance') {
+                actions += `<button class="action-btn" onclick="verifyPaymentRequest(${r.id})" style="color:var(--success);"><i class="fas fa-check-circle"></i></button>`;
+                actions += `<button class="action-btn" onclick="rejectPaymentRequest(${r.id})" style="color:var(--danger);"><i class="fas fa-times-circle"></i></button>`;
+            }
+            if (r.status === 'verified' && currentUserRole === 'direktur') {
+                actions += `<button class="action-btn" onclick="approvePaymentRequest(${r.id})" style="color:var(--success);"><i class="fas fa-thumbs-up"></i></button>`;
+            }
+            html += `<tr><td>#${r.id}</td><td>${r.request_date || '-'}</td><td>${company}</td><td>${r.description || '-'}</td><td class="text-right">Rp ${formatNumber(r.amount)}</td><td class="text-right">Rp ${formatNumber(r.total_with_tax || r.amount)}</td><td><span class="status-badge ${statusClass}">${statusIcon} ${r.status}</span></td><td>${actions}</td></tr>`;
+        }
+        tbody.innerHTML = html;
+        updatePaymentPaginationControls(currentPage, totalPages, totalItems);
+    }
+    
+    function updatePaymentPaginationControls(currentPage, totalPages, totalItems) {
+        const start = (currentPage - 1) * currentPaymentPageSize + 1;
+        const end = Math.min(start + currentPaymentPageSize - 1, totalItems);
+        document.getElementById('paymentShowingInfo').innerHTML = totalItems > 0 ? `Menampilkan ${start}-${end} dari ${totalItems} request` : 'Menampilkan 0-0 dari 0 request';
+        document.getElementById('paymentPageInfo').innerHTML = `Halaman ${currentPage} dari ${totalPages || 1}`;
+        document.getElementById('paymentPrevPageBtn').disabled = currentPage <= 1;
+        document.getElementById('paymentNextPageBtn').disabled = currentPage >= totalPages;
+    }
+    
+    function paymentNextPage() { if (currentPaymentPage < totalPaymentPages) { currentPaymentPage++; refreshPaymentRequests(); } }
+    function paymentPreviousPage() { if (currentPaymentPage > 1) { currentPaymentPage--; refreshPaymentRequests(); } }
+    function refreshPaymentRequests() { refreshPaymentRequests(); }
+    
+    // ==================== CREATE PAYMENT REQUEST ====================
+    function showNewPaymentForm() {
+        const today = new Date().toISOString().split('T')[0];
+        let html = `
+            <div class="form-card"><div class="form-header"><h3><i class="fas fa-plus"></i> Buat Payment Request</h3><button class="btn btn-secondary" onclick="loadPaymentRequests()"><i class="fas fa-arrow-left"></i> Kembali</button></div>
+            <div class="form-group"><label>Perusahaan</label><select id="paymentCompany" class="form-control">${companies.map(c => `<option value="${c.id}" ${c.id == currentCompanyId ? 'selected' : ''}>${c.nama}</option>`).join('')}</select></div>
+            <div class="form-group"><label>Tanggal</label><input type="date" id="paymentDate" class="form-control" value="${today}"></div>
+            <div class="form-group"><label>Deskripsi</label><input type="text" id="paymentDesc" class="form-control" placeholder="Contoh: Pembayaran sewa"></div>
+            <div class="form-group"><label>Jumlah (Rp)</label><input type="text" id="paymentAmount" class="form-control" placeholder="0" onkeyup="formatMoney(this)"></div>
+            <div class="form-group"><label>Bank / No Rekening</label><input type="text" id="paymentBank" class="form-control" placeholder="BCA 1234567890"></div>
+            <div class="form-group"><label>Upload Bukti</label><input type="file" id="paymentFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png"><small>PDF/JPG/PNG max 5MB</small></div>
+            <div style="display:flex; gap:1rem; justify-content:flex-end;"><button class="btn btn-secondary" onclick="loadPaymentRequests()">Batal</button><button class="btn btn-primary" onclick="savePaymentRequest('draft')">Simpan Draft</button><button class="btn btn-success" onclick="savePaymentRequest('submit')">Ajukan ke Finance</button></div>
+            <div id="paymentResult"></div></div>
+        `;
+        document.getElementById('content').innerHTML = html;
+    }
+    
+    async function savePaymentRequest(action) {
+        const companyId = parseInt(document.getElementById('paymentCompany').value);
+        const date = document.getElementById('paymentDate').value;
+        const desc = document.getElementById('paymentDesc').value;
+        const amount = parseRupiah(document.getElementById('paymentAmount').value);
+        const bank = document.getElementById('paymentBank').value;
+        const fileInput = document.getElementById('paymentFile');
+        if (!desc || !amount || !bank) { showToast('Semua field harus diisi', 'error'); return; }
+        if (!fileInput.files || fileInput.files.length === 0) { showToast('Upload bukti pendukung', 'error'); return; }
+        const file = fileInput.files[0];
+        if (file.size > 5 * 1024 * 1024) { showToast('Ukuran file maksimal 5MB', 'error'); return; }
+        showLoading();
+        try {
+            const fileName = `payment_${Date.now()}_${file.name}`;
+            const { error: uploadError } = await sb.storage.from('payment-files').upload(fileName, file);
+            if (uploadError) throw uploadError;
+            const { data: urlData } = sb.storage.from('payment-files').getPublicUrl(fileName);
+            const { data, error } = await sb.from('payment_requests').insert({
+                company_id: companyId, request_date: date, description: desc, amount: amount,
+                bank_account: bank, bukti_url: urlData.publicUrl, requester_email: currentUser?.email,
+                status: action === 'submit' ? 'submitted' : 'draft', submitted_at: action === 'submit' ? new Date() : null
+            }).select().single();
+            if (error) throw error;
+            if (action === 'submit') {
+                await sb.from('payment_logs').insert({ request_id: data.id, user_email: currentUser?.email, user_role: currentUserRole, old_status: 'draft', new_status: 'submitted', keterangan: 'Request diajukan ke finance' });
+            }
+            showToast(`Request berhasil ${action === 'submit' ? 'diajukan' : 'disimpan'}`, 'success');
+            setTimeout(() => loadPaymentRequests(), 1500);
+        } catch (error) { showToast('Gagal menyimpan: ' + error.message, 'error'); }
+        finally { hideLoading(); }
+    }
+    
+    async function editPaymentRequest(id) {
+        showLoading();
+        try {
+            const { data: req, error } = await sb.from('payment_requests').select('*').eq('id', id).single();
+            if (error) throw error;
+            let html = `
+                <div class="form-card"><div class="form-header"><h3><i class="fas fa-edit"></i> Edit Payment Request #${req.id}</h3><button class="btn btn-secondary" onclick="loadPaymentRequests()">Kembali</button></div>
+                <div class="form-group"><label>Tanggal</label><input type="date" id="editPaymentDate" class="form-control" value="${req.request_date}"></div>
+                <div class="form-group"><label>Deskripsi</label><input type="text" id="editPaymentDesc" class="form-control" value="${req.description}"></div>
+                <div class="form-group"><label>Jumlah</label><input type="text" id="editPaymentAmount" class="form-control" value="${formatNumber(req.amount)}" onkeyup="formatMoney(this)"></div>
+                <div class="form-group"><label>Bank</label><input type="text" id="editPaymentBank" class="form-control" value="${req.bank_account || ''}"></div>
+                ${req.bukti_url ? `<div class="form-group"><label>Bukti Saat Ini</label><a href="${req.bukti_url}" target="_blank" class="btn btn-primary btn-sm">Lihat Bukti</a></div>` : ''}
+                <div class="form-group"><label>Upload Bukti Baru</label><input type="file" id="editPaymentFile" class="form-control" accept=".pdf,.jpg,.jpeg,.png"></div>
+                <div style="display:flex; gap:1rem;"><button class="btn btn-secondary" onclick="loadPaymentRequests()">Batal</button><button class="btn btn-primary" onclick="updatePaymentRequest(${req.id})">Simpan</button></div>
+                <div id="editPaymentResult"></div></div>
+            `;
+            document.getElementById('content').innerHTML = html;
+        } catch (error) { showToast('Gagal memuat data: ' + error.message, 'error'); }
+        finally { hideLoading(); }
+    }
+    
+    async function updatePaymentRequest(id) {
+        const date = document.getElementById('editPaymentDate').value;
+        const desc = document.getElementById('editPaymentDesc').value;
+        const amount = parseRupiah(document.getElementById('editPaymentAmount').value);
+        const bank = document.getElementById('editPaymentBank').value;
+        const fileInput = document.getElementById('editPaymentFile');
+        if (!desc || !amount || !bank || !date) { showToast('Semua field harus diisi', 'error'); return; }
+        showLoading();
+        try {
+            let buktiUrl = null;
+            if (fileInput.files && fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const fileName = `payment_${Date.now()}_${file.name}`;
+                await sb.storage.from('payment-files').upload(fileName, file);
+                const { data: urlData } = sb.storage.from('payment-files').getPublicUrl(fileName);
+                buktiUrl = urlData.publicUrl;
+            }
+            const updateData = { request_date: date, description: desc, amount: amount, bank_account: bank };
+            if (buktiUrl) updateData.bukti_url = buktiUrl;
+            await sb.from('payment_requests').update(updateData).eq('id', id);
+            showToast('Payment request berhasil diupdate', 'success');
+            setTimeout(() => loadPaymentRequests(), 1500);
+        } catch (error) { showToast('Gagal mengupdate: ' + error.message, 'error'); }
+        finally { hideLoading(); }
+    }
+    
+    async function deletePaymentRequest(id) {
+        if (!confirm('Hapus payment request ini? Tindakan tidak bisa dibatalkan!')) return;
+        showLoading();
+        try {
+            await sb.from('payment_requests').delete().eq('id', id);
+            showToast('Payment request berhasil dihapus', 'success');
+            refreshPaymentRequests();
+        } catch (error) { showToast('Gagal menghapus: ' + error.message, 'error'); }
+        finally { hideLoading(); }
+    }
+    
+    async function submitPaymentRequest(id) {
+        if (!confirm('Ajukan request ini ke finance?')) return;
+        showLoading();
+        try {
+            await sb.from('payment_requests').update({ status: 'submitted', submitted_at: new Date() }).eq('id', id);
+            await sb.from('payment_logs').insert({ request_id: id, user_email: currentUser?.email, user_role: currentUserRole, old_status: 'draft', new_status: 'submitted', keterangan: 'Request diajukan ke finance' });
+            showToast('Request berhasil diajukan', 'success');
+            refreshPaymentRequests();
+        } catch (error) { showToast('Gagal mengajukan: ' + error.message, 'error'); }
+        finally { hideLoading(); }
+    }
+    
+    async function rejectPaymentRequest(id) {
+        const alasan = prompt('Alasan penolakan:');
+        if (!alasan) return;
+        showLoading();
+        try {
+            await sb.from('payment_requests').update({ status: 'rejected', rejected_at: new Date(), rejected_by: currentUser?.email, rejection_reason: alasan }).eq('id', id);
+            await sb.from('payment_logs').insert({ request_id: id, user_email: currentUser?.email, user_role: currentUserRole, old_status: 'submitted', new_status: 'rejected', keterangan: `Ditolak: ${alasan}` });
+            showToast('Payment request ditolak', 'warning');
+            refreshPaymentRequests();
+        } catch (error) { showToast('Gagal menolak: ' + error.message, 'error'); }
+        finally { hideLoading(); }
+    }
+    
+    async function approvePaymentRequest(id) {
+        const { data: req, error } = await sb.from('payment_requests').select('*').eq('id', id).single();
+        if (error) { showToast('Gagal memuat data', 'error'); return; }
+        if (!confirm(`SETUJUI PEMBAYARAN INI?\n\nID: #${req.id}\nDeskripsi: ${req.description}\nJumlah: Rp ${formatNumber(req.amount)}\nTotal Transfer: Rp ${formatNumber(req.total_with_tax || req.amount)}\nProject: ${req.project_code || '-'}\n\nKlik OK untuk menyetujui`)) return;
+        showLoading();
+        try {
+            const lastJournal = await sb.from('journals').select('id').order('id', { ascending: false }).limit(1);
+            const journalId = (lastJournal.data?.[0]?.id || 0) + 1;
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            await sb.from('journals').insert({ id: journalId, company_id: req.company_id, journal_date: dateStr, period: dateStr.substring(0,7), description: `Pembayaran: ${req.description}`, reference: req.voucher_no, created_by: currentUser?.email, status: 'posted' });
+            await sb.from('journal_lines').insert([{ journal_id: journalId, account_code: req.debit_account, debit: req.amount, credit: 0, description: `Beban dari ${req.voucher_no}` }, { journal_id: journalId, account_code: req.credit_account, debit: 0, credit: req.total_with_tax || req.amount, description: `Transfer ke vendor dari ${req.voucher_no}` }]);
+            if (req.ppn > 0 && req.is_pkp) { const suffix = companies.find(c => c.id == req.company_id)?.singkatan || 'A'; await sb.from('journal_lines').insert({ journal_id: journalId, account_code: `1131-${suffix}`, debit: req.ppn, credit: 0, description: `PPN Masukan dari ${req.voucher_no}` }); }
+            if (req.pph > 0) { const suffix = companies.find(c => c.id == req.company_id)?.singkatan || 'A'; await sb.from('journal_lines').insert({ journal_id: journalId, account_code: `2103-03-${suffix}`, debit: 0, credit: req.pph, description: `Utang PPh 23 dari ${req.voucher_no}` }); }
+            await sb.from('payment_requests').update({ status: 'paid', paid_at: now, approved_by: currentUser?.email, journal_id: journalId }).eq('id', id);
+            await sb.from('payment_logs').insert({ request_id: id, user_email: currentUser?.email, user_role: currentUserRole, old_status: 'verified', new_status: 'paid', keterangan: `Approved, Jurnal: ${journalId}` });
+            showToast(`✅ Payment approved! Jurnal ID: ${journalId}`, 'success');
+            refreshPaymentRequests();
+        } catch (error) { showToast('Gagal approve: ' + error.message, 'error'); }
+        finally { hideLoading(); }
+    }
+    
+    async function viewPaymentRequest(id) {
+        showLoading();
+        try {
+            const { data: req, error } = await sb.from('payment_requests').select('*').eq('id', id).single();
+            if (error) throw error;
+            const { data: logs } = await sb.from('payment_logs').select('*').eq('request_id', id).order('created_at', { ascending: false });
+            const company = companies.find(c => c.id == req.company_id)?.nama || '-';
+            let logsHtml = '';
+            if (logs && logs.length > 0) {
+                logs.forEach(log => { logsHtml += `<div class="history-log"><div class="history-log-header"><span class="history-log-status">${log.new_status}</span><span class="history-log-time">${new Date(log.created_at).toLocaleString()}</span></div><div class="history-log-keterangan">${log.keterangan || '-'}</div><div class="history-log-user">${log.user_email || '-'}</div></div>`; });
+            } else { logsHtml = '<p style="text-align:center;color:var(--gray-500);">Belum ada riwayat</p>'; }
+            const modal = document.createElement('div'); modal.className = 'modal-overlay';
+            modal.innerHTML = `<div class="modal-content"><div style="padding:20px;"><h3><i class="fas fa-file-invoice"></i> Detail Payment Request #${req.id}</h3><table class="payment-detail-table"><tr><td>Tanggal</td><td>${req.request_date || '-'}</td></tr><tr><td>Perusahaan</td><td>${company}</td></tr><tr><td>Deskripsi</td><td>${req.description || '-'}</td></tr><tr><td>Jumlah (DPP)</td><td>Rp ${formatNumber(req.amount)}</td></tr>${req.ppn > 0 ? `<tr><td>PPN ${req.ppn_rate || 11}%</td><td>Rp ${formatNumber(req.ppn)}</td></tr>` : ''}${req.pph > 0 ? `<tr><td>PPh 23 2%</td><td>Rp ${formatNumber(req.pph)}</td></tr>` : ''}<tr><td>Total Transfer</td><td><strong>Rp ${formatNumber(req.total_with_tax || req.amount)}</strong></td></tr><tr><td>Status</td><td><span class="status-badge status-${req.status}">${req.status}</span></td></tr>${req.voucher_no ? `<tr><td>Voucher</td><td><code>${req.voucher_no}</code></td></tr>` : ''}${req.project_code ? `<tr><td>Project</td><td>${req.project_code}</td></tr>` : ''}${req.bukti_url ? `<tr><td>Bukti</td><td><a href="${req.bukti_url}" target="_blank" class="btn btn-primary btn-sm">Lihat Bukti</a></td></tr>` : ''}</table><div style="margin-top:20px;"><h4>Riwayat Perubahan</h4><div style="max-height:300px;overflow-y:auto;">${logsHtml}</div></div><div style="display:flex;justify-content:flex-end;margin-top:20px;"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Tutup</button></div></div></div>`;
+            document.body.appendChild(modal);
+        } catch (error) { showToast('Gagal memuat detail: ' + error.message, 'error'); }
+        finally { hideLoading(); }
+    }
+    
+    // ==================== VERIFIKASI ====================
+    async function verifyPaymentRequest(id) {
+        showLoading();
+        try {
+            const { data: req, error } = await sb.from('payment_requests').select('*').eq('id', id).single();
+            if (error) throw error;
+            nilaiAsliPaymentRequest = req.amount;
+            const taxConfig = await getTaxConfig(req.company_id);
+            const accounts = await getAccountList(req.company_id);
+            const projectsList = await getProjectList(req.company_id);
+            
+            let debitOptions = '<option value="">Pilih Akun Debit</option>';
+            let kasOptions = '<option value="">Pilih Akun Kas/Bank</option>';
+            accounts.forEach(acc => {
+                if (acc.account_type === 'Beban' || acc.account_type === 'Aset') debitOptions += `<option value="${acc.account_code}">${acc.account_code} - ${acc.account_name}</option>`;
+                if (acc.account_type === 'Aset' && (acc.account_name.includes('Bank') || acc.account_name.includes('Kas'))) kasOptions += `<option value="${acc.account_code}">${acc.account_code} - ${acc.account_name}</option>`;
+            });
+            
+            let projectOptions = '<option value="">[Tanpa Project]</option>';
+            projectsList.forEach(p => { let budgetText = p.budget ? `(Budget: Rp ${formatNumber(p.budget)})` : '(Unlimited)'; projectOptions += `<option value="${p.code}">${p.code} - ${p.name} ${budgetText}</option>`; });
+            
+            const companyName = companies.find(c => c.id == req.company_id)?.nama || 'Perusahaan';
+            const ppnNote = taxConfig.is_pkp ? `PPN ${taxConfig.ppn_rate}% (bisa dikreditkan)` : `PPN ${taxConfig.ppn_rate}% (tidak bisa dikreditkan, final)`;
+            
+            const modal = document.createElement('div'); modal.className = 'modal-overlay';
+            modal.innerHTML = `<div class="modal-content" style="max-width:700px;"><div style="padding:20px;"><h3><i class="fas fa-check-circle" style="color:var(--success);"></i> Verifikasi Payment Request #${req.id}</h3><div class="alert alert-info">${companyName} | ${ppnNote}</div><div style="background:var(--gray-50);padding:15px;border-radius:8px;margin-bottom:20px;"><p><strong>Deskripsi:</strong> ${req.description}</p><p><strong>Jumlah Diajukan:</strong> Rp ${formatNumber(req.amount)}</p></div><div class="form-group"><label>Project</label><select id="verifyProject" class="form-control searchable-dropdown" onchange="updateBudgetDisplay()">${projectOptions}<option value="NEW">+ BUAT PROJECT BARU</option></select></div><div id="newProjectInput" style="display:none;margin-bottom:20px;"><div class="form-group"><label>Kode Project</label><input type="text" id="newProjectCode" class="form-control" placeholder="UNQ, INT" onkeyup="this.value=this.value.toUpperCase()"></div><div class="form-group"><label>Nama Project</label><input type="text" id="newProjectName" class="form-control" placeholder="Nama lengkap"></div><div class="form-group"><label>Budget (0 = Unlimited)</label><input type="text" id="newProjectBudget" class="form-control" placeholder="Rp 0" onkeyup="formatMoney(this)"></div></div><div id="budgetDisplay"></div><div class="form-group"><label>Akun Debit</label><select id="debitAccount" class="form-control searchable-dropdown" required>${debitOptions}</select></div><div class="form-group"><label>Akun Kredit</label><select id="creditAccount" class="form-control searchable-dropdown" required>${kasOptions}</select></div><div style="margin:20px 0;"><h4>Pajak</h4><div style="display:flex;gap:20px;flex-wrap:wrap;"><label><input type="checkbox" id="ppnCheck" onchange="updatePaymentPajak()"> PPN ${taxConfig.ppn_rate}%</label><label><input type="checkbox" id="pphCheck" onchange="updatePaymentPajak()"> PPh 23 (2%)</label><label><input type="checkbox" id="grossUpCheck" onchange="updatePaymentPajak()"> Gross Up PPh</label></div></div><div class="verification-summary"><table><tr><td>DPP</td><td id="paymentDPP">Rp ${formatNumber(req.amount)}</td></tr><tr><td>PPN ${taxConfig.ppn_rate}%</td><td id="paymentPPN">Rp 0</td></tr><tr><td>PPh 23 2%</td><td id="paymentPPh">Rp 0</td></tr><tr style="border-top:1px solid rgba(255,255,255,0.3);"><td><strong>TOTAL DIBAYAR</strong></td><td><strong id="paymentTotal">Rp ${formatNumber(req.amount)}</strong></td></tr><tr id="grossUpInfoRow" style="display:none;"><td colspan="2" style="text-align:center;font-style:italic;">Gross Up: Vendor terima bersih Rp <span id="vendorAmount">${formatNumber(req.amount)}</span></td></tr></table></div><div class="voucher-preview"><strong>Preview Voucher:</strong> <span id="voucherPreview">[Pilih project]</span></div><div style="display:flex;gap:1rem;justify-content:flex-end;margin-top:20px;"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Batal</button><button class="btn btn-success" onclick="submitVerification(${req.id})">Verifikasi & Buat Voucher</button></div><div id="verifyResult"></div></div></div>`;
+            document.body.appendChild(modal);
+            $('.searchable-dropdown').select2({ width: '100%' });
+            window.currentVerifikasiReq = req;
+            window.currentTaxConfig = taxConfig;
+            updatePaymentPajak();
+            updateVoucherPreview();
+            $('#verifyProject').on('change', function() { const showNew = this.value === 'NEW'; document.getElementById('newProjectInput').style.display = showNew ? 'block' : 'none'; if (!showNew) updateBudgetDisplay(); updateVoucherPreview(); });
+            $('#newProjectCode, #newProjectName, #newProjectBudget').on('input', updateVoucherPreview);
+        } catch (error) { showToast('Gagal memuat form verifikasi: ' + error.message, 'error'); }
+        finally { hideLoading(); }
     }
     
     async function updateBudgetDisplay() {
-        let select = document.getElementById('verifyProject');
-        let projectCode = select.value;
-        let budgetDiv = document.getElementById('budgetDisplay');
-        
-        if (!projectCode || projectCode === '' || projectCode === 'NEW') {
-            budgetDiv.style.display = 'none';
-            return;
-        }
-        
-        let req = window.currentVerifikasiReq;
-        let { data: project } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', req.company_id).single();
-        if (!project) { budgetDiv.style.display = 'none'; return; }
-        
-        let { data: payments } = await sb.from('payment_requests').select('amount, total_with_tax')
-            .eq('project_code', projectCode).eq('company_id', req.company_id)
-            .in('status', ['verified', 'paid']);
-        let terpakai = (payments || []).reduce((a,b) => a + (b.total_with_tax || b.amount || 0), 0);
-        
-        let requestIni = req.amount;
-        let totalNanti = terpakai + requestIni;
-        let persen = project.is_unlimited ? 0 : (totalNanti / project.budget) * 100;
-        persen = Math.min(persen, 150);
-        
-        let warna = '', statusText = '';
-        if (project.is_unlimited) {
-            warna = 'unlimited';
-            statusText = '⚪ Unlimited (tanpa batas)';
-        } else if (persen <= 70) { warna = 'safe'; statusText = '🟢 Aman';
-        } else if (persen <= 90) { warna = 'warning'; statusText = '🟡 Mendekati batas';
-        } else if (persen <= 100) { warna = 'danger'; statusText = '🟠 Hampir habis';
-        } else { warna = 'over'; statusText = '🔴 OVER BUDGET!'; }
-        
-        budgetDiv.style.display = 'block';
-        budgetDiv.innerHTML = `
-            <div class="budget-card">
-                <div class="budget-title">🎯 ${project.name}</div>
-                <div class="budget-amount">${project.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(project.budget)}`}</div>
-                <div class="progress-budget"><div class="progress-fill ${warna}" style="width: ${persen}%;">${!project.is_unlimited ? Math.round(persen) + '%' : ''}</div></div>
-                <div class="budget-stats"><span>Terpakai: Rp ${formatNumber(terpakai)}</span><span>Request: Rp ${formatNumber(requestIni)}</span><span>${statusText}</span></div>
-                ${!project.is_unlimited && totalNanti > project.budget ? `<div class="alert alert-warning" style="margin-top:0.3rem; padding:0.2rem;">⚠️ Melebihi budget Rp ${formatNumber(totalNanti - project.budget)}</div>` : ''}
-            </div>
-        `;
+        const projectCode = document.getElementById('verifyProject').value;
+        const budgetDiv = document.getElementById('budgetDisplay');
+        if (!projectCode || projectCode === '' || projectCode === 'NEW') { budgetDiv.style.display = 'none'; return; }
+        const req = window.currentVerifikasiReq;
+        try {
+            const { data: project, error } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', req.company_id).single();
+            if (error || !project) { budgetDiv.style.display = 'none'; return; }
+            const { data: payments } = await sb.from('payment_requests').select('amount, total_with_tax').eq('project_code', projectCode).eq('company_id', req.company_id).in('status', ['verified', 'paid']);
+            const terpakai = (payments || []).reduce((a, b) => a + (b.total_with_tax || b.amount || 0), 0);
+            const totalNanti = terpakai + req.amount;
+            const persen = project.is_unlimited ? 0 : (totalNanti / project.budget) * 100;
+            const persenFixed = Math.min(persen, 150);
+            let warna = '', statusText = '';
+            if (project.is_unlimited) { warna = 'unlimited'; statusText = '⚪ Unlimited (tanpa batas)'; }
+            else if (persenFixed <= 70) { warna = 'safe'; statusText = '🟢 Aman'; }
+            else if (persenFixed <= 90) { warna = 'warning'; statusText = '🟡 Mendekati batas'; }
+            else if (persenFixed <= 100) { warna = 'danger'; statusText = '🟠 Hampir habis'; }
+            else { warna = 'over'; statusText = '🔴 OVER BUDGET!'; }
+            budgetDiv.style.display = 'block';
+            budgetDiv.innerHTML = `<div class="budget-card"><div class="budget-title">🎯 ${project.name}</div><div class="budget-amount">${project.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(project.budget)}`}</div><div class="progress-budget"><div class="progress-fill ${warna}" style="width: ${persenFixed}%;">${!project.is_unlimited ? Math.round(persenFixed) + '%' : ''}</div></div><div class="budget-stats"><span>Terpakai: Rp ${formatNumber(terpakai)}</span><span>Request ini: Rp ${formatNumber(req.amount)}</span><span>${statusText}</span></div>${!project.is_unlimited && totalNanti > project.budget ? `<div class="alert alert-warning" style="margin-top:0.5rem;">⚠️ Melebihi budget Rp ${formatNumber(totalNanti - project.budget)}</div>` : ''}</div>`;
+        } catch (error) { budgetDiv.style.display = 'none'; }
     }
     
-    function hitungTotalVerifikasi() {
-        let req = window.currentVerifikasiReq;
-        let taxConfig = window.currentTaxConfig;
+    function updatePaymentPajak() {
+        const req = window.currentVerifikasiReq;
+        const taxConfig = window.currentTaxConfig;
         if (!req) return;
-        
-        let kenaPPN = document.getElementById('kenaPPN')?.checked || false;
-        let kenaPPh = document.getElementById('kenaPPh')?.checked || false;
-        let ppn = kenaPPN ? Math.round(req.amount * (taxConfig.ppn_rate / 100)) : 0;
-        let pph = kenaPPh ? Math.round(req.amount * 0.02) : 0;
-        let total = req.amount + ppn - pph;
-        
-        document.getElementById('dppAmount').innerHTML = `Rp ${formatNumber(req.amount)}`;
-        document.getElementById('ppnAmount').innerHTML = `Rp ${formatNumber(ppn)}`;
-        document.getElementById('pphAmount').innerHTML = `Rp ${formatNumber(pph)}`;
-        document.getElementById('totalBayar').innerHTML = `Rp ${formatNumber(total)}`;
+        const kenaPPN = document.getElementById('ppnCheck')?.checked || false;
+        const kenaPPh = document.getElementById('pphCheck')?.checked || false;
+        const grossUp = document.getElementById('grossUpCheck')?.checked || false;
+        let dpp = req.amount, ppn = 0, pph = 0, total = dpp;
+        if (kenaPPN && kenaPPh) {
+            if (grossUp) { dpp = Math.round(req.amount / 0.98); ppn = Math.round(dpp * (taxConfig.ppn_rate / 100)); pph = Math.round(dpp * 0.02); total = dpp + ppn; }
+            else { ppn = Math.round(dpp * (taxConfig.ppn_rate / 100)); pph = Math.round(dpp * 0.02); total = dpp + ppn - pph; }
+        } else if (kenaPPN && !kenaPPh) { ppn = Math.round(dpp * (taxConfig.ppn_rate / 100)); total = dpp + ppn; }
+        else if (!kenaPPN && kenaPPh) {
+            if (grossUp) { dpp = Math.round(req.amount / 0.98); pph = Math.round(dpp * 0.02); total = dpp; }
+            else { pph = Math.round(dpp * 0.02); total = dpp - pph; }
+        }
+        document.getElementById('paymentDPP').innerHTML = `Rp ${formatNumber(dpp)}`;
+        document.getElementById('paymentPPN').innerHTML = `Rp ${formatNumber(ppn)}`;
+        document.getElementById('paymentPPh').innerHTML = `Rp ${formatNumber(pph)}`;
+        document.getElementById('paymentTotal').innerHTML = `Rp ${formatNumber(total)}`;
+        const grossUpRow = document.getElementById('grossUpInfoRow');
+        if (grossUp && kenaPPh) { grossUpRow.style.display = 'table-row'; document.getElementById('vendorAmount').innerHTML = formatNumber(req.amount); }
+        else { grossUpRow.style.display = 'none'; }
     }
     
     async function updateVoucherPreview() {
-        let req = window.currentVerifikasiReq;
+        const req = window.currentVerifikasiReq;
         if (!req) return;
-        
-        let projectSelect = document.getElementById('verifyProject');
+        const projectSelect = document.getElementById('verifyProject');
         let projectCode = projectSelect.value === 'NEW' ? document.getElementById('newProjectCode')?.value.toUpperCase() || '' : projectSelect.value;
-        
-        let company = companies.find(c => c.id == req.company_id);
-        let companyCode = company?.kode || 'ARK';
-        let now = new Date();
-        let year = now.getFullYear();
-        let month = String(now.getMonth() + 1).padStart(2, '0');
-        
+        const company = companies.find(c => c.id == req.company_id);
+        const companyCode = company?.kode || 'ARK';
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
         let basePattern = `${companyCode}/${year}/${month}`;
         if (projectCode && projectCode !== '') basePattern += `/${projectCode}`;
-        
-        let { data: existing } = await sb.from('payment_requests').select('voucher_no');
+        const { data: existing } = await sb.from('payment_requests').select('voucher_no');
         let lastNumber = 0;
-        (existing || []).forEach(v => {
-            if (v.voucher_no && v.voucher_no.startsWith(basePattern)) {
-                let num = parseInt(v.voucher_no.split('/').pop());
-                if (num > lastNumber) lastNumber = num;
-            }
-        });
-        let nextNumber = (lastNumber + 1).toString().padStart(3, '0');
-        
+        (existing || []).forEach(v => { if (v.voucher_no && v.voucher_no.startsWith(basePattern)) { const num = parseInt(v.voucher_no.split('/').pop()); if (num > lastNumber) lastNumber = num; } });
+        const nextNumber = (lastNumber + 1).toString().padStart(3, '0');
         let previewText = `${basePattern}/${nextNumber}`;
-        if (projectSelect.value === 'NEW' && !document.getElementById('newProjectCode')?.value) {
-            previewText = `${basePattern}/[KODE]/001 (isi kode project)`;
-        }
+        if (projectSelect.value === 'NEW' && !document.getElementById('newProjectCode')?.value) previewText = `${basePattern}/[KODE]/001 (isi kode project dulu)`;
         document.getElementById('voucherPreview').innerHTML = `<strong>${previewText}</strong>`;
     }
     
-    async function submitVerifikasiDenganProject(id) {
-    console.log("=== START SUBMIT VERIFIKASI ===");
-    console.log("Request ID:", id);
-    
-    let debitAccount = document.getElementById('debitAccount').value;
-    let creditAccount = document.getElementById('creditAccount').value;
-    let kenaPPN = document.getElementById('kenaPPN')?.checked || false;
-    let kenaPPh = document.getElementById('kenaPPh')?.checked || false;
-    
-    console.log("debitAccount:", debitAccount);
-    console.log("creditAccount:", creditAccount);
-    console.log("kenaPPN:", kenaPPN);
-    console.log("kenaPPh:", kenaPPh);
-    
-    let req = window.currentVerifikasiReq;
-    let taxConfig = window.currentTaxConfig;
-    
-    if (!req) {
-        console.error("req tidak ditemukan!");
-        alert("Error: Data request tidak ditemukan");
-        return;
-    }
-    
-    let ppn = kenaPPN ? Math.round(req.amount * (taxConfig.ppn_rate / 100)) : 0;
-    let pph = kenaPPh ? Math.round(req.amount * 0.02) : 0;
-    let total = req.amount + ppn - pph;
-    
-    console.log("PPN:", ppn, "PPh:", pph, "Total:", total);
-    
-    if (!debitAccount || !creditAccount) { 
-        alert('Pilih akun debit dan kredit'); 
-        return; 
-    }
-    
-    let projectSelect = document.getElementById('verifyProject');
-    let projectCode = '';
-    
-    if (projectSelect.value === 'NEW') {
-        projectCode = document.getElementById('newProjectCode')?.value.toUpperCase().trim();
-        let projectName = document.getElementById('newProjectName')?.value.trim();
-        let projectBudget = parseRupiah(document.getElementById('newProjectBudget')?.value);
-        
-        if (!projectCode) { alert('Isi kode project'); return; }
-        if (!projectName) { alert('Isi nama project'); return; }
-        
-        let { data: existing } = await sb.from('projects').select('*').eq('company_id', req.company_id).eq('code', projectCode);
-        if (!existing || existing.length === 0) {
-            await sb.from('projects').insert({
-                company_id: req.company_id, code: projectCode, name: projectName,
-                budget: projectBudget || 0, is_unlimited: projectBudget === 0, created_by: currentUser?.email
-            });
-            console.log("Project baru dibuat:", projectCode);
+    async function submitVerification(id) {
+        const debitAccount = document.getElementById('debitAccount').value;
+        const creditAccount = document.getElementById('creditAccount').value;
+        const kenaPPN = document.getElementById('ppnCheck')?.checked || false;
+        const kenaPPh = document.getElementById('pphCheck')?.checked || false;
+        const grossUp = document.getElementById('grossUpCheck')?.checked || false;
+        if (!debitAccount || !creditAccount) { showToast('Pilih akun debit dan kredit', 'error'); return; }
+        const req = window.currentVerifikasiReq;
+        const taxConfig = window.currentTaxConfig;
+        let dpp = req.amount, ppn = 0, pph = 0;
+        if (kenaPPN && kenaPPh) {
+            if (grossUp) { dpp = Math.round(req.amount / 0.98); ppn = Math.round(dpp * (taxConfig.ppn_rate / 100)); pph = Math.round(dpp * 0.02); }
+            else { ppn = Math.round(dpp * (taxConfig.ppn_rate / 100)); pph = Math.round(dpp * 0.02); }
+        } else if (kenaPPN && !kenaPPh) { ppn = Math.round(dpp * (taxConfig.ppn_rate / 100)); }
+        else if (!kenaPPN && kenaPPh) {
+            if (grossUp) { dpp = Math.round(req.amount / 0.98); pph = Math.round(dpp * 0.02); }
+            else { pph = Math.round(dpp * 0.02); }
         }
-    } else {
-        projectCode = projectSelect.value;
-    }
-    
-    let company = companies.find(c => c.id == req.company_id);
-    let companyCode = company?.kode || 'ARK';
-    let now = new Date();
-    let year = now.getFullYear();
-    let month = String(now.getMonth() + 1).padStart(2, '0');
-    
-    let basePattern = `${companyCode}/${year}/${month}`;
-    if (projectCode && projectCode !== '') basePattern += `/${projectCode}`;
-    
-    let { data: existing } = await sb.from('payment_requests').select('voucher_no');
-    let lastNumber = 0;
-    (existing || []).forEach(v => {
-        if (v.voucher_no && v.voucher_no.startsWith(basePattern)) {
-            let num = parseInt(v.voucher_no.split('/').pop());
-            if (num > lastNumber) lastNumber = num;
-        }
-    });
-    let voucherNo = `${basePattern}/${(lastNumber + 1).toString().padStart(3, '0')}`;
-    
-    console.log("Voucher No:", voucherNo);
-    
-    // UPDATE status ke VERIFIED
-    let { error: updateError } = await sb.from('payment_requests').update({
-        status: 'verified', 
-        verified_at: new Date(), 
-        verified_by: currentUser?.email,
-        debit_account: debitAccount, 
-        credit_account: creditAccount, 
-        voucher_no: voucherNo,
-        ppn: ppn, 
-        pph: pph, 
-        total_with_tax: total, 
-        project_code: projectCode
-    }).eq('id', id);
-    
-    if (updateError) {
-        console.error("Error update:", updateError);
-        alert("Gagal verifikasi: " + updateError.message);
-        return;
-    }
-    
-    console.log("Update berhasil!");
-    
-    // Insert ke payment_logs
-    await sb.from('payment_logs').insert({
-        request_id: id, 
-        user_email: currentUser?.email, 
-        user_role: currentUserRole,
-        old_status: 'submitted', 
-        new_status: 'verified',
-        keterangan: `Verifikasi, Voucher: ${voucherNo}, Project: ${projectCode || '-'}`
-    });
-    
-    showToast(`✅ Diverifikasi! Voucher: ${voucherNo}`, 'success');
-    setTimeout(() => { 
-        document.querySelector('.modal-overlay')?.remove(); 
-        loadPaymentRequests(); 
-        loadDashboard(); 
-    }, 1500);
-}
-
-        async function deletePaymentRequest(id) {
-        if (!confirm('Hapus payment request ini? Tindakan tidak bisa dibatalkan!')) return;
+        const total = dpp + ppn - pph;
         showLoading();
-        let { error } = await sb.from('payment_requests').delete().eq('id', id);
-        hideLoading();
-        if (error) {
-            showToast('Gagal menghapus: ' + error.message, 'error');
-        } else {
-            showToast('Payment request berhasil dihapus', 'success');
-            loadPaymentRequests();
-            loadDashboard();
-        }
-    }
-            async function rejectPaymentRequest(id) {
-        let alasan = prompt('Alasan penolakan:');
-        if (!alasan) return;
-        
-        showLoading();
-        await sb.from('payment_requests').update({ 
-            status: 'rejected', 
-            rejected_at: new Date(),
-            rejected_by: currentUser?.email,
-            rejection_reason: alasan
-        }).eq('id', id);
-        
-        await sb.from('payment_logs').insert({
-            request_id: id,
-            user_email: currentUser?.email,
-            user_role: currentUserRole,
-            old_status: 'submitted',
-            new_status: 'rejected',
-            keterangan: `Ditolak: ${alasan}`
-        });
-        
-        hideLoading();
-        showToast('Payment request ditolak', 'warning');
-        loadPaymentRequests();
-        loadDashboard();
-    }
-    
-        async function approvePaymentRequest(id) {
-        let { data: req } = await sb.from('payment_requests').select('*').eq('id', id).single();
-        
-        let confirmed = confirm(
-            `SETUJUI PEMBAYARAN INI?\n\n` +
-            `ID: #${req.id}\n` +
-            `Deskripsi: ${req.description}\n` +
-            `Jumlah: Rp ${formatNumber(req.amount)}\n` +
-            `Total Transfer: Rp ${formatNumber(req.total_with_tax || req.amount)}\n` +
-            `Project: ${req.project_code || '-'}\n\n` +
-            `Klik OK untuk menyetujui`
-        );
-        if (!confirmed) return;
-        
-        showLoading();
-        let lastJournal = await sb.from('journals').select('id').order('id', { ascending: false }).limit(1);
-        let journalId = (lastJournal.data?.[0]?.id || 0) + 1;
-        let now = new Date();
-        let dateStr = now.toISOString().split('T')[0];
-        
-        await sb.from('journals').insert({ 
-            id: journalId, 
-            company_id: req.company_id, 
-            journal_date: dateStr, 
-            period: dateStr.substring(0,7), 
-            description: `Pembayaran: ${req.description}`, 
-            reference: req.voucher_no, 
-            created_by: currentUser?.email, 
-            status: 'posted' 
-        });
-        
-        await sb.from('journal_lines').insert([
-            { journal_id: journalId, account_code: req.debit_account, debit: req.amount, credit: 0, description: `Beban dari ${req.voucher_no}` },
-            { journal_id: journalId, account_code: req.credit_account, debit: 0, credit: req.total_with_tax || req.amount, description: `Transfer ke vendor dari ${req.voucher_no}` }
-        ]);
-        
-        if (req.ppn > 0) {
-            let suffix = companies.find(c => c.id == req.company_id)?.singkatan || 'A';
-            await sb.from('journal_lines').insert({ journal_id: journalId, account_code: `1131-${suffix}`, debit: req.ppn, credit: 0, description: `PPN Masukan dari ${req.voucher_no}` });
-        }
-        
-        if (req.pph > 0) {
-            let suffix = companies.find(c => c.id == req.company_id)?.singkatan || 'A';
-            await sb.from('journal_lines').insert({ journal_id: journalId, account_code: `2103-03-${suffix}`, debit: 0, credit: req.pph, description: `Utang PPh 23 dari ${req.voucher_no}` });
-        }
-        
-        await sb.from('payment_requests').update({ 
-            status: 'paid', 
-            paid_at: now, 
-            approved_by: currentUser?.email, 
-            journal_id: journalId 
-        }).eq('id', id);
-        
-        await sb.from('payment_logs').insert({ 
-            request_id: id, 
-            user_email: currentUser?.email, 
-            user_role: currentUserRole, 
-            old_status: 'verified', 
-            new_status: 'paid', 
-            keterangan: `Approved, Jurnal: ${journalId}` 
-        });
-        
-        hideLoading();
-        showToast(`✅ Payment approved! Jurnal ID: ${journalId}`, 'success');
-        loadPaymentRequests(); 
-        loadDashboard();
-    }
-        function showToast(message, type = 'success') {
-        let toast = document.createElement('div');
-        toast.className = `toast-notify alert alert-${type}`;
-        toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${message}`;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    }
-    
-    // ==================== INVOICE PENJUALAN (AR) ====================
-    async function loadInvoiceList() {
-        let { data: invoices } = await sb.from('invoices').select('*').order('id', { ascending: false });
-        let customersList = await getCustomerList(currentCompanyId);
-        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-file-invoice"></i> Invoice Penjualan</h2><div><button class="btn btn-primary" onclick="showCreateInvoiceForm()"><i class="fas fa-plus"></i> Buat Invoice</button><button class="btn btn-secondary" onclick="exportTableToExcel('invoices')"><i class="fas fa-file-excel"></i> Export Excel</button></div></div>
-            <div class="filter-card"><div class="filter-grid"><div class="filter-item"><label class="filter-label">Status</label><select id="invoiceStatusFilter" class="filter-select" onchange="filterInvoices()"><option value="all">Semua</option><option value="draft">Draft</option><option value="posted">Posted</option><option value="partial">Partial</option><option value="paid">Paid</option></select></div>
-            <div class="filter-item"><label class="filter-label">Bulan</label><select id="invoiceMonthFilter" class="filter-select"><option value="all">Semua</option>${Array(12).fill().map((_,i)=>`<option value="${i+1}">${['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'][i]}</option>`).join('')}</select></div>
-            <div class="filter-item"><label class="filter-label">Tahun</label><select id="invoiceYearFilter" class="filter-select"><option value="all">Semua</option><option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option></select></div>
-            <div class="filter-item"><label class="filter-label">Cari</label><input type="text" id="invoiceSearch" class="filter-select" placeholder="No Invoice / Customer"></div></div></div>
-            <div class="table-container"><table class="table"><thead><tr><th>No Invoice</th><th>Customer</th><th>Tanggal</th><th>Jatuh Tempo</th><th>Total</th><th>Dibayar</th><th>Sisa</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="invoiceTableBody"></tbody></table></div></div>`;
-        document.getElementById('content').innerHTML = html;
-        filterInvoices();
-    }
-    
-    async function filterInvoices() {
-        let { data: invoices } = await sb.from('invoices').select('*').order('id', { ascending: false });
-        let customersList = await getCustomerList(currentCompanyId);
-        let statusFilter = document.getElementById('invoiceStatusFilter')?.value || 'all';
-        let monthFilter = document.getElementById('invoiceMonthFilter')?.value || 'all';
-        let yearFilter = document.getElementById('invoiceYearFilter')?.value || 'all';
-        let searchFilter = document.getElementById('invoiceSearch')?.value || '';
-        let filtered = (invoices || []).filter(inv => {
-            if (statusFilter !== 'all' && inv.status !== statusFilter) return false;
-            if (monthFilter !== 'all') { let d = new Date(inv.invoice_date); if (d.getMonth() + 1 != monthFilter) return false; }
-            if (yearFilter !== 'all') { let d = new Date(inv.invoice_date); if (d.getFullYear() != yearFilter) return false; }
-            if (searchFilter) { let cust = customersList.find(c => c.id == inv.customer_id); if (!inv.invoice_no?.toLowerCase().includes(searchFilter.toLowerCase()) && !cust?.name?.toLowerCase().includes(searchFilter.toLowerCase())) return false; }
-            return true;
-        });
-        let tbody = '';
-        for (let inv of filtered) {
-            let customer = customersList.find(c => c.id == inv.customer_id);
-            let sisa = (inv.total || 0) - (inv.paid_amount || 0);
-            let statusClass = inv.status === 'paid' ? 'status-paid' : inv.status === 'posted' ? 'status-submitted' : inv.status === 'partial' ? 'status-verified' : 'status-draft';
-            tbody += `<tr>
-                <td><strong>${inv.invoice_no || '#'+inv.id}</strong></td>
-                <td>${customer?.name || '-'}</td>
-                <td>${inv.invoice_date || '-'}</td>
-                <td>${inv.due_date || '-'}</td>
-                <td class="text-right">Rp ${formatNumber(inv.total)}</td>
-                <td class="text-right">Rp ${formatNumber(inv.paid_amount)}</td>
-                <td class="text-right">Rp ${formatNumber(sisa)}</td>
-                <td><span class="status-badge ${statusClass}">${inv.status || 'draft'}</span></td>
-                <td>
-                    <button class="action-btn" onclick="previewInvoicePDF(${inv.id})" title="Print"><i class="fas fa-print"></i></button>
-                    ${inv.status === 'draft' ? `<button class="action-btn" onclick="editInvoice(${inv.id})" title="Edit"><i class="fas fa-edit"></i></button><button class="action-btn" onclick="postInvoice(${inv.id})" title="Post"><i class="fas fa-check-circle"></i></button><button class="action-btn" onclick="deleteInvoice(${inv.id})" title="Hapus"><i class="fas fa-trash"></i></button>` : ''}
-                    ${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button class="action-btn" onclick="showRecordPaymentModal(${inv.id})" title="Record Payment"><i class="fas fa-money-bill-wave"></i></button>` : ''}
-                </td>
-            </tr>`;
-        }
-        document.getElementById('invoiceTableBody').innerHTML = tbody || '<tr><td colspan="9">Belum ada invoice</td></tr>';
-    }
-    
-    function showCreateInvoiceForm() {
-        showLoading();
-        Promise.all([getCustomerList(currentCompanyId), getProjectList(currentCompanyId), getTaxConfig(currentCompanyId), getRevenueAccounts(currentCompanyId), getBankList(currentCompanyId)]).then(async ([cust, proj, tax, rev, banks]) => {
-            customers = cust; projects = proj; revenueAccounts = rev;
-            let company = companies.find(c => c.id == currentCompanyId);
-            let companyCode = company?.kode || 'ARK';
-            let today = new Date();
-            let yearMonth = today.getFullYear().toString() + String(today.getMonth() + 1).padStart(2, '0');
-            let { data: existing } = await sb.from('invoices').select('invoice_no').eq('company_id', currentCompanyId);
-            let lastNumber = 0;
-            (existing || []).forEach(inv => {
-                if (inv.invoice_no && inv.invoice_no.startsWith(companyCode + '/INV/' + yearMonth)) {
-                    let num = parseInt(inv.invoice_no.split('/').pop());
-                    if (num > lastNumber) lastNumber = num;
+        try {
+            let projectCode = '';
+            const projectSelect = document.getElementById('verifyProject');
+            if (projectSelect.value === 'NEW') {
+                projectCode = document.getElementById('newProjectCode')?.value.toUpperCase().trim();
+                const projectName = document.getElementById('newProjectName')?.value.trim();
+                const projectBudget = parseRupiah(document.getElementById('newProjectBudget')?.value);
+                if (!projectCode || !projectName) { showToast('Isi kode dan nama project', 'error'); return; }
+                const { data: existing } = await sb.from('projects').select('*').eq('company_id', req.company_id).eq('code', projectCode);
+                if (!existing || existing.length === 0) {
+                    await sb.from('projects').insert({ company_id: req.company_id, code: projectCode, name: projectName, budget: projectBudget || 0, is_unlimited: projectBudget === 0, created_by: currentUser?.email });
                 }
-            });
-            let invoiceNo = companyCode + '/INV/' + yearMonth + '/' + (lastNumber + 1).toString().padStart(3, '0');
-            let customerOptions = '<option value="">Pilih Customer</option>'; customers.forEach(c => { customerOptions += `<option value="${c.id}">${c.name}</option>`; });
-            let projectOptions = '<option value="">Tanpa Project</option>'; projects.forEach(p => { projectOptions += `<option value="${p.id}">${p.code} - ${p.name}</option>`; });
-            let revenueOptions = '<option value="">Pilih Akun Pendapatan</option>'; revenueAccounts.forEach(acc => { revenueOptions += `<option value="${acc.account_code}">${acc.account_code} - ${acc.account_name}</option>`; });
-            let bankOptions = '<option value="">Pilih Bank Tujuan</option>'; banks.forEach(b => { bankOptions += `<option value="${b.code}">${b.display}</option>`; });
-            let dueDate = new Date(); dueDate.setMonth(dueDate.getMonth() + 1);
-            let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-plus"></i> Buat Invoice Baru</h2><button class="btn btn-secondary" onclick="loadInvoiceList()">Kembali</button></div>
-                <div class="form-group"><label>No Invoice</label><input type="text" id="invoiceNo" class="form-control" value="${invoiceNo}" readonly></div>
-                <div class="form-group"><label>Customer</label><select id="createInvoiceCustomer" class="form-control searchable-dropdown" required>${customerOptions}</select></div>
-                <div class="form-group"><label>Project</label><select id="createInvoiceProject" class="form-control searchable-dropdown">${projectOptions}</select></div>
-                <div class="form-group"><label>Akun Pendapatan</label><select id="createInvoiceRevenueAccount" class="form-control searchable-dropdown" required>${revenueOptions}</select></div>
-                <div class="form-group"><label>Bank Tujuan</label><select id="createInvoiceBank" class="form-control searchable-dropdown" required>${bankOptions}</select></div>
-                <div class="row" style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;"><div class="form-group"><label>Tanggal Invoice</label><input type="date" id="createInvoiceDate" class="form-control" value="${today.toISOString().split('T')[0]}"></div>
-                <div class="form-group"><label>Jatuh Tempo</label><input type="date" id="createInvoiceDueDate" class="form-control" value="${dueDate.toISOString().split('T')[0]}"></div></div>
-                <div style="background:#f8f9fa; padding:0.8rem; border-radius:10px;"><h4>Item Barang/Jasa</h4><div id="invoiceItemsContainer"></div><button class="btn btn-secondary btn-sm" onclick="addInvoiceItem()">+ Tambah Item</button></div>
-                <div style="margin:0.5rem 0;"><label><input type="checkbox" id="createInvoicePPN" checked onchange="calculateInvoiceTotal()"> Kena PPN <span id="ppnRateLabel">11%</span></label></div>
-                <div style="background:var(--primary); color:white; padding:0.8rem; border-radius:10px;"><div style="display:flex; justify-content:space-between;"><span>Subtotal</span><span id="invoiceSubtotal">Rp 0</span></div><div style="display:flex; justify-content:space-between;"><span>PPN</span><span id="invoicePPN">Rp 0</span></div><div style="display:flex; justify-content:space-between; font-weight:bold;"><span>TOTAL</span><span id="invoiceTotal">Rp 0</span></div></div>
-                <div class="form-group"><label>Catatan</label><textarea id="createInvoiceNotes" class="form-control" rows="2"></textarea></div>
-                <div style="display:flex; gap:0.5rem; justify-content:flex-end;"><button class="btn btn-secondary" onclick="loadInvoiceList()">Batal</button><button class="btn btn-primary" onclick="saveInvoice()">Simpan</button></div>
-                <div id="createInvoiceResult"></div></div>`;
-            document.getElementById('content').innerHTML = html;
-            $('.searchable-dropdown').select2({ width: '100%' });
-            window.invoiceItemCounter = 1;
-            document.getElementById('invoiceItemsContainer').innerHTML = renderInvoiceItem(0);
-            calculateInvoiceTotal();
-            hideLoading();
-        });
+            } else { projectCode = projectSelect.value; }
+            const company = companies.find(c => c.id == req.company_id);
+            const companyCode = company?.kode || 'ARK';
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            let basePattern = `${companyCode}/${year}/${month}`;
+            if (projectCode && projectCode !== '') basePattern += `/${projectCode}`;
+            const { data: existing } = await sb.from('payment_requests').select('voucher_no');
+            let lastNumber = 0;
+            (existing || []).forEach(v => { if (v.voucher_no && v.voucher_no.startsWith(basePattern)) { const num = parseInt(v.voucher_no.split('/').pop()); if (num > lastNumber) lastNumber = num; } });
+            const voucherNo = `${basePattern}/${(lastNumber + 1).toString().padStart(3, '0')}`;
+            await sb.from('payment_requests').update({ status: 'verified', verified_at: new Date(), verified_by: currentUser?.email, debit_account: debitAccount, credit_account: creditAccount, voucher_no: voucherNo, ppn: ppn, pph: pph, total_with_tax: total, project_code: projectCode, ppn_rate: taxConfig.ppn_rate, is_pkp: taxConfig.is_pkp }).eq('id', id);
+            await sb.from('payment_logs').insert({ request_id: id, user_email: currentUser?.email, user_role: currentUserRole, old_status: 'submitted', new_status: 'verified', keterangan: `Verifikasi, Voucher: ${voucherNo}, Project: ${projectCode || '-'}, PPN: ${ppn}, PPh: ${pph}` });
+            showToast(`✅ Diverifikasi! Voucher: ${voucherNo}`, 'success');
+            setTimeout(() => { document.querySelector('.modal-overlay')?.remove(); refreshPaymentRequests(); }, 1500);
+        } catch (error) { showToast('Gagal verifikasi: ' + error.message, 'error'); }
+        finally { hideLoading(); }
     }
-    
-    function renderInvoiceItem(id) {
-        return `<div class="invoice-item" id="invoice-item-${id}" style="display:grid; grid-template-columns:3fr 0.8fr 1fr 0.8fr 1fr auto; gap:0.3rem; margin-bottom:0.3rem;">
-            <input type="text" class="item-name form-control" placeholder="Nama Item" value="Item ${id+1}" style="font-size:0.7rem;">
-            <input type="number" class="item-qty form-control" placeholder="Qty" value="1" min="1" onchange="calculateInvoiceTotal()" style="font-size:0.7rem;">
-            <input type="text" class="item-price form-control" placeholder="Harga" value="0" onkeyup="formatMoney(this)" onblur="calculateInvoiceTotal()" style="font-size:0.7rem;">
-            <input type="text" class="item-discount form-control" placeholder="Diskon %" value="0" onchange="calculateInvoiceTotal()" style="font-size:0.7rem;">
-            <input type="text" class="item-total form-control" placeholder="Total" readonly style="background:#f0f0f0; font-size:0.7rem;">
-            ${id > 0 ? `<button class="btn btn-danger btn-sm" onclick="removeInvoiceItem(${id})"><i class="fas fa-trash"></i></button>` : '<div style="width:24px;"></div>'}
-        </div>`;
-    }
-    
-    function addInvoiceItem() { let container = document.getElementById('invoiceItemsContainer'); window.invoiceItemCounter++; let newItem = document.createElement('div'); newItem.innerHTML = renderInvoiceItem(window.invoiceItemCounter); container.appendChild(newItem.firstChild); calculateInvoiceTotal(); }
-    function removeInvoiceItem(id) { let item = document.getElementById(`invoice-item-${id}`); if (document.querySelectorAll('.invoice-item').length > 1) { item.remove(); calculateInvoiceTotal(); } else { alert('Minimal satu item harus ada'); } }
-    
-    function calculateInvoiceTotal() {
-        let subtotal = 0;
-        document.querySelectorAll('.invoice-item').forEach(item => {
-            let qty = parseFloat(item.querySelector('.item-qty')?.value) || 0;
-            let price = parseRupiah(item.querySelector('.item-price')?.value);
-            let discount = parseFloat(item.querySelector('.item-discount')?.value) || 0;
-            let itemTotal = qty * price * (1 - discount / 100);
-            subtotal += itemTotal;
-            let totalInput = item.querySelector('.item-total');
-            if (totalInput) totalInput.value = formatNumber(itemTotal);
-        });
-        let companyId = currentCompanyId;
-        let ppnRate = (companyId === 2 || companyId === 3) ? 1.1 : 11;
-        let kenaPPN = document.getElementById('createInvoicePPN')?.checked || false;
-        let ppn = kenaPPN ? subtotal * ppnRate / 100 : 0;
-        document.getElementById('invoiceSubtotal').innerHTML = `Rp ${formatNumber(subtotal)}`;
-        document.getElementById('invoicePPN').innerHTML = `Rp ${formatNumber(ppn)}`;
-        document.getElementById('invoiceTotal').innerHTML = `Rp ${formatNumber(subtotal + ppn)}`;
-        document.getElementById('ppnRateLabel').innerHTML = ppnRate + '%';
-    }
-    
-    async function saveInvoice() {
-        let customerId = parseInt(document.getElementById('createInvoiceCustomer').value);
-        let projectId = document.getElementById('createInvoiceProject').value || null;
-        let revenueAccount = document.getElementById('createInvoiceRevenueAccount').value;
-        let bankCode = document.getElementById('createInvoiceBank').value;
-        let invoiceDate = document.getElementById('createInvoiceDate').value;
-        let dueDate = document.getElementById('createInvoiceDueDate').value;
-        let notes = document.getElementById('createInvoiceNotes').value;
-        let invoiceNo = document.getElementById('invoiceNo').value;
-        let items = [];
-        let hasError = false;
-        document.querySelectorAll('.invoice-item').forEach((item, idx) => {
-            let name = item.querySelector('.item-name')?.value;
-            let qty = parseFloat(item.querySelector('.item-qty')?.value) || 0;
-            let price = parseRupiah(item.querySelector('.item-price')?.value);
-            let discount = parseFloat(item.querySelector('.item-discount')?.value) || 0;
-            if (!name) { alert(`Item ${idx+1}: Nama harus diisi`); hasError = true; return; }
-            let amount = qty * price * (1 - discount / 100);
-            items.push({ description: name, quantity: qty, unitPrice: price, discount: discount * price * qty / 100, amount: amount });
-        });
-        if (hasError) return;
-        let subtotal = parseRupiah(document.getElementById('invoiceSubtotal').innerHTML.replace('Rp ', '').replace(/\./g, ''));
-        let ppn = parseRupiah(document.getElementById('invoicePPN').innerHTML.replace('Rp ', '').replace(/\./g, ''));
-        let total = parseRupiah(document.getElementById('invoiceTotal').innerHTML.replace('Rp ', '').replace(/\./g, ''));
-        showLoading();
-        let { data, error } = await sb.from('invoices').insert({
-            company_id: currentCompanyId, customer_id: customerId, project_id: projectId, revenue_account: revenueAccount, bank_code: bankCode,
-            invoice_date: invoiceDate, due_date: dueDate, notes: notes, dpp: subtotal, ppn: ppn, total: total, status: 'draft', invoice_no: invoiceNo, created_by: currentUser?.email
-        }).select().single();
-        if (error) { hideLoading(); document.getElementById('createInvoiceResult').innerHTML = `<div class="alert alert-error">${error.message}</div>`; return; }
-        for (let item of items) { await sb.from('invoice_items').insert({ invoice_id: data.id, description: item.description, quantity: item.quantity, price: item.unitPrice, discount: item.discount, amount: item.amount }); }
-        hideLoading(); document.getElementById('createInvoiceResult').innerHTML = `<div class="alert alert-success">✅ Invoice ${invoiceNo} berhasil dibuat!</div>`; setTimeout(() => loadInvoiceList(), 2000);
-    }
-    
-    async function postInvoice(id) {
-        if (!confirm('Posting invoice akan membuat jurnal otomatis. Lanjutkan?')) return;
-        showLoading();
-        let { data: invoice } = await sb.from('invoices').select('*').eq('id', id).single();
-        let suffix = companies.find(c => c.id == invoice.company_id)?.singkatan || 'A';
-        let piutangAkun = `1111-${suffix}`;
-        let ppnAkun = `2103-01-${suffix}`;
-        let lastJournal = await sb.from('journals').select('id').order('id', { ascending: false }).limit(1);
-        let journalId = (lastJournal.data?.[0]?.id || 0) + 1;
-        await sb.from('journals').insert({ id: journalId, company_id: invoice.company_id, journal_date: invoice.invoice_date, period: invoice.invoice_date.substring(0,7), description: `Penjualan Invoice ${invoice.invoice_no}`, reference: invoice.invoice_no, created_by: currentUser?.email, status: 'posted' });
-        await sb.from('journal_lines').insert({ journal_id: journalId, account_code: piutangAkun, debit: invoice.total, credit: 0, description: `Piutang dari invoice ${invoice.invoice_no}` });
-        await sb.from('journal_lines').insert({ journal_id: journalId, account_code: invoice.revenue_account, debit: 0, credit: invoice.dpp, description: `Pendapatan invoice ${invoice.invoice_no}` });
-        if (invoice.ppn > 0) { await sb.from('journal_lines').insert({ journal_id: journalId, account_code: ppnAkun, debit: 0, credit: invoice.ppn, description: `PPN Keluaran invoice ${invoice.invoice_no}` }); }
-        await sb.from('invoices').update({ status: 'posted' }).eq('id', id);
-        hideLoading(); alert(`✅ Invoice berhasil diposting! Jurnal ID: ${journalId}`); loadInvoiceList(); loadDashboard();
-    }
-    
-    async function deleteInvoice(id) {
-        if (!confirm('Hapus invoice ini? Tindakan tidak bisa dibatalkan!')) return;
-        showLoading();
-        await sb.from('invoice_items').delete().eq('invoice_id', id);
-        await sb.from('invoices').delete().eq('id', id);
-        hideLoading(); alert('Invoice berhasil dihapus'); loadInvoiceList();
-    }
-    
-    function editInvoice(id) { alert('Fitur edit invoice menyusul'); }
-    
-    function showRecordPaymentModal(invoiceId) { recordPayment(invoiceId); }
-    
-    async function recordPayment(invoiceId) {
-        let amount = prompt('Jumlah pembayaran:', '0');
-        if (!amount) return;
-        let { data: invoice } = await sb.from('invoices').select('*').eq('id', invoiceId).single();
-        let sisa = invoice.total - (invoice.paid_amount || 0);
-        if (parseFloat(amount) > sisa) { alert(`Maksimal pembayaran Rp ${formatNumber(sisa)}`); return; }
-        let newPaid = (invoice.paid_amount || 0) + parseFloat(amount);
-        let newStatus = newPaid >= invoice.total ? 'paid' : 'partial';
-        let suffix = companies.find(c => c.id == invoice.company_id)?.singkatan || 'A';
-        let bankAkun = invoice.bank_code;
-        let piutangAkun = `1111-${suffix}`;
-        let lastJournal = await sb.from('journals').select('id').order('id', { ascending: false }).limit(1);
-        let journalId = (lastJournal.data?.[0]?.id || 0) + 1;
-        await sb.from('journals').insert({ id: journalId, company_id: invoice.company_id, journal_date: new Date().toISOString().split('T')[0], period: new Date().toISOString().substring(0,7), description: `Penerimaan pembayaran invoice ${invoice.invoice_no}`, reference: invoice.invoice_no, created_by: currentUser?.email, status: 'posted' });
-        await sb.from('journal_lines').insert({ journal_id: journalId, account_code: bankAkun, debit: parseFloat(amount), credit: 0, description: `Penerimaan dari invoice ${invoice.invoice_no}` });
-        await sb.from('journal_lines').insert({ journal_id: journalId, account_code: piutangAkun, debit: 0, credit: parseFloat(amount), description: `Lunasi piutang invoice ${invoice.invoice_no}` });
-        await sb.from('invoices').update({ paid_amount: newPaid, status: newStatus, last_payment_date: new Date().toISOString().split('T')[0] }).eq('id', invoiceId);
-        alert(`✅ Pembayaran Rp ${formatNumber(amount)} dicatat. Sisa: Rp ${formatNumber(sisa - amount)}`);
-        loadInvoiceList(); loadDashboard();
-    }
-    
-    async function previewInvoicePDF(invoiceId) {
-        showLoading();
-        let { data: invoice } = await sb.from('invoices').select('*').eq('id', invoiceId).single();
-        let { data: items } = await sb.from('invoice_items').select('*').eq('invoice_id', invoiceId);
-        let { data: company } = await sb.from('companies').select('*').eq('id', invoice.company_id).single();
-        let { data: customer } = await sb.from('customers').select('*').eq('id', invoice.customer_id).single();
-        let { data: bank } = await sb.from('chart_of_accounts').select('*').eq('company_id', invoice.company_id).eq('account_code', invoice.bank_code).single();
-        let ppnRate = (invoice.company_id === 2 || invoice.company_id === 3) ? '1.1%' : '11%';
-        let itemsHtml = ''; let no = 1;
-        items.forEach(item => { itemsHtml += `<tr><td>${no++}</td>.html${item.description}</td><td class="text-center">${item.quantity}</td><td class="text-right">Rp ${formatNumber(item.price)}</td><td class="text-right">Rp ${formatNumber(item.discount)}</td><td class="text-right">Rp ${formatNumber(item.amount)}</td></tr>`; });
-        function terbilang(angka) { let bilangan = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas']; if (angka < 12) return bilangan[angka]; if (angka < 20) return bilangan[angka-10] + ' Belas'; if (angka < 100) return bilangan[Math.floor(angka/10)] + ' Puluh ' + bilangan[angka%10]; if (angka < 200) return 'Seratus ' + terbilang(angka-100); if (angka < 1000) return bilangan[Math.floor(angka/100)] + ' Ratus ' + terbilang(angka%100); if (angka < 1000000) return terbilang(Math.floor(angka/1000)) + ' Ribu ' + terbilang(angka%1000); return terbilang(Math.floor(angka/1000000)) + ' Juta ' + terbilang(angka%1000000); }
-        let html = `<!DOCTYPE html><html><head><title>Invoice ${invoice.invoice_no}</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>body{font-family:'Inter',sans-serif;background:#f3f4f6;padding:30px}.invoice{max-width:1000px;margin:0 auto;background:white;border-radius:20px;overflow:hidden;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25)}.header{background:linear-gradient(135deg,#0f172a,#1e293b);padding:30px;color:white}.header-top{display:flex;justify-content:space-between}.logo{width:60px;height:60px;background:#3b82f6;border-radius:16px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:24px}.company-info{display:flex;justify-content:space-between;padding:20px 30px;background:#f8fafc}.customer-section{padding:20px 30px}.meta{padding:15px 30px;background:#f3f4f6;display:flex;gap:30px}.items-table{padding:20px 30px}table{width:100%;border-collapse:collapse}th{background:#0f172a;color:white;padding:12px}td{padding:10px;border-bottom:1px solid #e5e7eb}.summary{padding:20px 30px;background:#f8fafc;text-align:right}.terbilang{padding:20px 30px;background:#e0f2fe;border-left:4px solid #3b82f6}.footer{display:flex;justify-content:space-between;padding:20px 30px;background:#f3f4f6}.print-btn{text-align:center;padding:20px;background:white}button{background:#0f172a;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer}@media print{.print-btn{display:none}body{background:white;padding:0}}</style></head><body><div class="invoice"><div class="header"><div class="header-top"><div class="logo">${company.singkatan||'AG'}</div><div><h2>INVOICE</h2><p>${invoice.invoice_no}</p></div></div><h1>${company.nama}</h1><p>${company.alamat||''}</p></div><div class="company-info"><div><strong>NPWP:</strong> ${company.npwp||'-'}</div><div>Telp: ${company.telp||'-'}<br>Email: ${company.email||'-'}</div></div><div class="customer-section"><h4>Kepada Yth.</h4><h3>${customer?.name||'Customer'}</h3><p>${customer?.alamat||'-'}<br>NPWP: ${customer?.npwp||'-'}<br>Telp: ${customer?.telp||'-'}</p></div><div class="meta"><div><strong>Tanggal Invoice:</strong> ${invoice.invoice_date}</div><div><strong>Jatuh Tempo:</strong> ${invoice.due_date}</div></div><div class="items-table"><table><thead><tr><th>No</th><th>Deskripsi</th><th class="text-center">Qty</th><th class="text-right">Harga</th><th class="text-right">Diskon</th><th class="text-right">Jumlah</th></tr></thead><tbody>${itemsHtml}</tbody></table></div><div class="summary"><p>Subtotal: Rp ${formatNumber(invoice.dpp)}</p><p>PPN ${ppnRate}: Rp ${formatNumber(invoice.ppn)}</p><h3>Total: Rp ${formatNumber(invoice.total)}</h3></div><div class="terbilang"><strong>Terbilang:</strong> ${terbilang(Math.floor(invoice.total))} Rupiah</div><div class="footer"><div><strong>INFORMASI PEMBAYARAN</strong><br>✓ ${bank?.account_name || bank?.display || 'Bank Tujuan'}<br>Harap sertakan nomor invoice pada referensi transfer</div><div><div style="margin-top:30px; text-align:center;"><div style="border-top:1px solid #000; width:200px;"></div>${company.direktur||'Direktur Utama'}</div></div></div><div class="print-btn"><button onclick="window.print()">🖨️ PRINT / DOWNLOAD PDF</button></div></div></body></html>`;
-        let printWindow = window.open('', '_blank');
-        printWindow.document.write(html);
-        printWindow.document.close();
-        setTimeout(() => printWindow.print(), 500);
-        hideLoading();
-    }
-    
-    // ==================== VENDOR INVOICE (AP) ====================
-    async function loadVendorInvoiceList() {
-        let { data: invoices } = await sb.from('vendor_invoices').select('*').order('id', { ascending: false });
-        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-users"></i> Invoice Pembelian (AP)</h2><div><button class="btn btn-primary" onclick="alert('Fitur tambah invoice vendor menyusul')"><i class="fas fa-plus"></i> Tambah Invoice</button><button class="btn btn-secondary" onclick="exportTableToExcel('vendor_invoices')"><i class="fas fa-file-excel"></i> Export Excel</button></div></div>
-            <div class="filter-card"><div class="filter-grid"><div class="filter-item"><label class="filter-label">Status</label><select id="vendorStatusFilter" class="filter-select" onchange="filterVendorInvoices()"><option value="all">Semua</option><option value="unpaid">Belum Dibayar</option><option value="partial">Sebagian</option><option value="paid">Lunas</option></select></div>
-            <div class="filter-item"><label class="filter-label">Bulan</label><select id="vendorMonthFilter" class="filter-select"><option value="all">Semua</option>${Array(12).fill().map((_,i)=>`<option value="${i+1}">${['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'][i]}</option>`).join('')}</select></div>
-            <div class="filter-item"><label class="filter-label">Tahun</label><select id="vendorYearFilter" class="filter-select"><option value="all">Semua</option><option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option></select></div></div></div>
-            <div class="stats-grid" style="grid-template-columns:repeat(3,1fr); margin-bottom:0.5rem;"><div class="stat-card"><div class="stat-value" id="totalUtangVendor">Rp 0</div><div class="stat-label">Total Utang</div></div>
-            <div class="stat-card"><div class="stat-value" id="jatuhTempoMingguIni">Rp 0</div><div class="stat-label">Jatuh Tempo Minggu Ini</div></div>
-            <div class="stat-card"><div class="stat-value" id="sudahDibayarVendor">Rp 0</div><div class="stat-label">Sudah Dibayar</div></div></div>
-            <div class="table-container"><table class="table"><thead><tr><th>Vendor</th><th>No Invoice</th><th>Tanggal</th><th>Jatuh Tempo</th><th>Total</th><th>Dibayar</th><th>Sisa</th><th>Status</th><th>File</th><th>Aksi</th></tr></thead><tbody id="vendorTableBody"></tbody></table></div></div>`;
-        document.getElementById('content').innerHTML = html;
-        await filterVendorInvoices();
-    }
-    
-    async function filterVendorInvoices() {
-        let { data: invoices } = await sb.from('vendor_invoices').select('*').order('id', { ascending: false });
-        let statusFilter = document.getElementById('vendorStatusFilter')?.value || 'all';
-        let monthFilter = document.getElementById('vendorMonthFilter')?.value || 'all';
-        let yearFilter = document.getElementById('vendorYearFilter')?.value || 'all';
-        let filtered = (invoices || []).filter(inv => {
-            if (statusFilter !== 'all' && inv.payment_status !== statusFilter) return false;
-            if (monthFilter !== 'all') { let d = new Date(inv.invoice_date); if (d.getMonth() + 1 != monthFilter) return false; }
-            if (yearFilter !== 'all') { let d = new Date(inv.invoice_date); if (d.getFullYear() != yearFilter) return false; }
-            return true;
-        });
-        let totalUtang = 0, totalDibayar = 0, totalJatuhTempo = 0;
-        let today = new Date(); let nextWeek = new Date(); nextWeek.setDate(today.getDate() + 7);
-        filtered.forEach(inv => {
-            let sisa = (inv.total || 0) - (inv.paid_amount || 0);
-            totalUtang += sisa;
-            totalDibayar += (inv.paid_amount || 0);
-            let dueDate = new Date(inv.due_date);
-            if (sisa > 0 && dueDate >= today && dueDate <= nextWeek) totalJatuhTempo += sisa;
-        });
-        document.getElementById('totalUtangVendor').innerHTML = `Rp ${formatNumber(totalUtang)}`;
-        document.getElementById('jatuhTempoMingguIni').innerHTML = `Rp ${formatNumber(totalJatuhTempo)}`;
-        document.getElementById('sudahDibayarVendor').innerHTML = `Rp ${formatNumber(totalDibayar)}`;
-        
-        let tbody = '';
-        for (let inv of filtered) {
-            let sisa = (inv.total || 0) - (inv.paid_amount || 0);
-            let statusClass = inv.payment_status === 'paid' ? 'status-paid' : inv.payment_status === 'partial' ? 'status-verified' : 'status-draft';
-            let fileIcon = inv.file_url ? `<a href="${inv.file_url}" target="_blank" class="action-btn"><i class="fas fa-file-pdf" style="color:var(--danger);"></i></a>` : '<span class="action-btn"><i class="fas fa-file"></i></span>';
-            tbody += `<tr>
-                <td>${inv.vendor_name || '-'}</td>
-                <td>${inv.invoice_no || '-'}</td>
-                <td>${inv.invoice_date || '-'}</td>
-                <td>${inv.due_date || '-'}</td>
-                <td class="text-right">Rp ${formatNumber(inv.total)}</td>
-                <td class="text-right">Rp ${formatNumber(inv.paid_amount)}</td>
-                <td class="text-right">Rp ${formatNumber(sisa)}</td>
-                <td><span class="status-badge ${statusClass}">${inv.payment_status}</span></td>
-                <td class="text-center">${fileIcon}</td>
-                <td>
-                    <button class="action-btn" onclick="viewVendorInvoiceDetail(${inv.id})" title="Detail"><i class="fas fa-eye"></i></button>
-                    ${sisa > 0 ? `<button class="action-btn" onclick="submitVendorPayment(${inv.id})" title="Ajukan Pembayaran" style="color:var(--success);"><i class="fas fa-money-bill-wave"></i></button>` : ''}
-                </td>
-            </tr>`;
-        }
-        document.getElementById('vendorTableBody').innerHTML = tbody || '<tr><td colspan="10">Belum ada数据</td></tr>';
-    }
-    
-    async function viewVendorInvoiceDetail(id) {
-        let { data: invoice } = await sb.from('vendor_invoices').select('*').eq('id', id).single();
-        let sisa = (invoice.total || 0) - (invoice.paid_amount || 0);
-        alert(`Detail Invoice Vendor\nVendor: ${invoice.vendor_name}\nNo Invoice: ${invoice.invoice_no}\nTanggal: ${invoice.invoice_date}\nTotal: Rp ${formatNumber(invoice.total)}\nDibayar: Rp ${formatNumber(invoice.paid_amount)}\nSisa: Rp ${formatNumber(sisa)}\nStatus: ${invoice.payment_status}\nFile: ${invoice.file_url || '-'}`);
-    }
-    
-    async function submitVendorPayment(id) {
-        let amount = prompt('Jumlah pembayaran:', '0');
-        if (!amount) return;
-        let { data: invoice } = await sb.from('vendor_invoices').select('*').eq('id', id).single();
-        let sisa = invoice.total - (invoice.paid_amount || 0);
-        if (parseFloat(amount) > sisa) { alert(`Maksimal pembayaran Rp ${formatNumber(sisa)}`); return; }
-        let newPaid = (invoice.paid_amount || 0) + parseFloat(amount);
-        let newStatus = newPaid >= invoice.total ? 'paid' : 'partial';
-        let bankCode = prompt('Kode Bank (contoh: 1102-01-A):', invoice.bank_code);
-        if (!bankCode) return;
-        let suffix = companies.find(c => c.id == invoice.company_id)?.singkatan || 'A';
-        let utangAkun = `2111-${suffix}`;
-        let lastJournal = await sb.from('journals').select('id').order('id', { ascending: false }).limit(1);
-        let journalId = (lastJournal.data?.[0]?.id || 0) + 1;
-        await sb.from('journals').insert({ id: journalId, company_id: invoice.company_id, journal_date: new Date().toISOString().split('T')[0], period: new Date().toISOString().substring(0,7), description: `Pembayaran invoice ${invoice.invoice_no}`, reference: invoice.invoice_no, created_by: currentUser?.email, status: 'posted' });
-        await sb.from('journal_lines').insert([
-            { journal_id: journalId, account_code: utangAkun, debit: parseFloat(amount), credit: 0, description: `Pembayaran invoice ${invoice.invoice_no}` },
-            { journal_id: journalId, account_code: bankCode, debit: 0, credit: parseFloat(amount), description: `Transfer ke ${invoice.vendor_name}` }
-        ]);
-        await sb.from('vendor_invoices').update({ paid_amount: newPaid, payment_status: newStatus, last_payment_date: new Date().toISOString().split('T')[0] }).eq('id', id);
-        alert(`✅ Pembayaran Rp ${formatNumber(amount)} dicatat. Sisa: Rp ${formatNumber(sisa - amount)}`);
-        loadVendorInvoiceList(); loadDashboard();
-    }
-    
-    // ==================== JURNAL (Placeholder untuk sementara) ====================
-    async function loadJurnalForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Input Jurnal</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadLedgerForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Buku Besar</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadLabaRugiForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Laba Rugi</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadNeracaForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Neraca</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadJurnalUmum() { document.getElementById('content').innerHTML = '<div class="card"><h2>Jurnal Umum</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadRecurringList() { document.getElementById('content').innerHTML = '<div class="card"><h2>Transaksi Berulang</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadAsetList() { document.getElementById('content').innerHTML = '<div class="card"><h2>Manajemen Aset</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadCustomerList() { let cust = await getCustomerList(currentCompanyId); let html = `<div class="card"><h2>Data Customer</h2><div class="table-container"><table class="table"><thead><tr><th>Kode</th><th>Nama</th><th>NPWP</th><th>Telepon</th><th>Email</th></tr></thead><tbody>${cust.map(c=>`<tr>.html${c.code||'-'}</td>.html${c.name}</td>.html${c.npwp||'-'}</td>.html${c.telp||'-'}</td>.html${c.email||'-'}</td></tr>`).join('')}</tbody></table></div></div>`; document.getElementById('content').innerHTML = html; }
-    async function loadProjectList() { let proj = await getProjectList(currentCompanyId); let html = `<div class="card"><h2>Data Project</h2><div class="table-container"><table class="table"><thead><tr><th>Kode</th><th>Nama</th><th>Company</th></tr></thead><tbody>${proj.map(p=>`<tr>.html${p.code||'-'}</td>.html${p.name}</td>.html${companies.find(c=>c.id==p.company_id)?.nama||'-'}</td></tr>`).join('')}</tbody></table></div></div>`; document.getElementById('content').innerHTML = html; }
-    async function loadVendorList() { let vend = await getVendorList(currentCompanyId); let html = `<div class="card"><h2>Data Vendor</h2><div class="table-container"><table class="table"><thead><tr><th>Nama</th><th>NPWP</th><th>Bank</th><th>No Rekening</th><th>Termin</th></tr></thead><tbody>${vend.map(v=>`<tr>.html${v.name}</td>.html${v.npwp||'-'}</td>.html${v.bank_name||'-'}</td>.html${v.bank_account||'-'}</td><td class="text-center">${v.payment_term||30} hari</td></tr>`).join('')}</tbody></table></div></div>`; document.getElementById('content').innerHTML = html; }
-    async function loadOpeningBalanceForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Saldo Awal</h2><p>Fitur dalam pengembangan</p></div>'; }
-    async function loadExportBackupForm() { document.getElementById('content').innerHTML = '<div class="card"><h2>Export & Backup</h2><p>Fitur dalam pengembangan</p></div>'; }
-    
-    async function exportTableToExcel(tableName) { alert('Fitur export excel menyusul'); }
     
     async function checkSession() {
-        let { data } = await sb.auth.getSession();
+        const { data } = await sb.auth.getSession();
         if (data.session) {
-            let { data: profile } = await sb.from('user_profiles').select('*').eq('email', data.session.user.email).single();
+            const { data: profile } = await sb.from('user_profiles').select('*').eq('email', data.session.user.email).single();
             currentUser = data.session.user; currentUserRole = profile?.role || 'staff'; currentCompanyId = profile?.company_id || 1;
-            let { data: comps } = await sb.from('companies').select('*'); companies = comps || [];
+            const { data: comps } = await sb.from('companies').select('*'); companies = comps || [];
             document.getElementById('loginPage').style.display = 'none'; document.getElementById('appPage').style.display = 'flex';
             document.getElementById('userName').innerText = profile?.name || currentUser.email; document.getElementById('userRole').innerText = currentUserRole;
             document.getElementById('userAvatar').innerText = (profile?.name || currentUser.email).charAt(0).toUpperCase();
-            renderSidebar(); loadDashboard();
+            renderSidebar(); loadPaymentRequests();
         }
     }
     checkSession();
