@@ -241,13 +241,18 @@
         </div>
         <div class="main">
             <div class="top-bar">
-                <h1 class="page-title" id="pageTitle">Dashboard</h1>
-                <div class="user-menu">
-                    <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">Loading...</div></div>
-                    <div class="user-avatar" id="userAvatar">U</div>
-                    <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
-                </div>
-            </div>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <h1 class="page-title" id="pageTitle">Dashboard</h1>
+        <select id="companySelector" class="filter-select" style="width: 180px; margin-left: 1rem;" onchange="changeCompany(this.value)">
+            <option value="">Memuat...</option>
+        </select>
+    </div>
+    <div class="user-menu">
+        <div><div class="user-name" id="userName">Loading...</div><div class="user-role" id="userRole">Loading...</div></div>
+        <div class="user-avatar" id="userAvatar">U</div>
+        <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+</div>
             <div id="content"></div>
         </div>
     </div>
@@ -396,6 +401,7 @@
     
     // ==================== DASHBOARD ====================
     async function loadDashboard() {
+         populateCompanySelector();
         if (statusChart) statusChart.destroy(); if (companyChart) companyChart.destroy();
         const today = new Date(); const currentMonth = today.getMonth() + 1; const currentYear = today.getFullYear();
         const greeting = today.getHours() < 12 ? 'Selamat Pagi' : today.getHours() < 18 ? 'Selamat Siang' : 'Selamat Malam';
@@ -425,7 +431,19 @@
         document.getElementById('content').innerHTML = html;
         await refreshDashboard();
     }
+
+    function populateCompanySelector() {
+    const selector = document.getElementById('companySelector');
+    if (!selector) return;
     
+    let options = '';
+    companies.forEach(c => {
+        options += `<option value="${c.id}" ${c.id == currentCompanyId ? 'selected' : ''}>${c.nama}</option>`;
+    });
+    selector.innerHTML = options;
+}
+
+        
     async function refreshDashboard() {
         let companyId = document.getElementById('dashboardCompany')?.value || 'all';
         let month = document.getElementById('dashboardMonth')?.value || 'all';
@@ -1861,33 +1879,41 @@ ${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button c
     }
     
     async function updateInvoiceExistingProjectBudget(projectCode) {
-        const budgetDiv = document.getElementById('invExistingProjectBudget');
-        const subtotal = parseRupiah(document.getElementById('invSubtotal').innerHTML.replace('Rp ', '').replace(/\./g, ''));
-        const kenaPPN = document.getElementById('invPPN')?.checked || false;
-        const kenaPPh = document.getElementById('invPPh')?.checked || false;
-        const ppn = kenaPPN ? subtotal * 0.11 : 0;
-        const pph = kenaPPh ? subtotal * 0.02 : 0;
-        const total = subtotal + ppn - pph;
+    const budgetDiv = document.getElementById('invExistingProjectBudget');
+    const subtotal = parseRupiah(document.getElementById('invSubtotal').innerHTML.replace('Rp ', '').replace(/\./g, ''));
+    const kenaPPN = document.getElementById('invPPN')?.checked || false;
+    const kenaPPh = document.getElementById('invPPh')?.checked || false;
+    const ppn = kenaPPN ? subtotal * 0.11 : 0;
+    const pph = kenaPPh ? subtotal * 0.02 : 0;
+    const total = subtotal + ppn - pph;
+    
+    try {
+        const { data: project } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', currentCompanyId).single();
+        if (!project) { budgetDiv.innerHTML = '<div class="alert alert-warning">Project tidak ditemukan</div>'; return; }
         
+        // 🔴 PERBAIKAN: Gunakan or() atau filter manual
+        let paidInvoices = [];
         try {
-            const { data: project } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', currentCompanyId).single();
-            if (!project) { budgetDiv.innerHTML = '<div class="alert alert-warning">Project tidak ditemukan</div>'; return; }
-            
-            // Ambil total yang sudah dibayar dari invoice yang sudah paid/partial
-            const { data: paidInvoices } = await sb.from('invoices').select('paid_amount').eq('project_code', projectCode).eq('company_id', currentCompanyId).in('status', ['partial', 'paid']);
-// Jika error, coba tanpa filter status
-if (!paidInvoices) {
-    const { data: allInvoices } = await sb.from('invoices').select('paid_amount,status').eq('project_code', projectCode).eq('company_id', currentCompanyId);
-    paidInvoices = (allInvoices || []).filter(i => i.status === 'partial' || i.status === 'paid');
-}
-            const terpakai = (paidInvoices || []).reduce((a,b) => a + (b.paid_amount || 0), 0);
-            const totalNanti = terpakai + total;
-            const persen = project.is_unlimited ? 0 : (totalNanti / project.budget) * 100;
-            let warna = project.is_unlimited ? 'unlimited' : (persen <= 70 ? 'safe' : persen <= 90 ? 'warning' : persen <= 100 ? 'danger' : 'over');
-            
-            budgetDiv.innerHTML = `<div class="budget-card"><div class="budget-title">🎯 ${project.name}</div><div class="budget-amount">${project.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(project.budget)}`}</div><div class="progress-budget"><div class="progress-fill ${warna}" style="width: ${Math.min(persen, 150)}%;">${!project.is_unlimited ? Math.round(persen) + '%' : ''}</div></div><div class="budget-stats"><span>Terpakai (sudah dibayar): Rp ${formatNumber(terpakai)}</span><span>Invoice ini: Rp ${formatNumber(total)}</span></div></div>`;
-        } catch(e) { budgetDiv.innerHTML = '<div class="alert alert-warning">Gagal memuat budget</div>'; }
+            // Coba dengan in()
+            const { data } = await sb.from('invoices').select('paid_amount').eq('project_code', projectCode).eq('company_id', currentCompanyId).in('status', ['partial', 'paid']);
+            paidInvoices = data || [];
+        } catch (err) {
+            // Fallback: ambil semua lalu filter manual
+            const { data: allInvoices } = await sb.from('invoices').select('paid_amount,status').eq('project_code', projectCode).eq('company_id', currentCompanyId);
+            paidInvoices = (allInvoices || []).filter(i => i.status === 'partial' || i.status === 'paid');
+        }
+        
+        const terpakai = paidInvoices.reduce((a,b) => a + (b.paid_amount || 0), 0);
+        const totalNanti = terpakai + total;
+        const persen = project.is_unlimited ? 0 : (totalNanti / project.budget) * 100;
+        let warna = project.is_unlimited ? 'unlimited' : (persen <= 70 ? 'safe' : persen <= 90 ? 'warning' : persen <= 100 ? 'danger' : 'over');
+        
+        budgetDiv.innerHTML = `<div class="budget-card"><div class="budget-title">🎯 ${project.name}</div><div class="budget-amount">${project.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(project.budget)}`}</div><div class="progress-budget"><div class="progress-fill ${warna}" style="width: ${Math.min(persen, 150)}%;">${!project.is_unlimited ? Math.round(persen) + '%' : ''}</div></div><div class="budget-stats"><span>Terpakai (sudah dibayar): Rp ${formatNumber(terpakai)}</span><span>Invoice ini: Rp ${formatNumber(total)}</span></div></div>`;
+    } catch(e) { 
+        console.error(e);
+        budgetDiv.innerHTML = '<div class="alert alert-warning">Gagal memuat budget</div>'; 
     }
+}
     
     async function saveInvoice() {
         const customerSelect = document.getElementById('invCustomer');
@@ -2632,34 +2658,43 @@ if (!paidInvoices) {
         document.getElementById('content').innerHTML = html;
     }
     
-    async function loadProjectList() {
-        let proj = await getProjectList(currentCompanyId);
-        let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-project-diagram"></i> Data Project</h2><button class="btn btn-secondary" onclick="loadDashboard()">Kembali</button></div>
-            <div class="table-container"><table class="table"><thead><tr><th>Kode</th><th>Nama</th><th>Budget</th><th>Terpakai</th><th>Sisa</th><th>Status</th><th>Aksi</th></tr></thead><tbody>`;
+   async function loadProjectList() {
+    let proj = await getProjectList(currentCompanyId);
+    let html = `<div class="form-card"><div class="form-header"><h2><i class="fas fa-project-diagram"></i> Data Project</h2><button class="btn btn-secondary" onclick="loadDashboard()">Kembali</button></div>
+        <div class="table-container"><table class="table"><thead><tr><th>Kode</th><th>Nama</th><th>Budget</th><th>Terpakai</th><th>Sisa</th><th>Status</th><th>Aksi</th></tr></thead><tbody>`;
+    
+    for (const p of proj) {
+        // Hitung total terpakai dari payment_requests yang sudah paid (AP)
+        const { data: payments } = await sb.from('payment_requests').select('total_with_tax').eq('project_code', p.code).eq('company_id', currentCompanyId).in('status', ['paid']);
         
-        for (const p of proj) {
-            // Hitung total terpakai dari payment_requests yang sudah paid (AP) dan invoices yang sudah paid (AR)
-            const { data: payments } = await sb.from('payment_requests').select('total_with_tax').eq('project_code', p.code).eq('company_id', currentCompanyId).in('status', ['paid']);
-            const { data: paidInvoices } = await sb.from('invoices').select('paid_amount').eq('project_code', p.code).eq('company_id', currentCompanyId).in('status', ['partial', 'paid']);
-            
-            const terpakaiAP = (payments || []).reduce((a,b) => a + (b.total_with_tax || 0), 0);
-            const terpakaiAR = (paidInvoices || []).reduce((a,b) => a + (b.paid_amount || 0), 0);
-            const terpakai = terpakaiAP + terpakaiAR;
-            const sisa = p.is_unlimited ? 0 : (p.budget - terpakai);
-            
-            html += `<tr>
-                <td>${p.code || '-'}</td>
-                <td>${p.name}</td>
-                <td class="text-right">${p.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(p.budget)}`}</td>
-                <td class="text-right">Rp ${formatNumber(terpakai)}</td>
-                <td class="text-right">${p.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(sisa)}`}</td>
-                <td><span class="status-badge ${p.is_unlimited ? 'status-draft' : 'status-paid'}">${p.is_unlimited ? 'Unlimited' : 'Limited'}</span></td>
-                <td><button class="action-btn" onclick="viewProjectDetail('${p.code}')"><i class="fas fa-chart-line"></i></button></td>
-            </tr>`;
+        // 🔴 PERBAIKAN: Hitung dari invoices yang sudah paid/partial
+        let paidInvoices = [];
+        try {
+            const { data } = await sb.from('invoices').select('paid_amount').eq('project_code', p.code).eq('company_id', currentCompanyId).in('status', ['partial', 'paid']);
+            paidInvoices = data || [];
+        } catch (err) {
+            const { data: allInvoices } = await sb.from('invoices').select('paid_amount,status').eq('project_code', p.code).eq('company_id', currentCompanyId);
+            paidInvoices = (allInvoices || []).filter(i => i.status === 'partial' || i.status === 'paid');
         }
-        html += '</tbody></table></div></div>';
-        document.getElementById('content').innerHTML = html;
+        
+        const terpakaiAP = (payments || []).reduce((a,b) => a + (b.total_with_tax || 0), 0);
+        const terpakaiAR = paidInvoices.reduce((a,b) => a + (b.paid_amount || 0), 0);
+        const terpakai = terpakaiAP + terpakaiAR;
+        const sisa = p.is_unlimited ? 0 : (p.budget - terpakai);
+        
+        html += `<tr>
+            <td>${p.code || '-'}</td>
+            <td>${p.name}</td>
+            <td class="text-right">${p.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(p.budget)}`}</td>
+            <td class="text-right">Rp ${formatNumber(terpakai)}</td>
+            <td class="text-right">${p.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(sisa)}`}</td>
+            <td><span class="status-badge ${p.is_unlimited ? 'status-draft' : 'status-paid'}">${p.is_unlimited ? 'Unlimited' : 'Limited'}</span></td>
+            <td><button class="action-btn" onclick="viewProjectDetail('${p.code}')"><i class="fas fa-chart-line"></i></button></td>
+        </tr>`;
     }
+    html += '</tbody></table></div></div>';
+    document.getElementById('content').innerHTML = html;
+}
     
     async function viewProjectDetail(projectCode) {
         showLoading();
