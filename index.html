@@ -748,7 +748,13 @@
     async function editPaymentRequest(id) {
         showLoading();
         try {
-            const { data: req, error } = await sb.from('payment_requests').select('*').eq('id', id).single();
+           const { data: reqArray, error } = await sb.from('payment_requests').select('*').eq('id', id);
+const req = reqArray?.[0];
+if (!req) {
+    showToast('Payment request tidak ditemukan', 'error');
+    hideLoading();
+    return;
+}          
             if (error) throw error;
             let html = `
                 <div class="form-card"><div class="form-header"><h3><i class="fas fa-edit"></i> Edit Payment Request #${req.id}</h3><button class="btn btn-secondary" onclick="loadPaymentRequests()">Kembali</button></div>
@@ -1390,7 +1396,8 @@
     const reqData = window.currentVerifikasiReq;
     
     try {
-        const { data: project, error } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', reqData.company_id).single();
+        const { data: projectArray, error } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', reqData.company_id);
+const project = projectArray?.[0];
         if (error || !project) {
             existingBudgetDiv.innerHTML = '<div class="alert alert-warning">Project tidak ditemukan</div>';
             return;
@@ -1433,7 +1440,8 @@
         existingBudgetDiv.innerHTML = '<div class="alert alert-warning">Gagal memuat budget</div>';
         }
     }
- }           
+ }
+}
     
     function closeVerifikasiModal() {
         const modal = document.getElementById('verifikasiModal');
