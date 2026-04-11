@@ -1383,71 +1383,69 @@ if (!req) {
                 }
             }
             
-            async function updateBudgetExistingLocal() {
-    const projectCode = projectSelect.value;
-    if (!projectCode || projectCode === '' || projectCode === 'NEW') {
-        existingBudgetDiv.style.display = 'none';
-        return;
-    }
-    
-    existingBudgetDiv.style.display = 'block';
-    existingBudgetDiv.innerHTML = '<div class="alert alert-info">Memuat budget...</div>';
-    
-    const reqData = window.currentVerifikasiReq;
-    
-    try {
-        const { data: projectArray, error } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', reqData.company_id);
-const project = projectArray?.[0];
-        if (error || !project) {
-            existingBudgetDiv.innerHTML = '<div class="alert alert-warning">Project tidak ditemukan</div>';
-            return;
-        }
-        
-        // 🔴 PERBAIKAN: ambil semua lalu filter
-        const { data: allPayments } = await sb.from('payment_requests').select('amount, total_with_tax, status').eq('project_code', projectCode).eq('company_id', reqData.company_id);
-        const payments = (allPayments || []).filter(p => p.status === 'verified' || p.status === 'paid');
-        
-        const terpakai = (payments || []).reduce((a, b) => a + (b.total_with_tax || b.amount || 0), 0);
-        const totalNanti = terpakai + reqData.amount;
-        const persen = project.is_unlimited ? 0 : (totalNanti / project.budget) * 100;
-        const persenFixed = Math.min(persen, 150);
-        
-        let warna = '', statusText = '';
-        if (project.is_unlimited) {
-            warna = 'unlimited';
-            statusText = '⚪ Unlimited (tanpa batas)';
-        } else if (persenFixed <= 70) { warna = 'safe'; statusText = '🟢 Aman'; }
-        else if (persenFixed <= 90) { warna = 'warning'; statusText = '🟡 Mendekati batas'; }
-        else if (persenFixed <= 100) { warna = 'danger'; statusText = '🟠 Hampir habis'; }
-        else { warna = 'over'; statusText = '🔴 OVER BUDGET!'; }
-        
-        existingBudgetDiv.innerHTML = `
-            <div class="budget-card">
-                <div class="budget-title">🎯 ${project.name}</div>
-                <div class="budget-amount">${project.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(project.budget)}`}</div>
-                <div class="progress-budget">
-                    <div class="progress-fill ${warna}" style="width: ${persenFixed}%;">${!project.is_unlimited ? Math.round(persenFixed) + '%' : ''}</div>
-                </div>
-                <div class="budget-stats">
-                    <span>Terpakai: Rp ${formatNumber(terpakai)}</span>
-                    <span>Request ini: Rp ${formatNumber(reqData.amount)}</span>
-                    <span>${statusText}</span>
-                </div>
-                ${!project.is_unlimited && totalNanti > project.budget ? `<div class="alert alert-warning" style="margin-top:0.5rem;">⚠️ Akan melebihi budget Rp ${formatNumber(totalNanti - project.budget)}</div>` : ''}
-            </div>
-        `;
-    } catch (error) {
-        existingBudgetDiv.innerHTML = '<div class="alert alert-warning">Gagal memuat budget</div>';
-        }
-    }
- }
-}
-    
+                       async function updateBudgetExistingLocal() {
+                const projectCode = projectSelect.value;
+                if (!projectCode || projectCode === '' || projectCode === 'NEW') {
+                    existingBudgetDiv.style.display = 'none';
+                    return;
+                }
+                
+                existingBudgetDiv.style.display = 'block';
+                existingBudgetDiv.innerHTML = '<div class="alert alert-info">Memuat budget...</div>';
+                
+                const reqData = window.currentVerifikasiReq;
+                
+                try {
+                    const { data: projectArray } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', reqData.company_id);
+                    const project = projectArray?.[0];
+                    if (!project) {
+                        existingBudgetDiv.innerHTML = '<div class="alert alert-warning">Project tidak ditemukan</div>';
+                        return;
+                    }
+                    
+                    const { data: allPayments } = await sb.from('payment_requests').select('amount, total_with_tax, status').eq('project_code', projectCode).eq('company_id', reqData.company_id);
+                    const payments = (allPayments || []).filter(p => p.status === 'verified' || p.status === 'paid');
+                    
+                    const terpakai = (payments || []).reduce((a, b) => a + (b.total_with_tax || b.amount || 0), 0);
+                    const totalNanti = terpakai + reqData.amount;
+                    const persen = project.is_unlimited ? 0 : (totalNanti / project.budget) * 100;
+                    const persenFixed = Math.min(persen, 150);
+                    
+                    let warna = '', statusText = '';
+                    if (project.is_unlimited) {
+                        warna = 'unlimited';
+                        statusText = '⚪ Unlimited (tanpa batas)';
+                    } else if (persenFixed <= 70) { warna = 'safe'; statusText = '🟢 Aman'; }
+                    else if (persenFixed <= 90) { warna = 'warning'; statusText = '🟡 Mendekati batas'; }
+                    else if (persenFixed <= 100) { warna = 'danger'; statusText = '🟠 Hampir habis'; }
+                    else { warna = 'over'; statusText = '🔴 OVER BUDGET!'; }
+                    
+                    existingBudgetDiv.innerHTML = `
+                        <div class="budget-card">
+                            <div class="budget-title">🎯 ${project.name}</div>
+                            <div class="budget-amount">${project.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(project.budget)}`}</div>
+                            <div class="progress-budget">
+                                <div class="progress-fill ${warna}" style="width: ${persenFixed}%;">${!project.is_unlimited ? Math.round(persenFixed) + '%' : ''}</div>
+                            </div>
+                            <div class="budget-stats">
+                                <span>Terpakai: Rp ${formatNumber(terpakai)}</span>
+                                <span>Request ini: Rp ${formatNumber(reqData.amount)}</span>
+                                <span>${statusText}</span>
+                            </div>
+                            ${!project.is_unlimited && totalNanti > project.budget ? `<div class="alert alert-warning" style="margin-top:0.5rem;">⚠️ Akan melebihi budget Rp ${formatNumber(totalNanti - project.budget)}</div>` : ''}
+                        </div>
+                    `;
+                } catch (error) {
+                    existingBudgetDiv.innerHTML = '<div class="alert alert-warning">Gagal memuat budget</div>';
+                }
+            }
+        } // ← Tutup try
+    } // ← Tutup fungsi verifyPaymentRequest
+
     function closeVerifikasiModal() {
         const modal = document.getElementById('verifikasiModal');
         if (modal) modal.remove();
-    }
-    
+    }    
     async function submitVerifikasiFinal(id) {
         const debitAccount = document.getElementById('debitAccount').value;
         const creditAccount = document.getElementById('creditAccount').value;
