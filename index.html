@@ -320,7 +320,8 @@
         showLoading();
         const { data, error } = await sb.auth.signInWithPassword({ email, password });
         if (error) { hideLoading(); let err = document.getElementById('loginError'); err.innerText = error.message; err.style.display = 'block'; return; }
-        const { data: profile } = await sb.from('user_profiles').select('*').eq('email', email).single();
+        const { data: profileData } = await sb.from('user_profiles').select('*').eq('email', email); 
+        const profile = profileData?.[0];
         currentUser = data.user; currentUserRole = profile?.role || 'staff'; currentCompanyId = profile?.company_id || 1;
         const { data: comps } = await sb.from('companies').select('*'); companies = comps || [];
         document.getElementById('loginPage').style.display = 'none'; document.getElementById('appPage').style.display = 'flex';
@@ -981,54 +982,57 @@
     }
     
     async function updateExistingProjectBudget(projectCode) {
-        const req = window.currentVerifikasiReq;
-        const budgetDiv = document.getElementById('existingProjectBudget');
-        
-        if (!budgetDiv || !req) return;
-        
-        try {
-            const { data: project, error } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', req.company_id).single();
-            if (error || !project) {
-                budgetDiv.innerHTML = '<div class="alert alert-warning">Project tidak ditemukan</div>';
-                return;
-            }
-            
-            const { data: payments } = await sb.from('payment_requests').select('amount, total_with_tax').eq('project_code', projectCode).eq('company_id', req.company_id).in('status', ['verified', 'paid']);
-            const terpakai = (payments || []).reduce((a, b) => a + (b.total_with_tax || b.amount || 0), 0);
-            const totalNanti = terpakai + req.amount;
-            const persen = project.is_unlimited ? 0 : (totalNanti / project.budget) * 100;
-            const persenFixed = Math.min(persen, 150);
-            
-            let warna = '', statusText = '';
-            if (project.is_unlimited) {
-                warna = 'unlimited';
-                statusText = '⚪ Unlimited (tanpa batas)';
-            } else if (persenFixed <= 70) { warna = 'safe'; statusText = '🟢 Aman'; }
-            else if (persenFixed <= 90) { warna = 'warning'; statusText = '🟡 Mendekati batas'; }
-            else if (persenFixed <= 100) { warna = 'danger'; statusText = '🟠 Hampir habis'; }
-            else { warna = 'over'; statusText = '🔴 OVER BUDGET!'; }
-            
-            budgetDiv.innerHTML = `
-                <div class="budget-card">
-                    <div class="budget-title">🎯 ${project.name}</div>
-                    <div class="budget-amount">${project.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(project.budget)}`}</div>
-                    <div class="progress-budget">
-                        <div class="progress-fill ${warna}" style="width: ${persenFixed}%;">
-                            ${!project.is_unlimited ? Math.round(persenFixed) + '%' : ''}
-                        </div>
-                    </div>
-                    <div class="budget-stats">
-                        <span>Terpakai: Rp ${formatNumber(terpakai)}</span>
-                        <span>Request ini: Rp ${formatNumber(req.amount)}</span>
-                        <span>${statusText}</span>
-                    </div>
-                    ${!project.is_unlimited && totalNanti > project.budget ? `<div class="alert alert-warning" style="margin-top:0.5rem;">⚠️ Akan melebihi budget Rp ${formatNumber(totalNanti - project.budget)}</div>` : ''}
-                </div>
-            `;
-        } catch (error) {
-            budgetDiv.innerHTML = '<div class="alert alert-warning">Gagal memuat budget project</div>';
+    const req = window.currentVerifikasiReq;
+    const budgetDiv = document.getElementById('existingProjectBudget');
+    
+    if (!budgetDiv || !req) return;
+    
+    try {
+        const { data: project, error } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', req.company_id).single();
+        if (error || !project) {
+            budgetDiv.innerHTML = '<div class="alert alert-warning">Project tidak ditemukan</div>';
+            return;
         }
+        
+        // 🔴 PERBAIKAN: ambil semua lalu filter
+        const { data: allPayments } = await sb.from('payment_requests').select('amount, total_with_tax, status').eq('project_code', projectCode).eq('company_id', req.company_id);
+        const payments = (allPayments || []).filter(p => p.status === 'verified' || p.status === 'paid');
+        
+        const terpakai = (payments || []).reduce((a, b) => a + (b.total_with_tax || b.amount || 0), 0);
+        const totalNanti = terpakai + req.amount;
+        const persen = project.is_unlimited ? 0 : (totalNanti / project.budget) * 100;
+        const persenFixed = Math.min(persen, 150);
+        
+        let warna = '', statusText = '';
+        if (project.is_unlimited) {
+            warna = 'unlimited';
+            statusText = '⚪ Unlimited (tanpa batas)';
+        } else if (persenFixed <= 70) { warna = 'safe'; statusText = '🟢 Aman'; }
+        else if (persenFixed <= 90) { warna = 'warning'; statusText = '🟡 Mendekati batas'; }
+        else if (persenFixed <= 100) { warna = 'danger'; statusText = '🟠 Hampir habis'; }
+        else { warna = 'over'; statusText = '🔴 OVER BUDGET!'; }
+        
+        budgetDiv.innerHTML = `
+            <div class="budget-card">
+                <div class="budget-title">🎯 ${project.name}</div>
+                <div class="budget-amount">${project.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(project.budget)}`}</div>
+                <div class="progress-budget">
+                    <div class="progress-fill ${warna}" style="width: ${persenFixed}%;">
+                        ${!project.is_unlimited ? Math.round(persenFixed) + '%' : ''}
+                    </div>
+                </div>
+                <div class="budget-stats">
+                    <span>Terpakai: Rp ${formatNumber(terpakai)}</span>
+                    <span>Request ini: Rp ${formatNumber(req.amount)}</span>
+                    <span>${statusText}</span>
+                </div>
+                ${!project.is_unlimited && totalNanti > project.budget ? `<div class="alert alert-warning" style="margin-top:0.5rem;">⚠️ Akan melebihi budget Rp ${formatNumber(totalNanti - project.budget)}</div>` : ''}
+            </div>
+        `;
+    } catch (error) {
+        budgetDiv.innerHTML = '<div class="alert alert-warning">Gagal memuat budget project</div>';
     }
+}
     
     function updatePaymentPajak() {
         const req = window.currentVerifikasiReq;
@@ -1374,102 +1378,62 @@
             }
             
             async function updateBudgetExistingLocal() {
-                const projectCode = projectSelect.value;
-                if (!projectCode || projectCode === '' || projectCode === 'NEW') {
-                    existingBudgetDiv.style.display = 'none';
-                    return;
-                }
-                
-                existingBudgetDiv.style.display = 'block';
-                existingBudgetDiv.innerHTML = '<div class="alert alert-info">Memuat budget...</div>';
-                
-                const reqData = window.currentVerifikasiReq;
-                
-                try {
-                    const { data: project, error } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', reqData.company_id).single();
-                    if (error || !project) {
-                        existingBudgetDiv.innerHTML = '<div class="alert alert-warning">Project tidak ditemukan</div>';
-                        return;
-                    }
-                    
-                    const { data: payments } = await sb.from('payment_requests').select('amount, total_with_tax').eq('project_code', projectCode).eq('company_id', reqData.company_id).in('status', ['verified', 'paid']);
-                    const terpakai = (payments || []).reduce((a, b) => a + (b.total_with_tax || b.amount || 0), 0);
-                    const totalNanti = terpakai + reqData.amount;
-                    const persen = project.is_unlimited ? 0 : (totalNanti / project.budget) * 100;
-                    const persenFixed = Math.min(persen, 150);
-                    
-                    let warna = '', statusText = '';
-                    if (project.is_unlimited) {
-                        warna = 'unlimited';
-                        statusText = '⚪ Unlimited (tanpa batas)';
-                    } else if (persenFixed <= 70) { warna = 'safe'; statusText = '🟢 Aman'; }
-                    else if (persenFixed <= 90) { warna = 'warning'; statusText = '🟡 Mendekati batas'; }
-                    else if (persenFixed <= 100) { warna = 'danger'; statusText = '🟠 Hampir habis'; }
-                    else { warna = 'over'; statusText = '🔴 OVER BUDGET!'; }
-                    
-                    existingBudgetDiv.innerHTML = `
-                        <div class="budget-card">
-                            <div class="budget-title">🎯 ${project.name}</div>
-                            <div class="budget-amount">${project.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(project.budget)}`}</div>
-                            <div class="progress-budget">
-                                <div class="progress-fill ${warna}" style="width: ${persenFixed}%;">${!project.is_unlimited ? Math.round(persenFixed) + '%' : ''}</div>
-                            </div>
-                            <div class="budget-stats">
-                                <span>Terpakai: Rp ${formatNumber(terpakai)}</span>
-                                <span>Request ini: Rp ${formatNumber(reqData.amount)}</span>
-                                <span>${statusText}</span>
-                            </div>
-                            ${!project.is_unlimited && totalNanti > project.budget ? `<div class="alert alert-warning" style="margin-top:0.5rem;">⚠️ Akan melebihi budget Rp ${formatNumber(totalNanti - project.budget)}</div>` : ''}
-                        </div>
-                    `;
-                } catch (error) {
-                    existingBudgetDiv.innerHTML = '<div class="alert alert-warning">Gagal memuat budget</div>';
-                }
-            }
-            
-            projectSelect.onchange = function() {
-                if (this.value === 'NEW') {
-                    newProjectSection.style.display = 'block';
-                    existingBudgetDiv.style.display = 'none';
-                } else if (this.value && this.value !== '') {
-                    newProjectSection.style.display = 'none';
-                    existingBudgetDiv.style.display = 'block';
-                    updateBudgetExistingLocal();
-                } else {
-                    newProjectSection.style.display = 'none';
-                    existingBudgetDiv.style.display = 'none';
-                }
-                updateVoucherPreviewLocal();
-            };
-            
-            if (newProjectCode) {
-                newProjectCode.oninput = function() { updateVoucherPreviewLocal(); previewBudgetBaru(); };
-            }
-            if (newProjectName) {
-                newProjectName.oninput = previewBudgetBaru;
-            }
-            if (newProjectBudget) {
-                newProjectBudget.oninput = function() { previewBudgetBaru(); updateVoucherPreviewLocal(); };
-            }
-            
-            ppnCheck.onchange = hitungPajak;
-            pphCheck.onchange = hitungPajak;
-            grossUpCheck.onchange = hitungPajak;
-            
-            btnVerifikasi.onclick = async function() {
-                await submitVerifikasiFinal(id);
-            };
-            
-            hitungPajak();
-            updateVoucherPreviewLocal();
-            
-        } catch (error) {
-            console.error('Error:', error);
-            showToast('Gagal memuat form verifikasi: ' + error.message, 'error');
-        } finally {
-            hideLoading();
-        }
+    const projectCode = projectSelect.value;
+    if (!projectCode || projectCode === '' || projectCode === 'NEW') {
+        existingBudgetDiv.style.display = 'none';
+        return;
     }
+    
+    existingBudgetDiv.style.display = 'block';
+    existingBudgetDiv.innerHTML = '<div class="alert alert-info">Memuat budget...</div>';
+    
+    const reqData = window.currentVerifikasiReq;
+    
+    try {
+        const { data: project, error } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', reqData.company_id).single();
+        if (error || !project) {
+            existingBudgetDiv.innerHTML = '<div class="alert alert-warning">Project tidak ditemukan</div>';
+            return;
+        }
+        
+        // 🔴 PERBAIKAN: ambil semua lalu filter
+        const { data: allPayments } = await sb.from('payment_requests').select('amount, total_with_tax, status').eq('project_code', projectCode).eq('company_id', reqData.company_id);
+        const payments = (allPayments || []).filter(p => p.status === 'verified' || p.status === 'paid');
+        
+        const terpakai = (payments || []).reduce((a, b) => a + (b.total_with_tax || b.amount || 0), 0);
+        const totalNanti = terpakai + reqData.amount;
+        const persen = project.is_unlimited ? 0 : (totalNanti / project.budget) * 100;
+        const persenFixed = Math.min(persen, 150);
+        
+        let warna = '', statusText = '';
+        if (project.is_unlimited) {
+            warna = 'unlimited';
+            statusText = '⚪ Unlimited (tanpa batas)';
+        } else if (persenFixed <= 70) { warna = 'safe'; statusText = '🟢 Aman'; }
+        else if (persenFixed <= 90) { warna = 'warning'; statusText = '🟡 Mendekati batas'; }
+        else if (persenFixed <= 100) { warna = 'danger'; statusText = '🟠 Hampir habis'; }
+        else { warna = 'over'; statusText = '🔴 OVER BUDGET!'; }
+        
+        existingBudgetDiv.innerHTML = `
+            <div class="budget-card">
+                <div class="budget-title">🎯 ${project.name}</div>
+                <div class="budget-amount">${project.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(project.budget)}`}</div>
+                <div class="progress-budget">
+                    <div class="progress-fill ${warna}" style="width: ${persenFixed}%;">${!project.is_unlimited ? Math.round(persenFixed) + '%' : ''}</div>
+                </div>
+                <div class="budget-stats">
+                    <span>Terpakai: Rp ${formatNumber(terpakai)}</span>
+                    <span>Request ini: Rp ${formatNumber(reqData.amount)}</span>
+                    <span>${statusText}</span>
+                </div>
+                ${!project.is_unlimited && totalNanti > project.budget ? `<div class="alert alert-warning" style="margin-top:0.5rem;">⚠️ Akan melebihi budget Rp ${formatNumber(totalNanti - project.budget)}</div>` : ''}
+            </div>
+        `;
+    } catch (error) {
+        existingBudgetDiv.innerHTML = '<div class="alert alert-warning">Gagal memuat budget</div>';
+    }
+}
+            
     
     function closeVerifikasiModal() {
         const modal = document.getElementById('verifikasiModal');
@@ -1888,7 +1852,8 @@ ${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button c
     const total = subtotal + ppn - pph;
     
     try {
-        const { data: project } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', currentCompanyId).single();
+        const { data: projectArray } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', currentCompanyId);
+const project = projectArray?.[0];
         if (!project) { budgetDiv.innerHTML = '<div class="alert alert-warning">Project tidak ditemukan</div>'; return; }
         
         // 🔴 PERBAIKAN: Gunakan or() atau filter manual
@@ -2360,11 +2325,13 @@ ${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button c
         const finalTotal = total + ppn - pph;
         
         try {
-            const { data: project } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', currentCompanyId).single();
+            const { data: projectArray } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', currentCompanyId); const project = projectArray?.[0];
             if (!project) { budgetDiv.innerHTML = '<div class="alert alert-warning">Project tidak ditemukan</div>'; return; }
             
             // Ambil total yang sudah dibayar dari payment_requests yang sudah paid
-            const { data: payments } = await sb.from('payment_requests').select('amount, total_with_tax').eq('project_code', projectCode).eq('company_id', currentCompanyId).in('status', ['paid']);
+            // ✅ KODE BENAR
+const { data: allPayments } = await sb.from('payment_requests').select('amount, total_with_tax, status').eq('project_code', projectCode).eq('company_id', currentCompanyId);
+const payments = (allPayments || []).filter(p => p.status === 'paid');
             const terpakai = (payments || []).reduce((a,b) => a + (b.total_with_tax || b.amount || 0), 0);
             const totalNanti = terpakai + finalTotal;
             const persen = project.is_unlimited ? 0 : (totalNanti / project.budget) * 100;
@@ -2664,18 +2631,12 @@ ${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button c
         <div class="table-container"><table class="table"><thead><tr><th>Kode</th><th>Nama</th><th>Budget</th><th>Terpakai</th><th>Sisa</th><th>Status</th><th>Aksi</th></tr></thead><tbody>`;
     
     for (const p of proj) {
-        // Hitung total terpakai dari payment_requests yang sudah paid (AP)
-        const { data: payments } = await sb.from('payment_requests').select('total_with_tax').eq('project_code', p.code).eq('company_id', currentCompanyId).in('status', ['paid']);
+        // 🔴 PERBAIKAN: ambil semua lalu filter
+        const { data: allPayments } = await sb.from('payment_requests').select('total_with_tax, status').eq('project_code', p.code).eq('company_id', currentCompanyId);
+        const payments = (allPayments || []).filter(pay => pay.status === 'paid');
         
-        // 🔴 PERBAIKAN: Hitung dari invoices yang sudah paid/partial
-        let paidInvoices = [];
-        try {
-            const { data } = await sb.from('invoices').select('paid_amount').eq('project_code', p.code).eq('company_id', currentCompanyId).in('status', ['partial', 'paid']);
-            paidInvoices = data || [];
-        } catch (err) {
-            const { data: allInvoices } = await sb.from('invoices').select('paid_amount,status').eq('project_code', p.code).eq('company_id', currentCompanyId);
-            paidInvoices = (allInvoices || []).filter(i => i.status === 'partial' || i.status === 'paid');
-        }
+        const { data: allInvoices } = await sb.from('invoices').select('paid_amount, status').eq('project_code', p.code).eq('company_id', currentCompanyId);
+        const paidInvoices = (allInvoices || []).filter(i => i.status === 'partial' || i.status === 'paid');
         
         const terpakaiAP = (payments || []).reduce((a,b) => a + (b.total_with_tax || 0), 0);
         const terpakaiAR = paidInvoices.reduce((a,b) => a + (b.paid_amount || 0), 0);
@@ -2695,105 +2656,107 @@ ${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button c
     html += '</tbody></table></div></div>';
     document.getElementById('content').innerHTML = html;
 }
-    
-    async function viewProjectDetail(projectCode) {
-        showLoading();
-        try {
-            const { data: project } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', currentCompanyId).single();
-            if (!project) { showToast('Project tidak ditemukan', 'error'); hideLoading(); return; }
             
-            // Ambil semua transaksi AR (invoices yang sudah dibayar)
-            const { data: invoices } = await sb.from('invoices').select('*').eq('project_code', projectCode).eq('company_id', currentCompanyId).in('status', ['partial', 'paid']);
-            
-            // Ambil semua transaksi AP (payment requests yang sudah paid)
-            const { data: payments } = await sb.from('payment_requests').select('*').eq('project_code', projectCode).eq('company_id', currentCompanyId).in('status', ['paid']);
-            
-            // Gabungkan dan urutkan
-            let transactions = [];
-            invoices.forEach(inv => {
-                transactions.push({
-                    date: inv.paid_at || inv.invoice_date,
-                    type: 'AR (Pemasukan)',
-                    reference: inv.invoice_no,
-                    description: `Invoice customer: ${inv.description || '-'}`,
-                    amount: inv.paid_amount || 0,
-                    is_income: true
-                });
+   async function viewProjectDetail(projectCode) {
+    showLoading();
+    try {
+        const { data: project } = await sb.from('projects').select('*').eq('code', projectCode).eq('company_id', currentCompanyId).single();
+        if (!project) { showToast('Project tidak ditemukan', 'error'); hideLoading(); return; }
+        
+        // Ambil semua transaksi AR (invoices yang sudah dibayar)
+        const { data: allInvoices } = await sb.from('invoices').select('*').eq('project_code', projectCode).eq('company_id', currentCompanyId);
+        const invoices = (allInvoices || []).filter(i => i.status === 'partial' || i.status === 'paid');
+        
+        // Ambil semua transaksi AP (payment requests yang sudah paid)
+        const { data: allPayments } = await sb.from('payment_requests').select('*').eq('project_code', projectCode).eq('company_id', currentCompanyId);
+        const payments = (allPayments || []).filter(p => p.status === 'paid');
+        
+        // Gabungkan dan urutkan
+        let transactions = [];
+        invoices.forEach(inv => {
+            transactions.push({
+                date: inv.paid_at || inv.invoice_date,
+                type: 'AR (Pemasukan)',
+                reference: inv.invoice_no,
+                description: `Invoice customer: ${inv.description || '-'}`,
+                amount: inv.paid_amount || 0,
+                is_income: true
             });
-            payments.forEach(pay => {
-                transactions.push({
-                    date: pay.paid_at || pay.request_date,
-                    type: 'AP (Pengeluaran)',
-                    reference: pay.voucher_no || `#${pay.id}`,
-                    description: pay.description,
-                    amount: pay.total_with_tax || pay.amount,
-                    is_income: false
-                });
+        });
+        payments.forEach(pay => {
+            transactions.push({
+                date: pay.paid_at || pay.request_date,
+                type: 'AP (Pengeluaran)',
+                reference: pay.voucher_no || `#${pay.id}`,
+                description: pay.description,
+                amount: pay.total_with_tax || pay.amount,
+                is_income: false
             });
-            transactions.sort((a,b) => new Date(b.date) - new Date(a.date));
-            
-            const totalIncome = transactions.filter(t => t.is_income).reduce((a,b) => a + b.amount, 0);
-            const totalExpense = transactions.filter(t => !t.is_income).reduce((a,b) => a + b.amount, 0);
-            const netCashflow = totalIncome - totalExpense;
-            const budgetUsed = project.is_unlimited ? totalExpense : (project.budget - (project.budget - totalExpense));
-            
-            let html = `
-                <div class="form-card">
-                    <div class="form-header">
-                        <h2><i class="fas fa-chart-line"></i> Detail Project: ${project.code} - ${project.name}</h2>
-                        <button class="btn btn-secondary" onclick="loadProjectList()">Kembali</button>
-                    </div>
-                    
-                    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom:20px;">
-                        <div class="stat-card"><div class="stat-value">${project.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(project.budget)}`}</div><div class="stat-label">Total Budget</div></div>
-                        <div class="stat-card"><div class="stat-value">Rp ${formatNumber(totalExpense)}</div><div class="stat-label">Total Pengeluaran (AP)</div></div>
-                        <div class="stat-card"><div class="stat-value">Rp ${formatNumber(totalIncome)}</div><div class="stat-label">Total Pemasukan (AR)</div></div>
-                        <div class="stat-card"><div class="stat-value" style="color:${netCashflow >= 0 ? 'var(--success)' : 'var(--danger)'}">Rp ${formatNumber(Math.abs(netCashflow))}</div><div class="stat-label">${netCashflow >= 0 ? 'Surplus' : 'Defisit'}</div></div>
-                    </div>
-                    
-                    <div class="progress-budget" style="margin-bottom:20px;">
-                        <div class="progress-fill ${project.is_unlimited ? 'unlimited' : (budgetUsed/project.budget*100 <= 70 ? 'safe' : (budgetUsed/project.budget*100 <= 90 ? 'warning' : 'danger'))}" style="width: ${project.is_unlimited ? 0 : Math.min((budgetUsed/project.budget)*100, 100)}%;">
-                            ${!project.is_unlimited ? Math.round((budgetUsed/project.budget)*100) + '%' : ''}
-                        </div>
-                    </div>
-                    
-                    <div class="table-container">
-                        <table class="table">
-                            <thead><tr><th>Tanggal</th><th>Tipe</th><th>Referensi</th><th>Deskripsi</th><th class="text-right">Jumlah</th></tr></thead>
-                            <tbody>
-                                ${transactions.map(t => `
-                                    <tr>
-                                        <td>${formatDate(t.date)}</td>
-                                        <td><span class="status-badge ${t.is_income ? 'status-paid' : 'status-draft'}">${t.type}</span></td>
-                                        <td>${t.reference}</td>
-                                        <td>${t.description}</td>
-                                        <td class="text-right" style="color:${t.is_income ? 'var(--success)' : 'var(--danger)'}">${t.is_income ? '+' : '-'} Rp ${formatNumber(t.amount)}</td>
-                                    </tr>
-                                `).join('')}
-                                ${transactions.length === 0 ? '<tr><td colspan="5" class="text-center">Belum ada transaksi</td></tr>' : ''}
-                            </tbody>
-                            <tfoot>
-                                <tr style="font-weight:bold; background:var(--gray-100);">
-                                    <td colspan="4" class="text-right">TOTAL PEMASUKAN</td>
-                                    <td class="text-right" style="color:var(--success);">+ Rp ${formatNumber(totalIncome)}</td>
-                                </tr>
-                                <tr style="font-weight:bold; background:var(--gray-100);">
-                                    <td colspan="4" class="text-right">TOTAL PENGELUARAN</td>
-                                    <td class="text-right" style="color:var(--danger);">- Rp ${formatNumber(totalExpense)}</td>
-                                </tr>
-                                <tr style="font-weight:bold; background:var(--primary); color:white;">
-                                    <td colspan="4" class="text-right">NET CASHFLOW</td>
-                                    <td class="text-right">Rp ${formatNumber(Math.abs(netCashflow))} (${netCashflow >= 0 ? 'Surplus' : 'Defisit'})</td>
-                                </tr>
-                            </tfoot>
-                        </table>
+        });
+        transactions.sort((a,b) => new Date(b.date) - new Date(a.date));
+        
+        const totalIncome = transactions.filter(t => t.is_income).reduce((a,b) => a + b.amount, 0);
+        const totalExpense = transactions.filter(t => !t.is_income).reduce((a,b) => a + b.amount, 0);
+        const netCashflow = totalIncome - totalExpense;
+        const budgetUsed = project.is_unlimited ? totalExpense : (project.budget - (project.budget - totalExpense));
+        
+        let html = `
+            <div class="form-card">
+                <div class="form-header">
+                    <h2><i class="fas fa-chart-line"></i> Detail Project: ${project.code} - ${project.name}</h2>
+                    <button class="btn btn-secondary" onclick="loadProjectList()">Kembali</button>
+                </div>
+                
+                <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom:20px;">
+                    <div class="stat-card"><div class="stat-value">${project.is_unlimited ? 'Unlimited' : `Rp ${formatNumber(project.budget)}`}</div><div class="stat-label">Total Budget</div></div>
+                    <div class="stat-card"><div class="stat-value">Rp ${formatNumber(totalExpense)}</div><div class="stat-label">Total Pengeluaran (AP)</div></div>
+                    <div class="stat-card"><div class="stat-value">Rp ${formatNumber(totalIncome)}</div><div class="stat-label">Total Pemasukan (AR)</div></div>
+                    <div class="stat-card"><div class="stat-value" style="color:${netCashflow >= 0 ? 'var(--success)' : 'var(--danger)'}">Rp ${formatNumber(Math.abs(netCashflow))}</div><div class="stat-label">${netCashflow >= 0 ? 'Surplus' : 'Defisit'}</div></div>
+                </div>
+                
+                <div class="progress-budget" style="margin-bottom:20px;">
+                    <div class="progress-fill ${project.is_unlimited ? 'unlimited' : (budgetUsed/project.budget*100 <= 70 ? 'safe' : (budgetUsed/project.budget*100 <= 90 ? 'warning' : 'danger'))}" style="width: ${project.is_unlimited ? 0 : Math.min((budgetUsed/project.budget)*100, 100)}%;">
+                        ${!project.is_unlimited ? Math.round((budgetUsed/project.budget)*100) + '%' : ''}
                     </div>
                 </div>
-            `;
-            document.getElementById('content').innerHTML = html;
-        } catch (error) { showToast('Error: ' + error.message, 'error'); }
-        finally { hideLoading(); }
-    }
+                
+                <div class="table-container">
+                    <table class="table">
+                        <thead><tr><th>Tanggal</th><th>Tipe</th><th>Referensi</th><th>Deskripsi</th><th class="text-right">Jumlah</th></tr></thead>
+                        <tbody>
+                            ${transactions.map(t => `
+                                <tr>
+                                    <td>${formatDate(t.date)}</td>
+                                    <td><span class="status-badge ${t.is_income ? 'status-paid' : 'status-draft'}">${t.type}</span></td>
+                                    <td>${t.reference}</td>
+                                    <td>${t.description}</td>
+                                    <td class="text-right" style="color:${t.is_income ? 'var(--success)' : 'var(--danger)'}">${t.is_income ? '+' : '-'} Rp ${formatNumber(t.amount)}</td>
+                                </tr>
+                            `).join('')}
+                            ${transactions.length === 0 ? '<tr><td colspan="5" class="text-center">Belum ada transaksi</td></tr>' : ''}
+                        </tbody>
+                        <tfoot>
+                            <tr style="font-weight:bold; background:var(--gray-100);">
+                                <td colspan="4" class="text-right">TOTAL PEMASUKAN</td>
+                                <td class="text-right" style="color:var(--success);">+ Rp ${formatNumber(totalIncome)}</td>
+                            </tr>
+                            <tr style="font-weight:bold; background:var(--gray-100);">
+                                <td colspan="4" class="text-right">TOTAL PENGELUARAN</td>
+                                <td class="text-right" style="color:var(--danger);">- Rp ${formatNumber(totalExpense)}</td>
+                            </tr>
+                            <tr style="font-weight:bold; background:var(--primary); color:white;">
+                                <td colspan="4" class="text-right">NET CASHFLOW</td>
+                                <td class="text-right">Rp ${formatNumber(Math.abs(netCashflow))} (${netCashflow >= 0 ? 'Surplus' : 'Defisit'})</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        `;
+        document.getElementById('content').innerHTML = html;
+    } catch (error) { showToast('Error: ' + error.message, 'error'); }
+    finally { hideLoading(); }
+}
     
     async function loadVendorList() {
         let vend = await getVendorList(currentCompanyId);
