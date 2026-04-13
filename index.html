@@ -313,22 +313,31 @@
     }
     
     // ==================== AUTHENTICATION ====================
-    async function login() {
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        if (!email || !password) { let err = document.getElementById('loginError'); err.innerText = 'Isi email dan password'; err.style.display = 'block'; return; }
-        showLoading();
-        const { data, error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) { hideLoading(); let err = document.getElementById('loginError'); err.innerText = error.message; err.style.display = 'block'; return; }
-        const { data: profileData } = await sb.from('user_profiles').select('*').eq('email', email);
-        const profile = profileData?.[0];
-        currentUser = data.user; currentUserRole = profile?.role || 'staff'; currentCompanyId = profile?.company_id || 1;
-        const { data: comps } = await sb.from('companies').select('*'); companies = comps || [];
-        document.getElementById('loginPage').style.display = 'none'; document.getElementById('appPage').style.display = 'flex';
-        document.getElementById('userName').innerText = profile?.name || email; document.getElementById('userRole').innerText = currentUserRole;
-        document.getElementById('userAvatar').innerText = (profile?.name || email).charAt(0).toUpperCase();
-        renderSidebar(); loadDashboard(); hideLoading();
+   async function login() {
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    if (!email || !password) { let err = document.getElementById('loginError'); err.innerText = 'Isi email dan password'; err.style.display = 'block'; return; }
+    showLoading();
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { hideLoading(); let err = document.getElementById('loginError'); err.innerText = error.message; err.style.display = 'block'; return; }
+    const { data: profileData } = await sb.from('user_profiles').select('*').eq('email', email);
+    const profile = profileData?.[0];
+    currentUser = data.user; currentUserRole = profile?.role || 'staff'; currentCompanyId = profile?.company_id || 1;
+    
+    // ✅ PERBAIKAN - HANYA SATU KALI
+    const { data: comps } = await sb.from('companies').select('*');
+    if (currentUserRole === 'direktur') {
+        companies = comps || [];
+    } else {
+        companies = (comps || []).filter(c => c.id === currentCompanyId);
     }
+    // HAPUS baris duplikat di bawah ini!
+    
+    document.getElementById('loginPage').style.display = 'none'; document.getElementById('appPage').style.display = 'flex';
+    document.getElementById('userName').innerText = profile?.name || email; document.getElementById('userRole').innerText = currentUserRole;
+    document.getElementById('userAvatar').innerText = (profile?.name || email).charAt(0).toUpperCase();
+    renderSidebar(); loadDashboard(); hideLoading();
+}
     
     async function logout() { await sb.auth.signOut(); document.getElementById('loginPage').style.display = 'flex'; document.getElementById('appPage').style.display = 'none'; }
     
@@ -1626,45 +1635,80 @@
     }
     
     // ==================== AR (INVOICE PENJUALAN) LENGKAP ====================
-    async function loadInvoiceList() {
-        if (!companies.length) { setTimeout(() => loadInvoiceList(), 500); return; }
-        if (!currentCompanyId) currentCompanyId = companies[0]?.id || 1;
-        
-        const today = new Date();
-        const currentMonth = today.getMonth() + 1;
-        const currentYear = today.getFullYear();
-        const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-        
-        let monthOptions = '<option value="all">Semua Bulan</option>';
-        for (let i = 1; i <= 12; i++) monthOptions += `<option value="${i}" ${i == currentMonth ? 'selected' : ''}>${monthNames[i-1]}</option>`;
-        
-        let yearOptions = '<option value="all">Semua Tahun</option>';
-        for (let y = currentYear - 2; y <= currentYear + 1; y++) yearOptions += `<option value="${y}" ${y == currentYear ? 'selected' : ''}>${y}</option>`;
-        
-        let html = `
-            <div class="form-card">
-                <div class="form-header">
-                    <h2><i class="fas fa-file-invoice"></i> Invoice Penjualan (AR)</h2>
-                    <div>
-                        <button class="btn btn-primary" onclick="showCreateInvoiceForm()"><i class="fas fa-plus"></i> Buat Invoice</button>
-                        <button class="btn btn-secondary btn-sm" onclick="refreshInvoices()"><i class="fas fa-sync-alt"></i> Refresh</button>
-                    </div>
-                </div>
-                <div class="filter-card">
-                    <div class="filter-grid">
-                        <div class="filter-item"><label class="filter-label">Bulan</label><select id="invoiceMonthFilter" class="filter-select" onchange="loadInvoices()">${monthOptions}</select></div>
-                        <div class="filter-item"><label class="filter-label">Tahun</label><select id="invoiceYearFilter" class="filter-select" onchange="loadInvoices()">${yearOptions}</select></div>
-                        <div class="filter-item"><label class="filter-label">Status</label><select id="invoiceStatusFilter" class="filter-select" onchange="loadInvoices()">
-                            <option value="all">Semua</option><option value="draft">Draft</option><option value="posted">Posted</option><option value="partial">Partial</option><option value="paid">Paid</option>
-                        </select></div>
-                    </div>
-                </div>
-                <div class="table-container"><table class="table"><thead><tr><th>No Invoice</th><th>Customer</th><th>Tanggal</th><th>Project</th><th>Total</th><th>Dibayar</th><th>Sisa</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="invoiceTableBody"><tr><td colspan="9" class="text-center">Loading...</td></tr></tbody>}</div>
-            </div>
-        `;
-        document.getElementById('content').innerHTML = html;
-        await loadInvoices();
+   async function loadInvoiceList() {
+    if (!companies.length) { setTimeout(() => loadInvoiceList(), 500); return; }
+    if (!currentCompanyId) currentCompanyId = companies[0]?.id || 1;
+
+    // 🔴 TAMBAHKAN INI - OPTIONS PERUSAHAAN BERDASARKAN ROLE
+    let companyOptions = '';
+    if (currentUserRole === 'direktur') {
+        companyOptions = '<option value="all">Semua Perusahaan</option>';
+        companies.forEach(c => {
+            companyOptions += `<option value="${c.id}" ${c.id == currentCompanyId ? 'selected' : ''}>${c.nama}</option>`;
+        });
+    } else {
+        const userCompany = companies.find(c => c.id === currentCompanyId);
+        companyOptions = `<option value="${currentCompanyId}" selected>${userCompany?.nama || 'Perusahaan Saya'}</option>`;
     }
+    // SAMPAI SINI
+
+    const today = new Date();
+    const currentMonth = today.getMonth() + 1;
+    const currentYear = today.getFullYear();
+    const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    
+    let monthOptions = '<option value="all">Semua Bulan</option>';
+    for (let i = 1; i <= 12; i++) monthOptions += `<option value="${i}" ${i == currentMonth ? 'selected' : ''}>${monthNames[i-1]}</option>`;
+    
+    let yearOptions = '<option value="all">Semua Tahun</option>';
+    for (let y = currentYear - 2; y <= currentYear + 1; y++) yearOptions += `<option value="${y}" ${y == currentYear ? 'selected' : ''}>${y}</option>`;
+    
+    let html = `
+        <div class="form-card">
+            <div class="form-header">
+                <h2><i class="fas fa-file-invoice"></i> Invoice Penjualan (AR)</h2>
+                <div>
+                    <button class="btn btn-primary" onclick="showCreateInvoiceForm()"><i class="fas fa-plus"></i> Buat Invoice</button>
+                    <button class="btn btn-secondary btn-sm" onclick="refreshInvoices()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
+            </div>
+            
+            <!-- 🔴 TAMBAHKAN DROPDOWN PERUSAHAAN DI SINI -->
+            <div class="filter-card" style="margin-bottom:1rem;">
+                <div class="filter-grid">
+                    <div class="filter-item">
+                        <label class="filter-label">Perusahaan</label>
+                        <select id="invoiceCompanyFilter" class="filter-select" onchange="changeInvoiceCompany(this.value)">
+                            ${companyOptions}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <!-- SAMPAI SINI -->
+            
+            <div class="filter-card">
+                <div class="filter-grid">
+                    <div class="filter-item"><label class="filter-label">Bulan</label><select id="invoiceMonthFilter" class="filter-select" onchange="loadInvoices()">${monthOptions}</select></div>
+                    <div class="filter-item"><label class="filter-label">Tahun</label><select id="invoiceYearFilter" class="filter-select" onchange="loadInvoices()">${yearOptions}</select></div>
+                    <div class="filter-item"><label class="filter-label">Status</label><select id="invoiceStatusFilter" class="filter-select" onchange="loadInvoices()">
+                        <option value="all">Semua</option><option value="draft">Draft</option><option value="posted">Posted</option><option value="partial">Partial</option><option value="paid">Paid</option>
+                    </select></div>
+                </div>
+            </div>
+            <div class="table-container"><table class="table"><thead>...</thead><tbody id="invoiceTableBody">...</tbody>}</div>
+        </div>
+    `;
+    document.getElementById('content').innerHTML = html;
+    await loadInvoices();
+}
+        async function changeInvoiceCompany(companyId) {
+    if (companyId === 'all') {
+        currentCompanyId = null;
+    } else {
+        currentCompanyId = parseInt(companyId);
+    }
+    loadInvoices();
+}
     
     async function loadInvoices() {
         const month = document.getElementById('invoiceMonthFilter')?.value || 'all';
@@ -1727,6 +1771,18 @@ ${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button c
         const projectsList = await getProjectList(currentCompanyId);
         const revenueAccs = await getRevenueAccounts(currentCompanyId);
         const bankList = await getBankList(currentCompanyId);
+
+         let revenueOptions = '<option value="">Pilih Akun Pendapatan</option>';
+    revenueAccs.forEach(a => {
+        // Tampilkan kode akun + nama
+        revenueOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`;
+    });
+    
+    let bankOptions = '<option value="">Pilih Bank</option>';
+    bankList.forEach(b => {
+        // Tampilkan kode akun + nama bank
+        bankOptions += `<option value="${b.code}">${b.code} - ${b.display}</option>`;
+    });
         
         let customerOptions = '<option value="">Pilih Customer</option>';
         customersList.forEach(c => customerOptions += `<option value="${c.id}">${c.name}</option>`);
@@ -2136,6 +2192,27 @@ ${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button c
     // ==================== AP (INVOICE PEMBELIAN) LENGKAP ====================
     async function loadVendorInvoiceList() {
         if (!companies.length) { setTimeout(() => loadVendorInvoiceList(), 500); return; }
+         let companyOptions = '';
+    if (currentUserRole === 'direktur') {
+        companyOptions = '<option value="all">Semua Perusahaan</option>';
+        companies.forEach(c => {
+            companyOptions += `<option value="${c.id}" ${c.id == currentCompanyId ? 'selected' : ''}>${c.nama}</option>`;
+        });
+    } else {
+        const userCompany = companies.find(c => c.id === currentCompanyId);
+        companyOptions = `<option value="${currentCompanyId}" selected>${userCompany?.nama || 'Perusahaan Saya'}</option>`;
+    }
+        <div class="filter-card" style="margin-bottom:1rem;">
+    <div class="filter-grid">
+        <div class="filter-item">
+            <label class="filter-label">Perusahaan</label>
+            <select id="vendorCompanyFilter" class="filter-select" onchange="changeVendorCompany(this.value)">
+                ${companyOptions}
+            </select>
+        </div>
+    </div>
+</div>
+        
         let html = `
             <div class="form-card">
                 <div class="form-header"><h2><i class="fas fa-users"></i> Invoice Pembelian (AP)</h2>
@@ -2148,7 +2225,15 @@ ${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button c
         document.getElementById('content').innerHTML = html;
         await loadVendorInvoicesData();
     }
-    
+
+        async function changeVendorCompany(companyId) {
+    if (companyId === 'all') {
+        currentCompanyId = null;
+    } else {
+        currentCompanyId = parseInt(companyId);
+    }
+    loadVendorInvoicesData();
+}
     async function loadVendorInvoicesData() {
         showSkeletonLoader('vendorInvoiceTableBody', 5);
         try {
@@ -2693,7 +2778,26 @@ ${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button c
         else if (currentMenu === 'Data Customer') loadCustomerList();
         else if (currentMenu === 'Data Vendor') loadVendorList();
     }
-    
+
+        async function changeInvoiceCompany(companyId) {
+    if (companyId === 'all') {
+        // Untuk direktur, load semua perusahaan
+        currentCompanyId = null;
+    } else {
+        currentCompanyId = parseInt(companyId);
+    }
+    loadInvoices();
+}
+
+async function changeVendorCompany(companyId) {
+    if (companyId === 'all') {
+        currentCompanyId = null;
+    } else {
+        currentCompanyId = parseInt(companyId);
+    }
+    loadVendorInvoicesData();
+}
+        
     async function checkSession() {
         const { data } = await sb.auth.getSession();
         if (data.session) {
