@@ -2183,9 +2183,11 @@ ${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button c
     async function refreshInvoices() { loadInvoiceList(); }
     
     // ==================== AP (INVOICE PEMBELIAN) LENGKAP ====================
-    async function loadVendorInvoiceList() {
-        if (!companies.length) { setTimeout(() => loadVendorInvoiceList(), 500); return; }
-         let companyOptions = '';
+   // ==================== AP (INVOICE PEMBELIAN) LENGKAP ====================
+async function loadVendorInvoiceList() {
+    if (!companies.length) { setTimeout(() => loadVendorInvoiceList(), 500); return; }
+    
+    let companyOptions = '';
     if (currentUserRole === 'direktur') {
         companyOptions = '<option value="all">Semua Perusahaan</option>';
         companies.forEach(c => {
@@ -2195,30 +2197,53 @@ ${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button c
         const userCompany = companies.find(c => c.id === currentCompanyId);
         companyOptions = `<option value="${currentCompanyId}" selected>${userCompany?.nama || 'Perusahaan Saya'}</option>`;
     }
-        <div class="filter-card" style="margin-bottom:1rem;">
-    <div class="filter-grid">
-        <div class="filter-item">
-            <label class="filter-label">Perusahaan</label>
-            <select id="vendorCompanyFilter" class="filter-select" onchange="changeVendorCompany(this.value)">
-                ${companyOptions}
-            </select>
-        </div>
-    </div>
-</div>
-        
-        let html = `
-            <div class="form-card">
-                <div class="form-header"><h2><i class="fas fa-users"></i> Invoice Pembelian (AP)</h2>
-                    <div><button class="btn btn-primary" onclick="showCreateVendorInvoiceForm()"><i class="fas fa-plus"></i> Buat Invoice</button>
-                    <button class="btn btn-secondary btn-sm" onclick="refreshVendorInvoices()"><i class="fas fa-sync-alt"></i> Refresh</button></div>
+    
+    let html = `
+        <div class="form-card">
+            <div class="form-header">
+                <h2><i class="fas fa-users"></i> Invoice Pembelian (AP)</h2>
+                <div>
+                    <button class="btn btn-primary" onclick="showCreateVendorInvoiceForm()"><i class="fas fa-plus"></i> Buat Invoice</button>
+                    <button class="btn btn-secondary btn-sm" onclick="refreshVendorInvoices()"><i class="fas fa-sync-alt"></i> Refresh</button>
                 </div>
-                <div class="table-container"><table class="table"><thead><tr><th>Vendor</th><th>No Invoice</th><th>Tanggal</th><th>Project</th><th>Total</th><th>Dibayar</th><th>Sisa</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="vendorInvoiceTableBody"><tr><td colspan="9" class="text-center">Loading...</td></tr></tbody>}</div>
             </div>
-        `;
-        document.getElementById('content').innerHTML = html;
-        await loadVendorInvoicesData();
-    }
-
+            
+            <div class="filter-card" style="margin-bottom:1rem;">
+                <div class="filter-grid">
+                    <div class="filter-item">
+                        <label class="filter-label">Perusahaan</label>
+                        <select id="vendorCompanyFilter" class="filter-select" onchange="changeVendorCompany(this.value)">
+                            ${companyOptions}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Vendor</th>
+                            <th>No Invoice</th>
+                            <th>Tanggal</th>
+                            <th>Project</th>
+                            <th>Total</th>
+                            <th>Dibayar</th>
+                            <th>Sisa</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vendorInvoiceTableBody">
+                        <tr><td colspan="9" class="text-center">Loading...<\/td><\/tr>
+                    </tbody>
+                <\/table>
+            <\/div>
+        <\/div>
+    `;
+    document.getElementById('content').innerHTML = html;
+    await loadVendorInvoicesData();
+}
         async function changeVendorCompany(companyId) {
     if (companyId === 'all') {
         currentCompanyId = null;
@@ -2227,39 +2252,46 @@ ${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button c
     }
     loadVendorInvoicesData();
 }
-    async function loadVendorInvoicesData() {
-        showSkeletonLoader('vendorInvoiceTableBody', 5);
-        try {
-            let { data: invoices, error } = await sb.from('vendor_invoices').select('*').eq('company_id', currentCompanyId).order('id', { ascending: false });
-            if (error) throw error;
-            const tbody = document.getElementById('vendorInvoiceTableBody');
-            if (!invoices || invoices.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="text-center">Tidak ada data</td></tr>'; return; }
-            let html = '';
-            for (const inv of invoices) {
-                const sisa = (inv.total || 0) - (inv.paid_amount || 0);
-                html += `<tr>
-                    <td>${inv.vendor_name || '-'}</td>
-                    <td><strong>${inv.invoice_no}</strong></td>
-                    <td>${inv.invoice_date || '-'}</td>
-                    <td>${inv.project_code || '-'}</td>
-                    <td class="text-right">Rp ${formatNumber(inv.total)}</td>
-                    <td class="text-right">Rp ${formatNumber(inv.paid_amount || 0)}</td>
-                    <td class="text-right">Rp ${formatNumber(sisa)}</td>
-                    <td><span class="status-badge status-${inv.payment_status === 'paid' ? 'paid' : (inv.payment_status === 'partial' ? 'verified' : (inv.payment_status === 'submitted' ? 'status-submitted' : 'draft'))}">
-                        ${inv.payment_status || 'unpaid'}
-                    </span></td>
-                    <td>
-                        <button class="action-btn" onclick="viewVendorInvoiceDetail(${inv.id})"><i class="fas fa-eye"></i></button>
-                        ${inv.payment_status === 'submitted' && currentUserRole === 'direktur' ? 
-                            `<button class="action-btn" onclick="approveVendorPayment(${inv.id})" style="color:var(--success);"><i class="fas fa-thumbs-up"></i></button>` : 
-                            (inv.payment_status === 'unpaid' && currentUserRole === 'finance' ? 
-                                `<button class="action-btn" onclick="showAjukanPembayaranVendor(${inv.id})" style="color:var(--success);"><i class="fas fa-paper-plane"></i></button>` : '')}
-                    </td>
-                </tr>`;
-            }
-            tbody.innerHTML = html;
-        } catch (error) { console.error(error); showToast('Gagal memuat data', 'error'); }
-    }
+   async function loadVendorInvoicesData() {
+    showSkeletonLoader('vendorInvoiceTableBody', 5);
+    try {
+        let query = sb.from('vendor_invoices').select('*');
+        if (currentCompanyId) {
+            query = query.eq('company_id', currentCompanyId);
+        }
+        let { data: invoices, error } = await query.order('id', { ascending: false });
+        if (error) throw error;
+        const tbody = document.getElementById('vendorInvoiceTableBody');
+        if (!invoices || invoices.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center">Tidak ada数据<\/td><\/tr>';
+            return;
+        }
+        let html = '';
+        for (const inv of invoices) {
+            const sisa = (inv.total || 0) - (inv.paid_amount || 0);
+            html += `<tr>
+                <td>${inv.vendor_name || '-'}<\/td>
+                <td><strong>${inv.invoice_no}<\/strong><\/td>
+                <td>${inv.invoice_date || '-'}<\/td>
+                <td>${inv.project_code || '-'}<\/td>
+                <td class="text-right">Rp ${formatNumber(inv.total)}<\/td>
+                <td class="text-right">Rp ${formatNumber(inv.paid_amount || 0)}<\/td>
+                <td class="text-right">Rp ${formatNumber(sisa)}<\/td>
+                <td><span class="status-badge status-${inv.payment_status === 'paid' ? 'paid' : (inv.payment_status === 'partial' ? 'verified' : (inv.payment_status === 'submitted' ? 'status-submitted' : 'draft'))}">
+                    ${inv.payment_status || 'unpaid'}
+                <\/span><\/td>
+                <td>
+                    <button class="action-btn" onclick="viewVendorInvoiceDetail(${inv.id})"><i class="fas fa-eye"><\/i><\/button>
+                    ${inv.payment_status === 'submitted' && currentUserRole === 'direktur' ? 
+                        `<button class="action-btn" onclick="approveVendorPayment(${inv.id})" style="color:var(--success);"><i class="fas fa-thumbs-up"><\/i><\/button>` : 
+                        (inv.payment_status === 'unpaid' && currentUserRole === 'finance' ? 
+                            `<button class="action-btn" onclick="showAjukanPembayaranVendor(${inv.id})" style="color:var(--success);"><i class="fas fa-paper-plane"><\/i><\/button>` : '')}
+                <\/td>
+            <\/tr>`;
+        }
+        tbody.innerHTML = html;
+    } catch (error) { console.error(error); showToast('Gagal memuat data', 'error'); }
+}
     
     async function refreshVendorInvoices() { await loadVendorInvoicesData(); }
     
