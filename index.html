@@ -469,6 +469,12 @@
         
         let { data: vendorInvoices } = await sb.from('vendor_invoices').select('*');
         let totalUtang = (vendorInvoices || []).reduce((a,b) => a + ((b.total||0) - (b.paid_amount||0)), 0);
+
+        if (document.getElementById('totalKas')) document.getElementById('totalKas').innerHTML = `Rp ${formatNumber(totalApproved)}`;
+        if (document.getElementById('totalPiutang')) document.getElementById('totalPiutang').innerHTML = `Rp ${formatNumber(totalPiutang)}`;
+        if (document.getElementById('totalUtang')) document.getElementById('totalUtang').innerHTML = `Rp ${formatNumber(totalUtang)}`;
+        if (document.getElementById('totalPending')) document.getElementById('totalPending').innerHTML = `Rp ${formatNumber(totalPending)}`;
+        
         
         document.getElementById('totalKas').innerHTML = `Rp ${formatNumber(totalApproved)}`;
         document.getElementById('totalPiutang').innerHTML = `Rp ${formatNumber(totalPiutang)}`;
@@ -857,17 +863,56 @@
     }
     
     async function rejectPaymentRequest(id) {
-        const alasan = prompt('Alasan penolakan:');
-        if (!alasan) return;
-        showLoading();
-        try {
-            await sb.from('payment_requests').update({ status: 'rejected', rejected_at: new Date(), rejected_by: currentUser?.email, rejection_reason: alasan }).eq('id', id);
-            await sb.from('payment_logs').insert({ request_id: id, user_email: currentUser?.email, user_role: currentUserRole, old_status: 'submitted', new_status: 'rejected', keterangan: `Ditolak: ${alasan}` });
-            showToast('Payment request ditolak', 'warning');
-            refreshPaymentRequests();
-        } catch (error) { showToast('Gagal menolak: ' + error.message, 'error'); }
-        finally { hideLoading(); }
+    // Buat modal input alasan
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width:400px;">
+            <div style="padding:20px;">
+                <h3><i class="fas fa-times-circle" style="color:var(--danger);"></i> Tolak Payment Request</h3>
+                <div class="form-group" style="margin-top:15px;">
+                    <label>Alasan Penolakan</label>
+                    <textarea id="rejectReason" class="form-control" rows="3" placeholder="Masukkan alasan penolakan..."></textarea>
+                </div>
+                <div style="display:flex; gap:1rem; justify-content:flex-end; margin-top:20px;">
+                    <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Batal</button>
+                    <button class="btn btn-danger" onclick="submitReject(${id})">Tolak</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+async function submitReject(id) {
+    const alasan = document.getElementById('rejectReason').value;
+    if (!alasan) {
+        showToast('Alasan penolakan harus diisi', 'error');
+        return;
     }
+    document.querySelector('.modal-overlay').remove();
+    
+    showLoading();
+    try {
+        await sb.from('payment_requests').update({ 
+            status: 'rejected', 
+            rejected_at: new Date(), 
+            rejected_by: currentUser?.email, 
+            rejection_reason: alasan 
+        }).eq('id', id);
+        await sb.from('payment_logs').insert({ 
+            request_id: id, 
+            user_email: currentUser?.email, 
+            user_role: currentUserRole, 
+            old_status: 'submitted', 
+            new_status: 'rejected', 
+            keterangan: `Ditolak: ${alasan}` 
+        });
+        showToast('Payment request ditolak', 'warning');
+        refreshPaymentRequests();
+    } catch (error) { showToast('Gagal menolak: ' + error.message, 'error'); }
+    finally { hideLoading(); }
+}
     
     async function approvePaymentRequest(id) {
         const { data: req, error } = await sb.from('payment_requests').select('*').eq('id', id).single();
@@ -1150,6 +1195,10 @@
     
     // ==================== VERIFIKASI (FIXED) ====================
     async function verifyPaymentRequest(id) {
+        if (currentUserRole !== 'finance') {
+        showToast('Hanya finance yang bisa verifikasi', 'error');
+        return;
+    }
         showLoading();
         try {
             const { data: req, error } = await sb.from('payment_requests').select('*').eq('id', id).single();
@@ -1711,60 +1760,70 @@
 }
     
     async function loadInvoices() {
-        const month = document.getElementById('invoiceMonthFilter')?.value || 'all';
-        const year = document.getElementById('invoiceYearFilter')?.value || 'all';
-        const status = document.getElementById('invoiceStatusFilter')?.value || 'all';
+    const month = document.getElementById('invoiceMonthFilter')?.value || 'all';
+    const year = document.getElementById('invoiceYearFilter')?.value || 'all';
+    const status = document.getElementById('invoiceStatusFilter')?.value || 'all';
+    const companyFilter = document.getElementById('invoiceCompanyFilter')?.value;
+    
+    showSkeletonLoader('invoiceTableBody', 5);
+    
+    try {
+        let query = sb.from('invoices').select('*').order('id', { ascending: false });
         
-        showSkeletonLoader('invoiceTableBody', 5);
+        // 🔴 PERBAIKAN: Jika companyFilter 'all' atau null, jangan filter company
+        if (companyFilter && companyFilter !== 'all' && companyFilter !== 'null') {
+            query = query.eq('company_id', parseInt(companyFilter));
+        } else if (currentCompanyId && currentCompanyId !== null) {
+            query = query.eq('company_id', currentCompanyId);
+        }
+        // Jika tidak ada filter company, ambil semua data (tanpa filter company_id)
         
-        try {
-            let query = sb.from('invoices').select('*').eq('company_id', currentCompanyId).order('id', { ascending: false });
-            if (month !== 'all' && year !== 'all') {
-                const start = `${year}-${month.padStart(2,'0')}-01`;
-                const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
-                const end = `${year}-${month.padStart(2,'0')}-${lastDay}`;
-                query = query.gte('invoice_date', start).lte('invoice_date', end);
-            } else if (year !== 'all') {
-                query = query.gte('invoice_date', `${year}-01-01`).lte('invoice_date', `${year}-12-31`);
-            }
-            
-            let { data: invoices, error } = await query;
-            if (error) throw error;
-            
-            if (status !== 'all') invoices = invoices.filter(i => i.status === status);
-            
-            const customersList = await getCustomerList(currentCompanyId);
-            const tbody = document.getElementById('invoiceTableBody');
-            if (!invoices || invoices.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center">Tidak ada data invoice</td></tr>';
-                return;
-            }
-            
-            let html = '';
-            for (const inv of invoices) {
-                const cust = customersList.find(c => c.id == inv.customer_id);
-                const sisa = (inv.total || 0) - (inv.paid_amount || 0);
-                html += `<tr>
-                    <td><strong>${inv.invoice_no}</strong></td>
-                    <td>${cust?.name || '-'}</td>
-                    <td>${inv.invoice_date || '-'}</td>
-                    <td>${inv.project_code || '-'}</td>
-                    <td class="text-right">Rp ${formatNumber(inv.total)}</td>
-                    <td class="text-right">Rp ${formatNumber(inv.paid_amount || 0)}</td>
-                    <td class="text-right">Rp ${formatNumber(sisa)}</td>
-                    <td><span class="status-badge status-${inv.status || 'draft'}">${inv.status || 'draft'}</span>
-                                        <td>
-                       <button class="action-btn" onclick="viewInvoiceDetail(${inv.id})"><i class="fas fa-eye"></i></button>
-${inv.status === 'draft' ? `<button class="action-btn" onclick="postInvoice(${inv.id})" style="color:var(--info);"><i class="fas fa-check-circle"></i></button>` : ''}
-${inv.status === 'draft' ? `<button class="action-btn" onclick="editInvoice(${inv.id})" style="color:var(--warning);"><i class="fas fa-edit"></i></button>` : ''}
-${inv.status === 'draft' ? `<button class="action-btn" onclick="deleteInvoice(${inv.id})" style="color:var(--danger);"><i class="fas fa-trash"></i></button>` : ''}
-${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button class="action-btn" onclick="recordPayment(${inv.id})" style="color:var(--success);"><i class="fas fa-money-bill-wave"></i></button>` : ''}
-                     </tr>
-                `;
-            }
-            tbody.innerHTML = html;
-        } catch (error) { console.error(error); showToast('Gagal memuat data', 'error'); }
-    }
+        if (month !== 'all' && year !== 'all') {
+            const start = `${year}-${month.padStart(2,'0')}-01`;
+            const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+            const end = `${year}-${month.padStart(2,'0')}-${lastDay}`;
+            query = query.gte('invoice_date', start).lte('invoice_date', end);
+        } else if (year !== 'all') {
+            query = query.gte('invoice_date', `${year}-01-01`).lte('invoice_date', `${year}-12-31`);
+        }
+        
+        let { data: invoices, error } = await query;
+        if (error) throw error;
+        
+        if (status !== 'all') invoices = invoices.filter(i => i.status === status);
+        
+        const customersList = await getCustomerList(currentCompanyId || 1);
+        const tbody = document.getElementById('invoiceTableBody');
+        if (!invoices || invoices.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center">Tidak ada data invoice</td><td>',
+            return;
+        }
+        
+        let html = '';
+        for (const inv of invoices) {
+            const cust = customersList.find(c => c.id == inv.customer_id);
+            const sisa = (inv.total || 0) - (inv.paid_amount || 0);
+            html += `<tr>
+                <td><strong>${inv.invoice_no}</strong></td>
+                <td>${cust?.name || '-'}</td>
+                <td>${inv.invoice_date || '-'}</td>
+                <td>${inv.project_code || '-'}</td>
+                <td class="text-right">Rp ${formatNumber(inv.total)}</td>
+                <td class="text-right">Rp ${formatNumber(inv.paid_amount || 0)}</td>
+                <td class="text-right">Rp ${formatNumber(sisa)}</td>
+                <td><span class="status-badge status-${inv.status || 'draft'}">${inv.status || 'draft'}</span></td>
+                <td>
+                    <button class="action-btn" onclick="viewInvoiceDetail(${inv.id})"><i class="fas fa-eye"></i></button>
+                    ${inv.status === 'draft' ? `<button class="action-btn" onclick="postInvoice(${inv.id})" style="color:var(--info);"><i class="fas fa-check-circle"></i></button>` : ''}
+                    ${inv.status === 'draft' ? `<button class="action-btn" onclick="editInvoice(${inv.id})" style="color:var(--warning);"><i class="fas fa-edit"></i></button>` : ''}
+                    ${inv.status === 'draft' ? `<button class="action-btn" onclick="deleteInvoice(${inv.id})" style="color:var(--danger);"><i class="fas fa-trash"></i></button>` : ''}
+                    ${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button class="action-btn" onclick="recordPayment(${inv.id})" style="color:var(--success);"><i class="fas fa-money-bill-wave"></i></button>` : ''}
+                </td>
+            </tr>`;
+        }
+        tbody.innerHTML = html;
+    } catch (error) { console.error(error); showToast('Gagal memuat data', 'error'); }
+}
     
     async function showCreateInvoiceForm() {
     const customersList = await getCustomerList(currentCompanyId);
