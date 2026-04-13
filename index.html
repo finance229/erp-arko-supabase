@@ -1767,110 +1767,103 @@ ${(inv.status === 'posted' || inv.status === 'partial') && sisa > 0 ? `<button c
     }
     
     async function showCreateInvoiceForm() {
-        const customersList = await getCustomerList(currentCompanyId);
-        const projectsList = await getProjectList(currentCompanyId);
-        const revenueAccs = await getRevenueAccounts(currentCompanyId);
-        const bankList = await getBankList(currentCompanyId);
+    const customersList = await getCustomerList(currentCompanyId);
+    const projectsList = await getProjectList(currentCompanyId);
+    const revenueAccs = await getRevenueAccounts(currentCompanyId);
+    const bankList = await getBankList(currentCompanyId);
 
-         let revenueOptions = '<option value="">Pilih Akun Pendapatan</option>';
+    // AKUN PENDAPATAN dengan kode COA
+    let revenueOptions = '<option value="">Pilih Akun Pendapatan</option>';
     revenueAccs.forEach(a => {
-        // Tampilkan kode akun + nama
         revenueOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`;
     });
     
+    // BANK dengan kode COA
     let bankOptions = '<option value="">Pilih Bank</option>';
     bankList.forEach(b => {
-        // Tampilkan kode akun + nama bank
         bankOptions += `<option value="${b.code}">${b.code} - ${b.display}</option>`;
     });
-        
-        let customerOptions = '<option value="">Pilih Customer</option>';
-        customersList.forEach(c => customerOptions += `<option value="${c.id}">${c.name}</option>`);
-        customerOptions += `<option value="NEW">+ BUAT CUSTOMER BARU</option>`;
-        
-        let projectOptions = '<option value="">[Tanpa Project]</option>';
-        projectsList.forEach(p => projectOptions += `<option value="${p.code}">${p.code} - ${p.name}</option>`);
-        projectOptions += `<option value="NEW">+ BUAT PROJECT BARU</option>`;
-        
-        let revenueOptions = '<option value="">Pilih Akun Pendapatan</option>';
-        revenueAccs.forEach(a => revenueOptions += `<option value="${a.account_code}">${a.account_code} - ${a.account_name}</option>`);
-        
-        let bankOptions = '<option value="">Pilih Bank</option>';
-        bankList.forEach(b => bankOptions += `<option value="${b.code}">${b.display}</option>`);
-        
-        const today = new Date().toISOString().split('T')[0];
-        const nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
-        const dueDate = nextMonth.toISOString().split('T')[0];
-        
-        let html = `
-            <div class="form-card">
-                <div class="form-header"><h2><i class="fas fa-plus"></i> Buat Invoice Baru</h2><button class="btn btn-secondary" onclick="loadInvoiceList()">Kembali</button></div>
-                
-                <div class="form-group"><label>Customer</label><select id="invCustomer" class="form-control" onchange="toggleCustomerSection()">${customerOptions}</select></div>
-                <div id="invNewCustomerSection" style="display:none; padding:15px; background:#f8f9fa; border-radius:8px; margin-bottom:15px;">
-                    <h4>📝 Buat Customer Baru</h4>
-                    <div class="form-group"><label>Kode Customer</label><input type="text" id="invNewCustomerCode" class="form-control" placeholder="CUST-001"></div>
-                    <div class="form-group"><label>Nama Customer</label><input type="text" id="invNewCustomerName" class="form-control" placeholder="Nama lengkap"></div>
-                    <div class="form-group"><label>NPWP</label><input type="text" id="invNewCustomerNpwp" class="form-control" placeholder="Nomor NPWP"></div>
-                    <div class="form-group"><label>Telepon</label><input type="text" id="invNewCustomerTelp" class="form-control" placeholder="Nomor telepon"></div>
-                    <div class="form-group"><label>Email</label><input type="email" id="invNewCustomerEmail" class="form-control" placeholder="Email"></div>
-                    <div class="form-group"><label>Alamat</label><textarea id="invNewCustomerAlamat" class="form-control" rows="2" placeholder="Alamat lengkap"></textarea></div>
-                </div>
-                
-                <div class="form-group"><label>Project</label><select id="invProject" class="form-control" onchange="toggleInvoiceProjectSection()">${projectOptions}</select></div>
-                <div id="invNewProjectSection" style="display:none; padding:15px; background:#f8f9fa; border-radius:8px; margin-bottom:15px;">
-                    <h4>📝 Buat Project Baru</h4>
-                    <div class="form-group"><label>Kode Project</label><input type="text" id="invNewProjectCode" class="form-control" placeholder="Contoh: UNQ"></div>
-                    <div class="form-group"><label>Nama Project</label><input type="text" id="invNewProjectName" class="form-control" placeholder="Nama lengkap"></div>
-                    <div class="form-group"><label>Budget (0 = Unlimited)</label><input type="text" id="invNewProjectBudget" class="form-control" placeholder="Rp 0" onkeyup="formatMoney(this)"></div>
-                </div>
-                <div id="invExistingProjectBudget" style="margin-top:10px; margin-bottom:15px;"></div>
-                
-                <div class="form-group"><label>Akun Pendapatan</label><select id="invRevenueAccount" class="form-control">${revenueOptions}</select></div>
-                <div class="form-group"><label>Bank Tujuan</label><select id="invBank" class="form-control">${bankOptions}</select></div>
-                
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-                    <div class="form-group"><label>Tanggal Invoice</label><input type="date" id="invDate" class="form-control" value="${today}"></div>
-                    <div class="form-group"><label>Jatuh Tempo</label><input type="date" id="invDueDate" class="form-control" value="${dueDate}"></div>
-                </div>
-                
-                <div style="background:#f8f9fa; padding:20px; border-radius:10px; margin:20px 0;">
-                    <h4>Item Barang/Jasa</h4>
-                    <div id="invItemsContainer"></div>
-                    <button class="btn btn-secondary" onclick="addInvoiceItem()">+ Tambah Item</button>
-                </div>
-                
-                <div style="margin:20px 0;">
-                    <label><input type="checkbox" id="invPPN" onchange="calculateInvoiceTotal()"> Kena PPN 11%</label>
-                    <label style="margin-left:20px;"><input type="checkbox" id="invPPh" onchange="calculateInvoiceTotal()"> Kena PPh 23 2% (dipotong customer)</label>
-                </div>
-                
-                <div style="background:var(--primary); padding:20px; border-radius:10px; color:white;">
-                    <table style="width:100%;">
-                        <tr><td>Subtotal</td><td style="text-align:right;" id="invSubtotal">Rp 0</td></tr>
-                        <tr><td>PPN 11%</td><td style="text-align:right;" id="invPPNAmount">Rp 0</td></tr>
-                        <tr><td>PPh 23 2% (dipotong)</td><td style="text-align:right; color:#fbbf24;" id="invPPhAmount">Rp 0</td></tr>
-                        <tr style="border-top:1px solid rgba(255,255,255,0.3); font-weight:bold;"><td>TOTAL YANG HARUS DIBAYAR</td><td style="text-align:right;" id="invTotal">Rp 0</td></tr>
-                    </table>
-                    <p style="margin-top:10px; font-size:0.7rem;"><i class="fas fa-info-circle"></i> PPh 23 akan dipotong oleh customer, perusahaan terima bersih setelah dipotong</p>
-                </div>
-                
-                <div class="form-group"><label>Catatan</label><textarea id="invNotes" class="form-control" rows="2"></textarea></div>
-                
-                <div style="display:flex; gap:1rem; justify-content:flex-end;">
-                    <button class="btn btn-secondary" onclick="loadInvoiceList()">Batal</button>
-                    <button class="btn btn-primary" onclick="saveInvoice()">Simpan Invoice</button>
-                </div>
-                <div id="invResult"></div>
-            </div>
-        `;
-        document.getElementById('content').innerHTML = html;
-        
-        window.invoiceItemCounter = 1;
-        document.getElementById('invItemsContainer').innerHTML = renderInvoiceItem(0);
-        calculateInvoiceTotal();
-    }
     
+    let customerOptions = '<option value="">Pilih Customer</option>';
+    customersList.forEach(c => customerOptions += `<option value="${c.id}">${c.name}</option>`);
+    customerOptions += `<option value="NEW">+ BUAT CUSTOMER BARU</option>`;
+    
+    let projectOptions = '<option value="">[Tanpa Project]</option>';
+    projectsList.forEach(p => projectOptions += `<option value="${p.code}">${p.code} - ${p.name}</option>`);
+    projectOptions += `<option value="NEW">+ BUAT PROJECT BARU</option>`;
+    
+    const today = new Date().toISOString().split('T')[0];
+    const nextMonth = new Date(); nextMonth.setMonth(nextMonth.getMonth() + 1);
+    const dueDate = nextMonth.toISOString().split('T')[0];
+    
+    let html = `
+        <div class="form-card">
+            <div class="form-header"><h2><i class="fas fa-plus"></i> Buat Invoice Baru</h2><button class="btn btn-secondary" onclick="loadInvoiceList()">Kembali</button></div>
+            
+            <div class="form-group"><label>Customer</label><select id="invCustomer" class="form-control" onchange="toggleCustomerSection()">${customerOptions}</select></div>
+            <div id="invNewCustomerSection" style="display:none; padding:15px; background:#f8f9fa; border-radius:8px; margin-bottom:15px;">
+                <h4>📝 Buat Customer Baru</h4>
+                <div class="form-group"><label>Kode Customer</label><input type="text" id="invNewCustomerCode" class="form-control" placeholder="CUST-001"></div>
+                <div class="form-group"><label>Nama Customer</label><input type="text" id="invNewCustomerName" class="form-control" placeholder="Nama lengkap"></div>
+                <div class="form-group"><label>NPWP</label><input type="text" id="invNewCustomerNpwp" class="form-control" placeholder="Nomor NPWP"></div>
+                <div class="form-group"><label>Telepon</label><input type="text" id="invNewCustomerTelp" class="form-control" placeholder="Nomor telepon"></div>
+                <div class="form-group"><label>Email</label><input type="email" id="invNewCustomerEmail" class="form-control" placeholder="Email"></div>
+                <div class="form-group"><label>Alamat</label><textarea id="invNewCustomerAlamat" class="form-control" rows="2" placeholder="Alamat lengkap"></textarea></div>
+            </div>
+            
+            <div class="form-group"><label>Project</label><select id="invProject" class="form-control" onchange="toggleInvoiceProjectSection()">${projectOptions}</select></div>
+            <div id="invNewProjectSection" style="display:none; padding:15px; background:#f8f9fa; border-radius:8px; margin-bottom:15px;">
+                <h4>📝 Buat Project Baru</h4>
+                <div class="form-group"><label>Kode Project</label><input type="text" id="invNewProjectCode" class="form-control" placeholder="Contoh: UNQ"></div>
+                <div class="form-group"><label>Nama Project</label><input type="text" id="invNewProjectName" class="form-control" placeholder="Nama lengkap"></div>
+                <div class="form-group"><label>Budget (0 = Unlimited)</label><input type="text" id="invNewProjectBudget" class="form-control" placeholder="Rp 0" onkeyup="formatMoney(this)"></div>
+            </div>
+            <div id="invExistingProjectBudget" style="margin-top:10px; margin-bottom:15px;"></div>
+            
+            <div class="form-group"><label>Akun Pendapatan</label><select id="invRevenueAccount" class="form-control">${revenueOptions}</select></div>
+            <div class="form-group"><label>Bank Tujuan</label><select id="invBank" class="form-control">${bankOptions}</select></div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <div class="form-group"><label>Tanggal Invoice</label><input type="date" id="invDate" class="form-control" value="${today}"></div>
+                <div class="form-group"><label>Jatuh Tempo</label><input type="date" id="invDueDate" class="form-control" value="${dueDate}"></div>
+            </div>
+            
+            <div style="background:#f8f9fa; padding:20px; border-radius:10px; margin:20px 0;">
+                <h4>Item Barang/Jasa</h4>
+                <div id="invItemsContainer"></div>
+                <button class="btn btn-secondary" onclick="addInvoiceItem()">+ Tambah Item</button>
+            </div>
+            
+            <div style="margin:20px 0;">
+                <label><input type="checkbox" id="invPPN" onchange="calculateInvoiceTotal()"> Kena PPN 11%</label>
+                <label style="margin-left:20px;"><input type="checkbox" id="invPPh" onchange="calculateInvoiceTotal()"> Kena PPh 23 2% (dipotong customer)</label>
+            </div>
+            
+            <div style="background:var(--primary); padding:20px; border-radius:10px; color:white;">
+                <table style="width:100%;">
+                    <tr><td>Subtotal</td><td style="text-align:right;" id="invSubtotal">Rp 0</td></tr>
+                    <tr><td>PPN 11%</td><td style="text-align:right;" id="invPPNAmount">Rp 0</td></tr>
+                    <tr>.htmlPPh 23 2% (dipotong)</td><td style="text-align:right; color:#fbbf24;" id="invPPhAmount">Rp 0</td></tr>
+                    <tr style="border-top:1px solid rgba(255,255,255,0.3); font-weight:bold;"><td>TOTAL YANG HARUS DIBAYAR</td><td style="text-align:right;" id="invTotal">Rp 0</td></tr>
+                </table>
+                <p style="margin-top:10px; font-size:0.7rem;"><i class="fas fa-info-circle"></i> PPh 23 akan dipotong oleh customer, perusahaan terima bersih setelah dipotong</p>
+            </div>
+            
+            <div class="form-group"><label>Catatan</label><textarea id="invNotes" class="form-control" rows="2"></textarea></div>
+            
+            <div style="display:flex; gap:1rem; justify-content:flex-end;">
+                <button class="btn btn-secondary" onclick="loadInvoiceList()">Batal</button>
+                <button class="btn btn-primary" onclick="saveInvoice()">Simpan Invoice</button>
+            </div>
+            <div id="invResult"></div>
+        </div>
+    `;
+    document.getElementById('content').innerHTML = html;
+    
+    window.invoiceItemCounter = 1;
+    document.getElementById('invItemsContainer').innerHTML = renderInvoiceItem(0);
+    calculateInvoiceTotal();
+}    
     function toggleCustomerSection() {
         const select = document.getElementById('invCustomer');
         const newSection = document.getElementById('invNewCustomerSection');
