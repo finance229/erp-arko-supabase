@@ -475,12 +475,6 @@
         if (document.getElementById('totalUtang')) document.getElementById('totalUtang').innerHTML = `Rp ${formatNumber(totalUtang)}`;
         if (document.getElementById('totalPending')) document.getElementById('totalPending').innerHTML = `Rp ${formatNumber(totalPending)}`;
         
-        
-        document.getElementById('totalKas').innerHTML = `Rp ${formatNumber(totalApproved)}`;
-        document.getElementById('totalPiutang').innerHTML = `Rp ${formatNumber(totalPiutang)}`;
-        document.getElementById('totalUtang').innerHTML = `Rp ${formatNumber(totalUtang)}`;
-        document.getElementById('totalPending').innerHTML = `Rp ${formatNumber(totalPending)}`;
-        
         let statusData = { draft: 0, submitted: 0, verified: 0, paid: 0, rejected: 0 };
         let companyData = { 1:0, 2:0, 3:0, 4:0 };
         let monthlyData = {};
@@ -2242,8 +2236,7 @@ async function submitReject(id) {
     async function refreshInvoices() { loadInvoiceList(); }
     
     // ==================== AP (INVOICE PEMBELIAN) LENGKAP ====================
-   // ==================== AP (INVOICE PEMBELIAN) LENGKAP ====================
-async function loadVendorInvoiceList() {
+   async function loadVendorInvoiceList() {
     if (!companies.length) { setTimeout(() => loadVendorInvoiceList(), 500); return; }
     
     let companyOptions = '';
@@ -2294,11 +2287,11 @@ async function loadVendorInvoiceList() {
                         </tr>
                     </thead>
                     <tbody id="vendorInvoiceTableBody">
-                        <tr><td colspan="9" class="text-center">Loading...<\/td><\/tr>
+                        <tr><td colspan="9" class="text-center">Loading...</td></tr>
                     </tbody>
-                <\/table>
-            <\/div>
-        <\/div>
+                </table>
+            </div>
+        </div>
     `;
     document.getElementById('content').innerHTML = html;
     await loadVendorInvoicesData();
@@ -2322,31 +2315,35 @@ async function loadVendorInvoiceList() {
         if (error) throw error;
         const tbody = document.getElementById('vendorInvoiceTableBody');
         if (!invoices || invoices.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center">Tidak ada数据<\/td><\/tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center">Tidak ada data</td></tr>';
             return;
         }
         let html = '';
         for (const inv of invoices) {
             const sisa = (inv.total || 0) - (inv.paid_amount || 0);
+            let statusClass = '';
+            if (inv.payment_status === 'paid') statusClass = 'status-paid';
+            else if (inv.payment_status === 'partial') statusClass = 'status-verified';
+            else if (inv.payment_status === 'submitted') statusClass = 'status-submitted';
+            else statusClass = 'status-draft';
+            
             html += `<tr>
-                <td>${inv.vendor_name || '-'}<\/td>
-                <td><strong>${inv.invoice_no}<\/strong><\/td>
-                <td>${inv.invoice_date || '-'}<\/td>
-                <td>${inv.project_code || '-'}<\/td>
-                <td class="text-right">Rp ${formatNumber(inv.total)}<\/td>
-                <td class="text-right">Rp ${formatNumber(inv.paid_amount || 0)}<\/td>
-                <td class="text-right">Rp ${formatNumber(sisa)}<\/td>
-                <td><span class="status-badge status-${inv.payment_status === 'paid' ? 'paid' : (inv.payment_status === 'partial' ? 'verified' : (inv.payment_status === 'submitted' ? 'status-submitted' : 'draft'))}">
-                    ${inv.payment_status || 'unpaid'}
-                <\/span><\/td>
+                <td>${inv.vendor_name || '-'}</td>
+                <td><strong>${inv.invoice_no}</strong></td>
+                <td>${inv.invoice_date || '-'}</td>
+                <td>${inv.project_code || '-'}</td>
+                <td class="text-right">Rp ${formatNumber(inv.total)}</td>
+                <td class="text-right">Rp ${formatNumber(inv.paid_amount || 0)}</td>
+                <td class="text-right">Rp ${formatNumber(sisa)}</td>
+                <td><span class="status-badge ${statusClass}">${inv.payment_status || 'unpaid'}</span></td>
                 <td>
-                    <button class="action-btn" onclick="viewVendorInvoiceDetail(${inv.id})"><i class="fas fa-eye"><\/i><\/button>
+                    <button class="action-btn" onclick="viewVendorInvoiceDetail(${inv.id})"><i class="fas fa-eye"></i></button>
                     ${inv.payment_status === 'submitted' && currentUserRole === 'direktur' ? 
-                        `<button class="action-btn" onclick="approveVendorPayment(${inv.id})" style="color:var(--success);"><i class="fas fa-thumbs-up"><\/i><\/button>` : 
+                        `<button class="action-btn" onclick="approveVendorPayment(${inv.id})" style="color:var(--success);"><i class="fas fa-thumbs-up"></i></button>` : 
                         (inv.payment_status === 'unpaid' && currentUserRole === 'finance' ? 
-                            `<button class="action-btn" onclick="showAjukanPembayaranVendor(${inv.id})" style="color:var(--success);"><i class="fas fa-paper-plane"><\/i><\/button>` : '')}
-                <\/td>
-            <\/tr>`;
+                            `<button class="action-btn" onclick="showAjukanPembayaranVendor(${inv.id})" style="color:var(--success);"><i class="fas fa-paper-plane"></i></button>` : '')}
+                </td>
+            </tr>`;
         }
         tbody.innerHTML = html;
     } catch (error) { console.error(error); showToast('Gagal memuat data', 'error'); }
