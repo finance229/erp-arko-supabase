@@ -1789,8 +1789,8 @@ async function submitReject(id) {
         const customersList = await getCustomerList(currentCompanyId || 1);
         const tbody = document.getElementById('invoiceTableBody');
         if (!invoices || invoices.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center">Tidak ada data invoice</td><td>',
-            return;
+           tbody.innerHTML = '<tr><td colspan="9" class="text-center">Tidak ada data invoice</td></tr>';
+return;
         }
         
         let html = '';
@@ -2315,9 +2315,9 @@ async function submitReject(id) {
         if (error) throw error;
         const tbody = document.getElementById('vendorInvoiceTableBody');
         if (!invoices || invoices.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center">Tidak ada data</td></tr>';
-            return;
-        }
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center">Tidak ada data invoice</td></tr>';
+    return;
+}
         let html = '';
         for (const inv of invoices) {
             const sisa = (inv.total || 0) - (inv.paid_amount || 0);
@@ -2899,6 +2899,7 @@ async function changeVendorCompany(companyId) {
         }
     }
     checkSession();
+
     </script>
 </body>
 </html>
